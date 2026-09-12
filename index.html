@@ -1,4 +1,4 @@
-<!-- v3.2 -->
+<!-- v3.3 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -729,6 +729,16 @@ body.keyboard-open .bottom-nav{display:none}
   line-height:1.4;
 }
 
+
+.image-analysis-status{
+  margin:8px 2px 0;
+  min-height:16px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.4;
+}
+.image-analysis-status.ready{color:var(--accent)}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -850,7 +860,9 @@ const voiceVisual=document.getElementById("voiceVisual");
 const voiceTime=document.getElementById("voiceTime");
 const voiceStop=document.getElementById("voiceStop");
 const toast=document.getElementById("toast");
+const imageAnalysisStatus=document.getElementById("imageAnalysisStatus");
 let pendingImageData="";
+let pendingImageAnalysis=null;
 let voiceSeconds=0;
 let voiceTimer=null;
 let voiceRunning=false;
@@ -860,6 +872,170 @@ function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&l
 function showToast(msg="Saved."){
   toast.textContent=msg;toast.classList.add("show");
   setTimeout(()=>toast.classList.remove("show"),900)
+}
+
+
+
+let visionLibrariesPromise=null;
+let mobileNetModel=null;
+
+function loadScriptOnce(src,id){
+  return new Promise((resolve,reject)=>{
+    if(document.getElementById(id)){
+      const existing=document.getElementById(id);
+      if(existing.dataset.loaded==="1") return resolve();
+      existing.addEventListener("load",resolve,{once:true});
+      existing.addEventListener("error",reject,{once:true});
+      return;
+    }
+    const s=document.createElement("script");
+    s.id=id;s.src=src;s.async=true;
+    s.onload=()=>{s.dataset.loaded="1";resolve()};
+    s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function ensureVisionLibraries(){
+  if(visionLibrariesPromise) return visionLibrariesPromise;
+  visionLibrariesPromise=(async()=>{
+    await loadScriptOnce("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js","echo-tfjs");
+    await loadScriptOnce("https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js","echo-mobilenet");
+    await loadScriptOnce("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js","echo-tesseract");
+    if(!mobileNetModel && window.mobilenet) mobileNetModel=await window.mobilenet.load({version:2,alpha:1.0});
+  })();
+  return visionLibrariesPromise;
+}
+
+function loadImageElement(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=reject;
+    img.src=dataUrl;
+  });
+}
+
+function looksLikeTextCapture(text){
+  const cleaned=(text||"").replace(/\s+/g," ").trim();
+  const words=cleaned.split(" ").filter(Boolean);
+  return cleaned.length>=35 && words.length>=7;
+}
+
+function summarizeLabels(predictions){
+  return (predictions||[])
+    .filter(x=>x && x.className && x.probability>=0.08)
+    .slice(0,4)
+    .map(x=>({label:x.className,confidence:x.probability}));
+}
+
+async function analyzeCapturedImage(dataUrl){
+  if(!dataUrl) return null;
+  if(imageAnalysisStatus){
+    imageAnalysisStatus.textContent="Looking at what you captured…";
+    imageAnalysisStatus.classList.remove("ready");
+  }
+
+  try{
+    await ensureVisionLibraries();
+    const img=await loadImageElement(dataUrl);
+
+    let ocrText="";
+    if(window.Tesseract){
+      try{
+        const result=await window.Tesseract.recognize(dataUrl,"eng",{
+          logger:m=>{
+            if(imageAnalysisStatus && m.status==="recognizing text" && m.progress){
+              imageAnalysisStatus.textContent=`Reading visible text… ${Math.round(m.progress*100)}%`;
+            }
+          }
+        });
+        ocrText=(result?.data?.text||"").replace(/\s+/g," ").trim();
+      }catch(e){}
+    }
+
+    let labels=[];
+    if(mobileNetModel){
+      try{ labels=summarizeLabels(await mobileNetModel.classify(img,5)); }catch(e){}
+    }
+
+    const kind=looksLikeTextCapture(ocrText)?"text":"photo";
+    const analysis={
+      kind,
+      ocrText:ocrText.slice(0,1800),
+      labels,
+      analyzedAt:new Date().toISOString()
+    };
+
+    if(imageAnalysisStatus){
+      if(kind==="text"){
+        imageAnalysisStatus.textContent="Screenshot text recognized. Go Deeper can press on the actual words.";
+      }else if(labels.length){
+        imageAnalysisStatus.textContent=`Photo context recognized: ${labels.slice(0,2).map(x=>x.label).join(", ")}.`;
+      }else{
+        imageAnalysisStatus.textContent="Image attached. Add a few words if the meaning is personal rather than visual.";
+      }
+      imageAnalysisStatus.classList.add("ready");
+    }
+    return analysis;
+  }catch(e){
+    if(imageAnalysisStatus){
+      imageAnalysisStatus.textContent="Image analysis unavailable right now. The Moment will still save.";
+      imageAnalysisStatus.classList.remove("ready");
+    }
+    return null;
+  }
+}
+
+function cleanOCR(text){
+  return (text||"").replace(/\s+/g," ").replace(/[|]+/g," ").trim();
+}
+
+function meaningfulImageLabels(m){
+  return (m?.imageAnalysis?.labels||[]).map(x=>x.label).filter(Boolean);
+}
+
+function imageTextForReasoning(m){
+  const ocr=cleanOCR(m?.imageAnalysis?.ocrText||"");
+  return ocr.length>20?ocr:"";
+}
+
+function contextualPhotoQuestion(m,labels){
+  const joined=labels.join(" ").toLowerCase();
+  const user=(m.thought||"").trim();
+
+  if(/\b(lakeside|seashore|promontory|valley|cliff|mountain|alp|volcano|geyser|sandbar|dam|pier|dock|breakwater|river)\b/.test(joined)){
+    return {
+      type:"PRESS ON THE MOMENT",
+      text:user
+        ? `ECHO sees an outdoor landscape and you wrote “${user.slice(0,105)}${user.length>105?"…":""}.” What is the landscape adding to that thought—scale, stillness, distance, transition, or something else you would lose if this were only words?`
+        : "This appears to be a landscape rather than an argument to analyze. What made this particular scene worth preserving—the light, stillness, scale, contrast, sense of place, or the moment in your life attached to it?"
+    };
+  }
+
+  if(/\b(person|groom|bride|child|boy|girl|man|woman|face|suit|jersey|uniform)\b/.test(joined)){
+    return {
+      type:"LOOK AT THE HUMAN MOMENT",
+      text:user
+        ? `You paired this image of a person or people with “${user.slice(0,105)}${user.length>105?"…":""}.” What visible detail most changes the meaning of those words?`
+        : "What is happening between the people in this image that made the moment worth keeping—and what part of that meaning would a caption miss?"
+    };
+  }
+
+  if(/\b(screen|monitor|web site|book jacket|menu|comic book|notebook|packet|envelope)\b/.test(joined)){
+    return {
+      type:"PRESS ON THE CONTENT",
+      text:"This looks like captured information rather than a purely visual scene. What idea in it deserves pressure—and what assumption is that idea asking you to accept?"
+    };
+  }
+
+  const labelText=labels.length?labels.slice(0,2).join(" / "):"the visible scene";
+  return {
+    type:"PRESS ON WHAT'S VISIBLE",
+    text:user
+      ? `ECHO's visual read centers on ${labelText}, while you wrote “${user.slice(0,105)}${user.length>105?"…":""}.” Where do the image and your interpretation agree—and where might your interpretation be adding something that is not actually visible?`
+      : `ECHO's visual read centers on ${labelText}. What specific visible detail made this a Moment rather than just another photo?`
+  };
 }
 
 
@@ -876,36 +1052,38 @@ function inferImageContext(m){
 }
 
 function getImageEchoResponse(m){
-  const context=inferImageContext(m);
-  const t=context.toLowerCase();
+  const ocr=imageTextForReasoning(m);
+  const labels=meaningfulImageLabels(m);
+  const userText=(m.thought||"").trim();
 
-  // If the user has supplied image context, press directly on that context.
-  if(context){
-    const clean=context.replace(/\s+/g," ").replace(/[“”"]/g,"").trim();
-    const short=clean.length>115?clean.slice(0,112).trim()+"…":clean;
-
-    if(/\b(quote|says|text|screenshot|article|book|page|post|message)\b/.test(t)){
-      return {
-        type:"PRESS ON THE CONTENT",
-        text:`The image is preserving “${short}.” What is the strongest assumption inside that idea—and what would make it fail?`
-      };
-    }
-    if(/\b(nature|river|lake|mountain|sunset|sunrise|forest|sky|water|landscape|view)\b/.test(t)){
-      return {
-        type:"PRESS ON THE MOMENT",
-        text:`You chose to preserve this scene alongside “${short}.” What, specifically, is the scene making visible that the words alone do not capture?`
-      };
-    }
+  // Screenshot / book page / message: reason over the actual OCR'd words.
+  if(ocr){
+    const pseudo={...m,thought:ocr,imageData:""};
+    const response=getEchoResponse(pseudo);
+    const excerpt=ocr.length>145?ocr.slice(0,142).trim()+"…":ocr;
     return {
-      type:"PRESS ON THE IMAGE",
-      text:`You attached this image to “${short}.” Which visible detail carries the meaning for you—and how would your interpretation change if that detail were absent?`
+      type:response.type==="PRESS ON IT"?"PRESS ON THE CONTENT":response.type,
+      text:`From the image, ECHO reads: “${excerpt}” ${response.text}`
     };
   }
 
-  // No textual grounding exists. Be transparent instead of pretending the prototype saw the image.
+  // Photograph: use browser vision labels plus any user context.
+  if(labels.length){
+    return contextualPhotoQuestion(m,labels);
+  }
+
+  // Browser analysis may not have completed on older Moments.
+  const context=inferImageContext(m);
+  if(context){
+    return {
+      type:"PRESS ON THE IMAGE",
+      text:`You attached this image to “${context.slice(0,115)}${context.length>115?"…":""}.” What does the visible scene contribute that your words do not—and does the image support your interpretation or complicate it?`
+    };
+  }
+
   return {
     type:"LOOK CLOSER",
-    text:"This Moment is image-only. What specific detail made you stop—the subject, contrast, expression, wording, setting, or something else?"
+    text:"ECHO could not reliably identify enough visual context in this older image. What made this particular image a Moment rather than simply a photo?"
   };
 }
 
@@ -1380,10 +1558,15 @@ function openEdit(id){
   source.value=m.source==="Reflection"?"":(m.source||"");
   anchor.value=m.anchor||"";
   pendingImageData=m.imageData||"";
+  pendingImageAnalysis=m.imageAnalysis||null;
 
   if(pendingImageData){
     photoPreview.src=pendingImageData;
     photoPreview.classList.add("show");
+    pendingImageAnalysis=null;
+    analyzeCapturedImage(pendingImageData).then(result=>{
+      if(pendingImageData) pendingImageAnalysis=result;
+    });
     photoInline.classList.add("show");
   }else{
     photoPreview.src="";
@@ -1600,6 +1783,7 @@ photoInput.addEventListener("change",async()=>{
 });
 removePhoto.addEventListener("click",()=>{
   pendingImageData="";
+  pendingImageAnalysis=null;
   photoPreview.src="";
   photoPreview.classList.remove("show");
   photoInline.classList.remove("show");
@@ -1773,6 +1957,7 @@ document.getElementById("save").onclick=()=>{
       source:isReflection?"Reflection":source.value.trim(),
       anchor:isReflection?(moments[idx].anchor||""):anchor.value.trim(),
       imageData:isReflection?(moments[idx].imageData||""):pendingImageData,
+      imageAnalysis:isReflection?(moments[idx].imageAnalysis||null):pendingImageAnalysis,
       captureType:isReflection?(moments[idx].captureType||"reflection"):(pendingImageData?"photo+thought":"thought"),
       updatedAt:new Date().toISOString()
       // Intentionally preserve id, original display date, parentId and creation history.
@@ -1813,7 +1998,8 @@ document.getElementById("save").onclick=()=>{
     source:source.value.trim(),
     anchor:anchor.value.trim(),
     captureType:pendingImageData?"photo+thought":"thought",
-    imageData:pendingImageData
+    imageData:pendingImageData,
+    imageAnalysis:pendingImageAnalysis
   };
 
   try{
@@ -1829,6 +2015,7 @@ document.getElementById("save").onclick=()=>{
   echoResponseId=null;
   thought.value=source.value=anchor.value="";
   pendingImageData="";
+  pendingImageAnalysis=null;
   photoPreview.src="";
   photoPreview.classList.remove("show");
   photoInline.classList.remove("show");
