@@ -1,4 +1,4 @@
-<!-- v3.6 -->
+<!-- v3.7 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -731,6 +731,42 @@ body.keyboard-open .bottom-nav{display:none}
 
 
 
+
+.quick-audio-home{
+  width:min(330px,88vw);
+  margin:14px auto 0;
+  padding:0;
+  border:1px solid rgba(140,240,199,.18);
+  border-radius:18px;
+  background:linear-gradient(135deg,rgba(140,240,199,.07),rgba(154,167,255,.06));
+  overflow:hidden;
+  box-shadow:0 12px 35px rgba(0,0,0,.14);
+}
+.quick-audio-home button{
+  width:100%;border:0;background:transparent;color:var(--ink);
+  padding:13px 15px;text-align:left;display:flex;align-items:center;gap:12px;font:inherit;
+}
+.quick-audio-icon{
+  width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;font-size:15px;font-weight:900;flex:0 0 auto;
+}
+.quick-audio-copy{min-width:0;flex:1}
+.quick-audio-title{font-size:13px;font-weight:900}
+.quick-audio-sub{margin-top:2px;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick-audio-arrow{color:var(--accent);font-size:18px}
+.quick-mode-banner{
+  display:none;
+  margin:0 0 13px;padding:11px 12px;border:1px solid rgba(140,240,199,.20);
+  border-radius:15px;background:rgba(140,240,199,.055);
+}
+.quick-mode-banner.show{display:flex;align-items:center;gap:10px}
+.quick-mode-dot{
+  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;font-size:12px;font-weight:900;flex:0 0 auto;
+}
+.quick-mode-banner strong{display:block;font-size:12px}
+.quick-mode-banner span{display:block;color:var(--muted);font-size:10px;margin-top:2px;line-height:1.35}
+
 .audio-inline{
   display:none;
   margin-top:12px;
@@ -831,6 +867,14 @@ body.keyboard-open .bottom-nav{display:none}
       <button class="dismiss" id="close">Cancel</button>
     </div>
 
+    <div class="quick-mode-banner" id="quickModeBanner">
+      <div class="quick-mode-dot">▶</div>
+      <div>
+        <strong>Current audio captured</strong>
+        <span>Prototype simulation: source + play point are already attached. Add a thought only if you want to.</span>
+      </div>
+    </div>
+
     <p class="helper">Add whatever helps you remember the moment. Nothing here is required.</p>
 
     <label class="field-label" id="thoughtLabel" for="thought">What made you stop and think?</label>
@@ -886,7 +930,7 @@ body.keyboard-open .bottom-nav{display:none}
         <input id="audioTime" inputmode="numeric" placeholder="42:18">
       </div>
       <input id="audioUrl" inputmode="url" placeholder="Share or paste source link (optional)">
-      <p class="audio-help">Prototype: ECHO preserves the title + exact play point. In the native app, supported services can pass source details through Share → ECHO.</p>
+      <p class="audio-help">Prototype: ECHO preserves the title + exact play point. “ECHO this audio” simulates the future native quick-capture flow.</p>
     </div>
 
     <label class="field-label" id="sourceLabel" for="source">Other source <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
@@ -951,6 +995,7 @@ const audioTitle=document.getElementById("audioTitle");
 const audioPart=document.getElementById("audioPart");
 const audioTime=document.getElementById("audioTime");
 const audioUrl=document.getElementById("audioUrl");
+const quickModeBanner=document.getElementById("quickModeBanner");
 const voiceStatus=document.getElementById("voiceStatus");
 const voiceVisual=document.getElementById("voiceVisual");
 const voiceTime=document.getElementById("voiceTime");
@@ -958,6 +1003,7 @@ const voiceStop=document.getElementById("voiceStop");
 const toast=document.getElementById("toast");
 let pendingImageData="";
 let pendingAudioKind="podcast";
+let quickAudioMode=false;
 let voiceSeconds=0;
 let voiceTimer=null;
 let voiceRunning=false;
@@ -982,6 +1028,30 @@ function setAudioKind(kind){
   audioPart.placeholder=pendingAudioKind==="podcast"?"Episode title / number":"Chapter / section";
 }
 
+
+function simulatedCurrentAudio(){
+  // V3.7 prototype only. Native ECHO will receive real source metadata
+  // from supported share-sheet / shortcut / playback integrations.
+  return {
+    kind:"podcast",
+    title:"The Knowledge Project",
+    part:"Designing Your Environment",
+    time:"42:18",
+    url:""
+  };
+}
+
+function applyAudioDraft(a){
+  if(!a)return;
+  setAudioKind(a.kind||"podcast");
+  audioTitle.value=a.title||"";
+  audioPart.value=a.part||"";
+  audioTime.value=a.time||"";
+  audioUrl.value=a.url||"";
+  audioInline.classList.add("show");
+  audioToggle.classList.add("active");
+}
+
 function clearAudioDraft(){
   pendingAudioKind="podcast";
   audioTitle.value="";
@@ -990,6 +1060,8 @@ function clearAudioDraft(){
   audioUrl.value="";
   audioInline.classList.remove("show");
   audioToggle.classList.remove("active");
+  quickAudioMode=false;
+  quickModeBanner?.classList.remove("show");
   setAudioKind("podcast");
 }
 
@@ -1235,9 +1307,22 @@ function renderCaptureHome(){
       <span class="capture-orb-label">Capture a moment</span>
     </button>
     <p class="capture-home-note">Tap the moment it matters. Add as much—or as little—as you need.</p>
+
+    <div class="quick-audio-home">
+      <button id="quickAudioBtn" type="button" aria-label="Capture the current audio">
+        <span class="quick-audio-icon">▶</span>
+        <span class="quick-audio-copy">
+          <span class="quick-audio-title">ECHO this audio</span>
+          <span class="quick-audio-sub">Prototype current podcast · capture the play point fast</span>
+        </span>
+        <span class="quick-audio-arrow">→</span>
+      </button>
+    </div>
+
     ${count?`<button class="capture-home-recent" id="recentTimelineBtn" type="button">${count} ${count===1?"Moment":"Moments"} captured · View timeline →</button>`:""}
   </section>`;
   document.getElementById("homeCaptureBtn").onclick=openCapture;
+  document.getElementById("quickAudioBtn").onclick=openQuickAudioCapture;
   const recent=document.getElementById("recentTimelineBtn");
   if(recent) recent.onclick=()=>{view="timeline";render()};
 }
@@ -1892,9 +1977,29 @@ voiceStop.addEventListener("click",()=>{
   stopVoiceUI();
 });
 
+
+function openQuickAudioCapture(){
+  openCapture();
+  quickAudioMode=true;
+  const a=simulatedCurrentAudio();
+  applyAudioDraft(a);
+  quickModeBanner.classList.add("show");
+  captureTitle.textContent="ECHO this audio";
+  saveBtn.textContent="Save this moment";
+
+  // Make annotation available without making it mandatory.
+  voiceInline.classList.add("show");
+  voiceToggle.classList.add("active");
+  thought.placeholder="Optional: say or type what made you stop";
+  setTimeout(()=>thought.blur(),30);
+}
+
 function openCapture(){
   editingId=null;
   setCaptureEditMode(null);
+  quickAudioMode=false;
+  quickModeBanner.classList.remove("show");
+  thought.placeholder="Type here, or use Voice to add to your thought";
 
   // New capture starts clean. Switching among text/voice/photo after this
   // never clears any part of the draft.
@@ -1920,6 +2025,8 @@ function openCapture(){
 function closeCapture(){
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
+  quickAudioMode=false;
+  quickModeBanner.classList.remove("show");
   modal.style.display="none";modal.setAttribute("aria-hidden","true");
   document.body.style.overflow="";
 }
