@@ -1,4 +1,4 @@
-<!-- v2.0.1 -->
+<!-- v2.0.2 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -357,6 +357,23 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 }
 .linked-reflection .label{margin-bottom:5px}
 
+
+.original-moment-link{
+  margin-top:14px;padding:13px;border:1px solid rgba(154,167,255,.20);
+  border-radius:15px;background:rgba(154,167,255,.055)
+}
+.original-moment-link .label{margin-bottom:6px}
+.original-moment-link .thought{font-size:15px;line-height:1.4}
+.original-moment-link button{
+  margin-top:10px;width:100%;border:1px solid var(--line);border-radius:12px;
+  padding:10px 12px;background:rgba(255,255,255,.045);color:var(--ink);
+  font-weight:800
+}
+.parent-jump{
+  display:inline-flex;margin-top:8px;border:0;background:transparent;
+  color:var(--accent);font-size:12px;font-weight:800;padding:0
+}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -579,7 +596,9 @@ function renderTimeline(){
       <div class="date">${esc(m.date)}</div>
       <div class="thought">${esc(m.thought)||"Captured moment"}</div>
       ${(m.source||m.anchor)?`<div class="source">${esc(m.source||"")}${m.source&&m.anchor?" · ":""}${esc(m.anchor||"")}</div>`:""}
-      ${isReflection&&m.parentId?`<div class="source">↳ Linked to an earlier moment</div>`:""}
+      ${isReflection&&m.parentId?`
+        <button class="parent-jump" type="button" data-parent="${m.parentId}">↳ View original moment</button>
+      `:""}
       ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
       ${!isReflection?`<div class="go-deeper-wrap">
         <button class="go-deeper-btn" type="button" data-deep="${m.id}">${open?"Close":"Go deeper →"}</button>
@@ -609,11 +628,21 @@ function renderTimeline(){
       toggleGoDeeper(b.dataset.deep);
     };
   });
+  document.querySelectorAll("[data-parent]").forEach(b=>{
+    b.onclick=(e)=>{
+      e.stopPropagation();
+      detail(b.dataset.parent);
+    };
+  });
   justAdded=null;
 }
 function detail(id){
   const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
   const isReflection=m.source==="Reflection";
+  const parent=isReflection && m.parentId
+    ? moments.find(x=>String(x.id)===String(m.parentId))
+    : null;
+
   main.innerHTML=`<div class="detail-head">
     <button class="detailBack" onclick="render()">← Timeline</button>
     <div class="detail-menu-wrap">
@@ -632,6 +661,21 @@ function detail(id){
     ${!isReflection&&m.anchor?`<div class="source">Anchor: ${esc(m.anchor)}</div>`:""}
     ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
     ${m.updatedAt?`<div class="edited-note">Edited ${esc(new Date(m.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}))}</div>`:""}
+
+    ${isReflection && parent ? `<div class="original-moment-link">
+      <div class="label">ORIGINAL MOMENT</div>
+      <div class="date">${esc(parent.date)}</div>
+      <div class="thought">${esc(parent.thought)||"Captured moment"}</div>
+      ${(parent.source||parent.anchor)?`<div class="source">${esc(parent.source||"")}${parent.source&&parent.anchor?" · ":""}${esc(parent.anchor||"")}</div>`:""}
+      ${parent.imageData?`<img class="moment-image" src="${parent.imageData}" alt="Original captured image">`:""}
+      <button type="button" onclick="detail('${parent.id}')">View full original moment →</button>
+    </div>`:""}
+
+    ${isReflection && m.parentId && !parent ? `<div class="original-moment-link">
+      <div class="label">ORIGINAL MOMENT</div>
+      <div class="source">The original moment is no longer available.</div>
+    </div>`:""}
+
     ${!isReflection && moments.some(r=>String(r.parentId)===String(m.id))?`<div class="linked-reflections">
       <div class="label">REFLECTIONS ON THIS MOMENT</div>
       ${moments.filter(r=>String(r.parentId)===String(m.id)).map(r=>`
@@ -641,6 +685,7 @@ function detail(id){
           <div class="date">${esc(r.date)}</div>
         </div>`).join("")}
     </div>`:""}
+
     ${!isReflection?`<div class="go-deeper-panel" style="margin-top:14px">
       <div class="go-deeper-kicker">GO DEEPER</div>
       <div class="go-deeper-question">${esc(getGoDeeperPrompt(m))}</div>
