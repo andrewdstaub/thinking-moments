@@ -1,4 +1,4 @@
-<!-- v2.2.2 -->
+<!-- v2.3 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -457,6 +457,39 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
   height:1px;
   background:linear-gradient(90deg,var(--line),transparent);
   margin:4px 0 14px;
+}
+
+
+.reflect-time-section{
+  margin:0 0 26px;
+}
+.reflect-time-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 10px;
+  padding:6px 0;
+}
+.reflect-time-title{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink);
+}
+.reflect-time-count{
+  font-size:11px;
+  font-weight:750;
+  color:var(--muted);
+}
+.reflect-origin{
+  margin-top:10px;
+  padding-top:9px;
+  border-top:1px solid var(--line);
+  font-size:12px;
+  line-height:1.4;
+  color:var(--muted);
 }
 
 @media (min-width:700px){
@@ -957,8 +990,12 @@ function deleteItem(id){
 }
 
 function renderReflect(){
-  const reflections=moments.filter(m=>m.source==="Reflection");
+  const reflections=moments
+    .filter(m=>m.source==="Reflection")
+    .slice()
+    .sort((a,b)=>momentDate(b)-momentDate(a));
 
+  // Focused view: one original Moment and every Reflection attached to it.
   if(reflectFocusId){
     const parent=moments.find(m=>String(m.id)===String(reflectFocusId));
     const linked=reflections.filter(r=>String(r.parentId)===String(reflectFocusId));
@@ -973,8 +1010,8 @@ function renderReflect(){
         <button class="smallbtn" type="button" id="viewParentMoment">View full moment →</button>
       </article>`:""}
 
-      <div style="height:12px"></div>
-      <div class="label">REFLECTIONS</div>
+      <div style="height:16px"></div>
+      <div class="label">REFLECTIONS ON THIS MOMENT</div>
       ${linked.length?`<div class="reflection-stack" style="margin-top:10px">
         ${linked.map(r=>`<article class="reflect-card" data-reflection-id="${r.id}">
           <div class="date">${esc(r.date)}</div>
@@ -996,6 +1033,7 @@ function renderReflect(){
     return;
   }
 
+  // No saved reflections yet: retain the useful revisit prompt.
   if(!reflections.length){
     const previous=moments.find(m=>m.source!=="Reflection");
     main.innerHTML=`<div class="reflectHero">
@@ -1015,31 +1053,56 @@ function renderReflect(){
     return;
   }
 
-  const groups=[];
+  // V2.3: organize Reflections by when the Reflection itself happened.
+  const now=new Date();
+  const groups=new Map();
+
   reflections.forEach(r=>{
-    const parent=moments.find(m=>String(m.id)===String(r.parentId));
-    groups.push({r,parent});
+    const bucket=timelineBucket(r,now);
+    if(!groups.has(bucket.key)){
+      groups.set(bucket.key,{...bucket,items:[]});
+    }
+    groups.get(bucket.key).items.push(r);
   });
+
+  const ordered=[...groups.values()].sort((a,b)=>a.rank-b.rank);
 
   main.innerHTML=`<div class="reflectHero">
     <div class="eyebrow">REFLECT</div>
     <h2>Look back. Think forward.</h2>
-    <p>Your reflections live here, connected to the Moments that sparked them.</p>
+    <p>Your reflections are organized by when you had them—not when the original Moment was captured.</p>
   </div>
-  <div class="reflection-stack">
-    ${groups.map(({r,parent})=>`<article class="reflect-card" data-reflection-id="${r.id}">
-      <div class="label">REFLECTION</div>
-      <div class="date" style="margin-top:7px">${esc(r.date)}</div>
-      <div class="reflection-answer">${esc(r.thought)}</div>
-      ${parent?`<div class="prompt">
-        From: <strong>${esc((parent.thought||"Captured moment").slice(0,120))}${(parent.thought||"").length>120?"…":""}</strong>
+
+  ${ordered.map(group=>`
+    <section class="reflect-time-section">
+      <div class="reflect-time-head">
+        <div class="reflect-time-title">${esc(group.label)}</div>
+        <div class="reflect-time-count">${group.items.length} ${group.items.length===1?"reflection":"reflections"}</div>
       </div>
-      <button class="parent-jump" type="button" data-reflect-parent="${parent.id}">View original moment →</button>`:
-      r.parentId
-        ? `<div class="prompt">The original Moment is no longer available.</div>`
-        : `<div class="prompt">Standalone reflection</div>`}
-    </article>`).join("")}
-  </div>`;
+      <div class="timeline-section-spine"></div>
+
+      <div class="reflection-stack">
+        ${group.items.map(r=>{
+          const parent=r.parentId?moments.find(m=>String(m.id)===String(r.parentId)):null;
+          return `<article class="reflect-card" data-reflection-id="${r.id}">
+            <div class="date">${esc(r.date)}</div>
+            <div class="reflection-answer">${esc(r.thought)}</div>
+
+            ${parent?`<div class="reflect-origin">
+              From a Moment captured ${esc(parent.date)}<br>
+              <strong>${esc((parent.thought||"Captured moment").slice(0,110))}${(parent.thought||"").length>110?"…":""}</strong>
+            </div>
+            <button class="parent-jump" type="button" data-reflect-parent="${parent.id}">View original moment →</button>`:
+            r.parentId
+              ? `<div class="reflect-origin">The original Moment is no longer available.</div>`
+              : `<div class="reflect-origin">Standalone reflection</div>`}
+
+            ${r.updatedAt?`<div class="edited-note">Edited ${esc(new Date(r.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}))}</div>`:""}
+          </article>`;
+        }).join("")}
+      </div>
+    </section>
+  `).join("")}`;
 
   document.querySelectorAll("[data-reflection-id]").forEach(card=>{
     card.onclick=(e)=>{
@@ -1047,6 +1110,7 @@ function renderReflect(){
       detail(card.dataset.reflectionId);
     };
   });
+
   document.querySelectorAll("[data-reflect-parent]").forEach(b=>{
     b.onclick=(e)=>{
       e.stopPropagation();
