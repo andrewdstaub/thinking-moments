@@ -1,4 +1,4 @@
-<!-- v3.3 -->
+<!-- v3.4 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -1013,6 +1013,15 @@ function contextualPhotoQuestion(m,labels){
     };
   }
 
+  if(/\b(orange|lemon|fig|pineapple|banana|strawberry|pomegranate|custard apple|jackfruit|apple|pear|peach|food|fruit|vegetable|plate|dish|bakery|ice cream)\b/.test(joined)){
+    return {
+      type:"PRESS ON WHAT CAUGHT YOU",
+      text:user
+        ? `ECHO sees food or fruit in the image and you wrote “${user.slice(0,105)}${user.length>105?"…":""}.” Was the Moment about taste, appearance, surprise, memory, or something the image made you notice that you normally overlook?`
+        : "This appears to be a close-up of food or fruit. What made this particular object worth capturing—its appearance, taste, imperfection, surprise, or the memory attached to it?"
+    };
+  }
+
   if(/\b(person|groom|bride|child|boy|girl|man|woman|face|suit|jersey|uniform)\b/.test(joined)){
     return {
       type:"LOOK AT THE HUMAN MOMENT",
@@ -1081,9 +1090,16 @@ function getImageEchoResponse(m){
     };
   }
 
+  if(m?._analysisInProgress){
+    return {
+      type:"LOOKING AT THIS…",
+      text:"ECHO is analyzing what is visible in this image so Go Deeper can respond to the actual content."
+    };
+  }
+
   return {
     type:"LOOK CLOSER",
-    text:"ECHO could not reliably identify enough visual context in this older image. What made this particular image a Moment rather than simply a photo?"
+    text:"ECHO couldn't confidently identify enough visual context here. Add one short phrase about what caught you, and Go Deeper will use that together with the image."
   };
 }
 
@@ -1452,6 +1468,26 @@ function renderTimeline(){
 }
 function detail(id){
   const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
+  // V3.4: older image Moments created before image analysis existed
+  // are analyzed once when opened, then persisted for future Go Deeper use.
+  if(m.imageData && !m.imageAnalysis && !m._analysisInProgress){
+    m._analysisInProgress=true;
+    const originalId=m.id;
+    analyzeCapturedImage(m.imageData).then(result=>{
+      const target=moments.find(x=>String(x.id)===String(originalId));
+      if(!target)return;
+      delete target._analysisInProgress;
+      if(result){
+        target.imageAnalysis=result;
+        try{ saveData(); }catch(e){}
+        detail(originalId);
+      }
+    }).catch(()=>{
+      const target=moments.find(x=>String(x.id)===String(originalId));
+      if(target) delete target._analysisInProgress;
+    });
+  }
+
   const isReflection=m.source==="Reflection";
   const parent=isReflection && m.parentId
     ? moments.find(x=>String(x.id)===String(m.parentId))
@@ -1779,7 +1815,13 @@ photoInput.addEventListener("change",async()=>{
     photoPreview.src=pendingImageData;
     photoPreview.classList.add("show");
     photoInline.classList.add("show");
-  }catch(e){showToast("Couldn't load image.");}
+
+    // V3.4 bug fix: actually analyze every newly attached image.
+    pendingImageAnalysis=null;
+    pendingImageAnalysis=await analyzeCapturedImage(pendingImageData);
+  }catch(e){
+    showToast("Couldn't load or analyze image.");
+  }
 });
 removePhoto.addEventListener("click",()=>{
   pendingImageData="";
