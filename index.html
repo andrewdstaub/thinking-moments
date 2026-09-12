@@ -1,4 +1,4 @@
-<!-- v3.5 -->
+<!-- v3.6 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -730,15 +730,6 @@ body.keyboard-open .bottom-nav{display:none}
 }
 
 
-.image-analysis-status{
-  margin:8px 2px 0;
-  min-height:16px;
-  color:var(--muted);
-  font-size:11px;
-  line-height:1.4;
-}
-.image-analysis-status.ready{color:var(--accent)}
-
 
 .audio-inline{
   display:none;
@@ -910,6 +901,13 @@ body.keyboard-open .bottom-nav{display:none}
 
 <script>
 const KEY="echo_v1";
+/*
+V3.6 architecture note:
+- Capture, Timeline, Reflect, Search, and Play From remain local-first.
+- Image capture is preserved as data only.
+- Real image understanding should enter through one future multimodal service boundary,
+  not browser-side OCR/classification libraries.
+*/
 const seed=[
  {id:"s1",date:"Sep 11, 2026",thought:"Maybe discipline isn't the problem. Maybe my environment is.",source:"Podcast — The Knowledge Project",anchor:"42:18"},
  {id:"s2",date:"Sep 6, 2026",thought:"I keep returning to the idea that the questions we ask shape the lives we build.",source:"Conversation",anchor:"Dinner"},
@@ -958,9 +956,7 @@ const voiceVisual=document.getElementById("voiceVisual");
 const voiceTime=document.getElementById("voiceTime");
 const voiceStop=document.getElementById("voiceStop");
 const toast=document.getElementById("toast");
-const imageAnalysisStatus=document.getElementById("imageAnalysisStatus");
 let pendingImageData="";
-let pendingImageAnalysis=null;
 let pendingAudioKind="podcast";
 let voiceSeconds=0;
 let voiceTimer=null;
@@ -1035,230 +1031,36 @@ function showToast(msg="Saved."){
 
 
 
-let visionLibrariesPromise=null;
-let mobileNetModel=null;
-
-function loadScriptOnce(src,id){
-  return new Promise((resolve,reject)=>{
-    if(document.getElementById(id)){
-      const existing=document.getElementById(id);
-      if(existing.dataset.loaded==="1") return resolve();
-      existing.addEventListener("load",resolve,{once:true});
-      existing.addEventListener("error",reject,{once:true});
-      return;
-    }
-    const s=document.createElement("script");
-    s.id=id;s.src=src;s.async=true;
-    s.onload=()=>{s.dataset.loaded="1";resolve()};
-    s.onerror=reject;
-    document.head.appendChild(s);
-  });
-}
-
-async function ensureVisionLibraries(){
-  if(visionLibrariesPromise) return visionLibrariesPromise;
-  visionLibrariesPromise=(async()=>{
-    await loadScriptOnce("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js","echo-tfjs");
-    await loadScriptOnce("https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js","echo-mobilenet");
-    await loadScriptOnce("https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js","echo-tesseract");
-    if(!mobileNetModel && window.mobilenet) mobileNetModel=await window.mobilenet.load({version:2,alpha:1.0});
-  })();
-  return visionLibrariesPromise;
-}
-
-function loadImageElement(dataUrl){
-  return new Promise((resolve,reject)=>{
-    const img=new Image();
-    img.onload=()=>resolve(img);
-    img.onerror=reject;
-    img.src=dataUrl;
-  });
-}
-
-function looksLikeTextCapture(text){
-  const cleaned=(text||"").replace(/\s+/g," ").trim();
-  const words=cleaned.split(" ").filter(Boolean);
-  return cleaned.length>=35 && words.length>=7;
-}
-
-function summarizeLabels(predictions){
-  return (predictions||[])
-    .filter(x=>x && x.className && x.probability>=0.08)
-    .slice(0,4)
-    .map(x=>({label:x.className,confidence:x.probability}));
-}
-
-async function analyzeCapturedImage(dataUrl){
-  if(!dataUrl) return null;
-  if(imageAnalysisStatus){
-    imageAnalysisStatus.textContent="Looking at what you captured…";
-    imageAnalysisStatus.classList.remove("ready");
-  }
-
-  try{
-    await ensureVisionLibraries();
-    const img=await loadImageElement(dataUrl);
-
-    let ocrText="";
-    if(window.Tesseract){
-      try{
-        const result=await window.Tesseract.recognize(dataUrl,"eng",{
-          logger:m=>{
-            if(imageAnalysisStatus && m.status==="recognizing text" && m.progress){
-              imageAnalysisStatus.textContent=`Reading visible text… ${Math.round(m.progress*100)}%`;
-            }
-          }
-        });
-        ocrText=(result?.data?.text||"").replace(/\s+/g," ").trim();
-      }catch(e){}
-    }
-
-    let labels=[];
-    if(mobileNetModel){
-      try{ labels=summarizeLabels(await mobileNetModel.classify(img,5)); }catch(e){}
-    }
-
-    const kind=looksLikeTextCapture(ocrText)?"text":"photo";
-    const analysis={
-      kind,
-      ocrText:ocrText.slice(0,1800),
-      labels,
-      analyzedAt:new Date().toISOString()
-    };
-
-    if(imageAnalysisStatus){
-      if(kind==="text"){
-        imageAnalysisStatus.textContent="Screenshot text recognized. Go Deeper can press on the actual words.";
-      }else if(labels.length){
-        imageAnalysisStatus.textContent=`Photo context recognized: ${labels.slice(0,2).map(x=>x.label).join(", ")}.`;
-      }else{
-        imageAnalysisStatus.textContent="Image attached. Add a few words if the meaning is personal rather than visual.";
-      }
-      imageAnalysisStatus.classList.add("ready");
-    }
-    return analysis;
-  }catch(e){
-    if(imageAnalysisStatus){
-      imageAnalysisStatus.textContent="Image analysis unavailable right now. The Moment will still save.";
-      imageAnalysisStatus.classList.remove("ready");
-    }
-    return null;
-  }
-}
-
-function cleanOCR(text){
-  return (text||"").replace(/\s+/g," ").replace(/[|]+/g," ").trim();
-}
-
-function meaningfulImageLabels(m){
-  return (m?.imageAnalysis?.labels||[]).map(x=>x.label).filter(Boolean);
-}
-
-function imageTextForReasoning(m){
-  const ocr=cleanOCR(m?.imageAnalysis?.ocrText||"");
-  return ocr.length>20?ocr:"";
-}
-
-function contextualPhotoQuestion(m,labels){
-  const joined=labels.join(" ").toLowerCase();
-  const user=(m.thought||"").trim();
-
-  if(/\b(lakeside|seashore|promontory|valley|cliff|mountain|alp|volcano|geyser|sandbar|dam|pier|dock|breakwater|river)\b/.test(joined)){
-    return {
-      type:"PRESS ON THE MOMENT",
-      text:user
-        ? `ECHO sees an outdoor landscape and you wrote “${user.slice(0,105)}${user.length>105?"…":""}.” What is the landscape adding to that thought—scale, stillness, distance, transition, or something else you would lose if this were only words?`
-        : "This appears to be a landscape rather than an argument to analyze. What made this particular scene worth preserving—the light, stillness, scale, contrast, sense of place, or the moment in your life attached to it?"
-    };
-  }
-
-  if(/\b(orange|lemon|fig|pineapple|banana|strawberry|pomegranate|custard apple|jackfruit|apple|pear|peach|food|fruit|vegetable|plate|dish|bakery|ice cream)\b/.test(joined)){
-    return {
-      type:"PRESS ON WHAT CAUGHT YOU",
-      text:user
-        ? `ECHO sees food or fruit in the image and you wrote “${user.slice(0,105)}${user.length>105?"…":""}.” Was the Moment about taste, appearance, surprise, memory, or something the image made you notice that you normally overlook?`
-        : "This appears to be a close-up of food or fruit. What made this particular object worth capturing—its appearance, taste, imperfection, surprise, or the memory attached to it?"
-    };
-  }
-
-  if(/\b(person|groom|bride|child|boy|girl|man|woman|face|suit|jersey|uniform)\b/.test(joined)){
-    return {
-      type:"LOOK AT THE HUMAN MOMENT",
-      text:user
-        ? `You paired this image of a person or people with “${user.slice(0,105)}${user.length>105?"…":""}.” What visible detail most changes the meaning of those words?`
-        : "What is happening between the people in this image that made the moment worth keeping—and what part of that meaning would a caption miss?"
-    };
-  }
-
-  if(/\b(screen|monitor|web site|book jacket|menu|comic book|notebook|packet|envelope)\b/.test(joined)){
-    return {
-      type:"PRESS ON THE CONTENT",
-      text:"This looks like captured information rather than a purely visual scene. What idea in it deserves pressure—and what assumption is that idea asking you to accept?"
-    };
-  }
-
-  const labelText=labels.length?labels.slice(0,2).join(" / "):"the visible scene";
+function analyzeMomentContext(m){
+  // V3.6 architecture boundary.
+  // Text Moments are handled locally in the prototype.
+  // Image understanding is intentionally deferred to the future multimodal backend.
   return {
-    type:"PRESS ON WHAT'S VISIBLE",
-    text:user
-      ? `ECHO's visual read centers on ${labelText}, while you wrote “${user.slice(0,105)}${user.length>105?"…":""}.” Where do the image and your interpretation agree—and where might your interpretation be adding something that is not actually visible?`
-      : `ECHO's visual read centers on ${labelText}. What specific visible detail made this a Moment rather than just another photo?`
+    hasImage:!!m?.imageData,
+    hasText:!!((m?.thought||"").trim()),
+    source:(m?.source||"").trim(),
+    anchor:(m?.anchor||"").trim()
   };
 }
 
-
-function inferImageContext(m){
-  if(!m?.imageData) return "";
-  const text=(m.thought||"").trim();
-  const source=(m.source||"").trim();
-  const anchor=(m.anchor||"").trim();
-
-  // V3.2 prototype bridge:
-  // Any user-supplied words about the image become the semantic grounding.
-  // Production ECHO should replace this with actual multimodal vision + OCR.
-  return [text,source,anchor].filter(Boolean).join(" · ");
-}
-
 function getImageEchoResponse(m){
-  const ocr=imageTextForReasoning(m);
-  const labels=meaningfulImageLabels(m);
-  const userText=(m.thought||"").trim();
+  const ctx=analyzeMomentContext(m);
+  const user=(m?.thought||"").trim();
 
-  // Screenshot / book page / message: reason over the actual OCR'd words.
-  if(ocr){
-    const pseudo={...m,thought:ocr,imageData:""};
-    const response=getEchoResponse(pseudo);
-    const excerpt=ocr.length>145?ocr.slice(0,142).trim()+"…":ocr;
+  // Keep image Go Deeper honest in the static prototype.
+  // Production ECHO will pass image + text + source metadata to a multimodal model.
+  if(user){
+    const clean=user.replace(/\s+/g," ").replace(/[“”"]/g,"").trim();
+    const short=clean.length>120?clean.slice(0,117).trim()+"…":clean;
     return {
-      type:response.type==="PRESS ON IT"?"PRESS ON THE CONTENT":response.type,
-      text:`From the image, ECHO reads: “${excerpt}” ${response.text}`
-    };
-  }
-
-  // Photograph: use browser vision labels plus any user context.
-  if(labels.length){
-    return contextualPhotoQuestion(m,labels);
-  }
-
-  // Browser analysis may not have completed on older Moments.
-  const context=inferImageContext(m);
-  if(context){
-    return {
-      type:"PRESS ON THE IMAGE",
-      text:`You attached this image to “${context.slice(0,115)}${context.length>115?"…":""}.” What does the visible scene contribute that your words do not—and does the image support your interpretation or complicate it?`
-    };
-  }
-
-  if(m?._analysisInProgress){
-    return {
-      type:"LOOKING AT THIS…",
-      text:"ECHO is analyzing what is visible in this image so Go Deeper can respond to the actual content."
+      type:"PRESS ON IT",
+      text:`You captured an image with the thought “${short}.” What assumption or tension inside that thought is most worth testing?`
     };
   }
 
   return {
-    type:"LOOK CLOSER",
-    text:"ECHO couldn't confidently identify enough visual context here. Add one short phrase about what caught you, and Go Deeper will use that together with the image."
+    type:"IMAGE CAPTURED",
+    text:"This prototype can preserve the image, but it is intentionally not pretending to understand the visual content. In the production version, Go Deeper will analyze the actual image before responding."
   };
 }
 
@@ -1266,7 +1068,7 @@ function getEchoResponse(m){
   const raw=(m?.thought||"").trim();
   const t=raw.toLowerCase();
 
-  // V3.2: image/screenshot Moments get image-grounded treatment first.
+  // V3.6: image Moments route through a clean placeholder until real multimodal AI is connected.
   if(m?.imageData) return getImageEchoResponse(m);
 
   // V3.1 PRESS ON IT engine.
@@ -1639,27 +1441,7 @@ function renderTimeline(){
 }
 function detail(id){
   const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
-  // V3.4: older image Moments created before image analysis existed
-  // are analyzed once when opened, then persisted for future Go Deeper use.
-  if(m.imageData && !m.imageAnalysis && !m._analysisInProgress){
-    m._analysisInProgress=true;
-    const originalId=m.id;
-    analyzeCapturedImage(m.imageData).then(result=>{
-      const target=moments.find(x=>String(x.id)===String(originalId));
-      if(!target)return;
-      delete target._analysisInProgress;
-      if(result){
-        target.imageAnalysis=result;
-        try{ saveData(); }catch(e){}
-        detail(originalId);
-      }
-    }).catch(()=>{
-      const target=moments.find(x=>String(x.id)===String(originalId));
-      if(target) delete target._analysisInProgress;
-    });
-  }
-
-  const isReflection=m.source==="Reflection";
+    const isReflection=m.source==="Reflection";
   const parent=isReflection && m.parentId
     ? moments.find(x=>String(x.id)===String(m.parentId))
     : null;
@@ -1773,7 +1555,6 @@ function openEdit(id){
   source.value=m.source==="Reflection"?"":(m.source||"");
   anchor.value=m.anchor||"";
   pendingImageData=m.imageData||"";
-  pendingImageAnalysis=m.imageAnalysis||null;
   const existingAudio=m.audio||null;
   pendingAudioKind=existingAudio?.kind||"podcast";
   audioTitle.value=existingAudio?.title||"";
@@ -1787,10 +1568,6 @@ function openEdit(id){
   if(pendingImageData){
     photoPreview.src=pendingImageData;
     photoPreview.classList.add("show");
-    pendingImageAnalysis=null;
-    analyzeCapturedImage(pendingImageData).then(result=>{
-      if(pendingImageData) pendingImageAnalysis=result;
-    });
     photoInline.classList.add("show");
   }else{
     photoPreview.src="";
@@ -2018,17 +1795,12 @@ photoInput.addEventListener("change",async()=>{
     photoPreview.src=pendingImageData;
     photoPreview.classList.add("show");
     photoInline.classList.add("show");
-
-    // V3.4 bug fix: actually analyze every newly attached image.
-    pendingImageAnalysis=null;
-    pendingImageAnalysis=await analyzeCapturedImage(pendingImageData);
   }catch(e){
-    showToast("Couldn't load or analyze image.");
+    showToast("Couldn't load image.");
   }
 });
 removePhoto.addEventListener("click",()=>{
   pendingImageData="";
-  pendingImageAnalysis=null;
   photoPreview.src="";
   photoPreview.classList.remove("show");
   photoInline.classList.remove("show");
@@ -2205,7 +1977,6 @@ document.getElementById("save").onclick=()=>{
       anchor:isReflection?(moments[idx].anchor||""):(anchor.value.trim()||(audioDraft?.time||"")),
       audio:isReflection?(moments[idx].audio||null):audioDraft,
       imageData:isReflection?(moments[idx].imageData||""):pendingImageData,
-      imageAnalysis:isReflection?(moments[idx].imageAnalysis||null):pendingImageAnalysis,
       captureType:isReflection?(moments[idx].captureType||"reflection"):(audioDraft?"audio":(pendingImageData?"photo+thought":"thought")),
       updatedAt:new Date().toISOString()
       // Intentionally preserve id, original display date, parentId and creation history.
@@ -2248,7 +2019,6 @@ document.getElementById("save").onclick=()=>{
     audio:audioDraft,
     captureType:audioDraft?"audio":(pendingImageData?"photo+thought":"thought"),
     imageData:pendingImageData,
-    imageAnalysis:pendingImageAnalysis
   };
 
   try{
@@ -2264,7 +2034,6 @@ document.getElementById("save").onclick=()=>{
   echoResponseId=null;
   thought.value=source.value=anchor.value="";
   pendingImageData="";
-  pendingImageAnalysis=null;
   photoPreview.src="";
   photoPreview.classList.remove("show");
   photoInline.classList.remove("show");
