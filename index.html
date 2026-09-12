@@ -1,4 +1,4 @@
-<!-- v3.4 -->
+<!-- v3.5 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -739,6 +739,71 @@ body.keyboard-open .bottom-nav{display:none}
 }
 .image-analysis-status.ready{color:var(--accent)}
 
+
+.audio-inline{
+  display:none;
+  margin-top:12px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:rgba(255,255,255,.035);
+}
+.audio-inline.show{display:block}
+.audio-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.audio-head strong{font-size:14px}
+.audio-head span{display:block;color:var(--muted);font-size:11px;line-height:1.35;margin-top:3px}
+.audio-close{
+  border:0;background:transparent;color:var(--muted);font-size:20px;padding:0 2px;
+}
+.audio-kind{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:12px;
+}
+.audio-kind button{
+  min-height:40px;border:1px solid var(--line);border-radius:12px;
+  background:rgba(255,255,255,.035);color:var(--muted);font:inherit;font-size:12px;font-weight:800;
+}
+.audio-kind button.active{
+  color:#fff;border-color:rgba(140,240,199,.3);
+  background:linear-gradient(135deg,rgba(140,240,199,.13),rgba(154,167,255,.10));
+}
+.audio-grid{display:grid;grid-template-columns:1fr 110px;gap:9px}
+.audio-inline input{
+  width:100%;box-sizing:border-box;margin:0 0 9px;padding:12px 13px;
+  border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.035);
+  color:var(--ink);font:inherit;font-size:14px;outline:none;
+}
+.audio-inline input:focus{border-color:rgba(140,240,199,.35)}
+.audio-help{
+  margin:2px 1px 0;color:var(--muted);font-size:11px;line-height:1.4;
+}
+.audio-anchor-card{
+  margin-top:12px;padding:12px 13px;border:1px solid rgba(140,240,199,.18);
+  border-radius:15px;background:rgba(140,240,199,.045);
+}
+.audio-anchor-meta{
+  font-size:11px;font-weight:900;letter-spacing:.10em;text-transform:uppercase;color:var(--accent);margin-bottom:5px;
+}
+.audio-anchor-title{font-size:14px;font-weight:800;line-height:1.35}
+.play-from-btn{
+  width:100%;margin-top:9px;min-height:42px;border:0;border-radius:12px;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;
+  font:inherit;font-size:13px;font-weight:900;
+}
+.play-from-mini{
+  display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 10px;
+  border:1px solid rgba(140,240,199,.20);border-radius:999px;background:rgba(140,240,199,.05);
+  color:var(--accent);font-size:12px;font-weight:850;
+}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -783,6 +848,7 @@ body.keyboard-open .bottom-nav{display:none}
     <div class="composer-tools" id="composerTools">
       <button class="composer-tool" id="voiceToggle" type="button">🎙 <span>Voice</span></button>
       <label class="composer-tool" for="photoInput">▧ <span>Photo</span></label>
+      <button class="composer-tool" id="audioToggle" type="button">▶ <span>Play from</span></button>
       <input id="photoInput" type="file" accept="image/*" style="display:none">
     </div>
 
@@ -809,10 +875,33 @@ body.keyboard-open .bottom-nav{display:none}
       </div>
     </div>
 
-    <label class="field-label" id="sourceLabel" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-    <input id="source" placeholder="Podcast, book, conversation, article...">
+    <div class="audio-inline" id="audioInline">
+      <div class="audio-head">
+        <div>
+          <strong>Add a play-from point</strong>
+          <span>Save where the idea happened so you can return to it later.</span>
+        </div>
+        <button class="audio-close" id="audioClose" type="button" aria-label="Close audio source">×</button>
+      </div>
 
-    <label class="field-label" id="anchorLabel" for="anchor">Anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+      <div class="audio-kind">
+        <button type="button" id="podcastKind" class="active">Podcast</button>
+        <button type="button" id="audiobookKind">Audiobook</button>
+      </div>
+
+      <input id="audioTitle" placeholder="Podcast or book title">
+      <div class="audio-grid">
+        <input id="audioPart" placeholder="Episode / chapter">
+        <input id="audioTime" inputmode="numeric" placeholder="42:18">
+      </div>
+      <input id="audioUrl" inputmode="url" placeholder="Share or paste source link (optional)">
+      <p class="audio-help">Prototype: ECHO preserves the title + exact play point. In the native app, supported services can pass source details through Share → ECHO.</p>
+    </div>
+
+    <label class="field-label" id="sourceLabel" for="source">Other source <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+    <input id="source" placeholder="Book, conversation, article, website...">
+
+    <label class="field-label" id="anchorLabel" for="anchor">Other anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
     <input id="anchor" placeholder="Timestamp, page, link, or cue">
 
     <button class="save" id="save">Save moment</button>
@@ -855,6 +944,15 @@ const voiceToggle=document.getElementById("voiceToggle");
 const voiceInline=document.getElementById("voiceInline");
 const photoInline=document.getElementById("photoInline");
 const removePhoto=document.getElementById("removePhoto");
+const audioToggle=document.getElementById("audioToggle");
+const audioInline=document.getElementById("audioInline");
+const audioClose=document.getElementById("audioClose");
+const podcastKind=document.getElementById("podcastKind");
+const audiobookKind=document.getElementById("audiobookKind");
+const audioTitle=document.getElementById("audioTitle");
+const audioPart=document.getElementById("audioPart");
+const audioTime=document.getElementById("audioTime");
+const audioUrl=document.getElementById("audioUrl");
 const voiceStatus=document.getElementById("voiceStatus");
 const voiceVisual=document.getElementById("voiceVisual");
 const voiceTime=document.getElementById("voiceTime");
@@ -863,9 +961,70 @@ const toast=document.getElementById("toast");
 const imageAnalysisStatus=document.getElementById("imageAnalysisStatus");
 let pendingImageData="";
 let pendingImageAnalysis=null;
+let pendingAudioKind="podcast";
 let voiceSeconds=0;
 let voiceTimer=null;
 let voiceRunning=false;
+
+
+function normalizePlayTime(v){
+  const raw=String(v||"").trim();
+  if(!raw)return "";
+  if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(raw))return raw;
+  const digits=raw.replace(/\D/g,"");
+  if(digits.length===3)return digits[0]+":"+digits.slice(1);
+  if(digits.length===4)return digits.slice(0,2)+":"+digits.slice(2);
+  if(digits.length===5)return digits[0]+":"+digits.slice(1,3)+":"+digits.slice(3);
+  if(digits.length===6)return digits.slice(0,2)+":"+digits.slice(2,4)+":"+digits.slice(4);
+  return raw;
+}
+
+function setAudioKind(kind){
+  pendingAudioKind=kind==="audiobook"?"audiobook":"podcast";
+  podcastKind.classList.toggle("active",pendingAudioKind==="podcast");
+  audiobookKind.classList.toggle("active",pendingAudioKind==="audiobook");
+  audioPart.placeholder=pendingAudioKind==="podcast"?"Episode title / number":"Chapter / section";
+}
+
+function clearAudioDraft(){
+  pendingAudioKind="podcast";
+  audioTitle.value="";
+  audioPart.value="";
+  audioTime.value="";
+  audioUrl.value="";
+  audioInline.classList.remove("show");
+  audioToggle.classList.remove("active");
+  setAudioKind("podcast");
+}
+
+function currentAudioDraft(){
+  const title=audioTitle.value.trim();
+  const part=audioPart.value.trim();
+  const time=normalizePlayTime(audioTime.value);
+  const url=audioUrl.value.trim();
+  if(!title&&!part&&!time&&!url)return null;
+  return {kind:pendingAudioKind,title,part,time,url};
+}
+
+function audioSourceLabel(a){
+  if(!a)return "";
+  const kind=a.kind==="audiobook"?"Audiobook":"Podcast";
+  return [kind,a.title,a.part].filter(Boolean).join(" — ");
+}
+
+function audioPlayLabel(a){
+  if(!a)return "";
+  return a.time?`▶ Play from ${a.time}`:"▶ Return to source";
+}
+
+function openAudioSource(a){
+  if(!a)return;
+  if(a.url){
+    try{window.open(a.url,"_blank","noopener,noreferrer");return}catch(e){}
+  }
+  const where=a.time?` at ${a.time}`:"";
+  alert(`Open ${a.title||"the source"}${where}. The native ECHO app will deep-link to supported podcast and audiobook services when they expose playback positions.`);
+}
 
 function saveData(){localStorage.setItem(KEY,JSON.stringify(moments))}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -1352,6 +1511,11 @@ function renderMomentCard(m){
     <div class="date">${esc(m.date)}</div>
     <div class="thought">${esc(m.thought)||"Captured moment"}</div>
     ${(m.source||m.anchor)?`<div class="source">${esc(m.source||"")}${m.source&&m.anchor?" · ":""}${esc(m.anchor||"")}</div>`:""}
+    ${m.audio?`<div class="audio-anchor-card">
+      <div class="audio-anchor-meta">${m.audio.kind==="audiobook"?"AUDIOBOOK":"PODCAST"}</div>
+      <div class="audio-anchor-title">${esc([m.audio.title,m.audio.part].filter(Boolean).join(" · ")||"Audio source")}</div>
+      <button class="play-from-btn" type="button" data-audio-play="${m.id}">${esc(audioPlayLabel(m.audio))}</button>
+    </div>`:""}
     ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
 
     ${reflectionCount?`
@@ -1384,7 +1548,7 @@ function searchBarHTML(kind,value){
   const label=kind==="timeline"?"Search moments":"Search reflections";
   return `<div class="echo-search-wrap"><span class="echo-search-icon">⌕</span><input class="echo-search" id="${kind}Search" type="search" placeholder="${label}" value="${esc(value)}" autocomplete="off">${value?`<button class="echo-search-clear" id="${kind}SearchClear" type="button" aria-label="Clear search">×</button>`:""}</div>`;
 }
-function searchableMomentText(m){return [m.thought,m.source,m.anchor].filter(Boolean).join(" ").toLowerCase()}
+function searchableMomentText(m){return [m.thought,m.source,m.anchor,m.audio?.title,m.audio?.part,m.audio?.time].filter(Boolean).join(" ").toLowerCase()}
 function searchableReflectionText(r){
   const p=r.parentId?moments.find(m=>String(m.id)===String(r.parentId)):null;
   return [r.thought,r.anchor,p?.thought,p?.source,p?.anchor].filter(Boolean).join(" ").toLowerCase();
@@ -1463,6 +1627,13 @@ function renderTimeline(){
     };
   });
 
+  document.querySelectorAll("[data-audio-play]").forEach(b=>{
+    b.onclick=(e)=>{
+      e.stopPropagation();
+      const mm=moments.find(x=>String(x.id)===String(b.dataset.audioPlay));
+      openAudioSource(mm?.audio);
+    };
+  });
   wireSearch("timeline");
   justAdded=null;
 }
@@ -1509,6 +1680,12 @@ function detail(id){
     <div class="thought">${esc(m.thought)||"Captured moment"}</div>
     ${!isReflection&&m.source?`<div class="source">${esc(m.source)}</div>`:""}
     ${!isReflection&&m.anchor?`<div class="source">Anchor: ${esc(m.anchor)}</div>`:""}
+    ${!isReflection&&m.audio?`<div class="audio-anchor-card">
+      <div class="audio-anchor-meta">${m.audio.kind==="audiobook"?"AUDIOBOOK":"PODCAST"}</div>
+      <div class="audio-anchor-title">${esc([m.audio.title,m.audio.part].filter(Boolean).join(" · ")||"Audio source")}</div>
+      ${m.audio.time?`<div class="play-from-mini">▶ ${esc(m.audio.time)}</div>`:""}
+      <button class="play-from-btn" type="button" id="detailPlayFrom">${esc(audioPlayLabel(m.audio))}</button>
+    </div>`:""}
     ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
     ${m.updatedAt?`<div class="edited-note">Edited ${esc(new Date(m.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}))}</div>`:""}
 
@@ -1544,12 +1721,14 @@ function detail(id){
       <div class="go-deeper-kicker">${esc(getEchoResponse(m).type)}</div>
       <div class="go-deeper-question">${esc(getEchoResponse(m).text)}</div>
     </div>`:""}
-    ${!isReflection?`<button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>`:""}
+    ${!isReflection&&!m.audio?`<button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>`:""}
   </article>`;
 
   const menuBtn=document.getElementById("detailMenuBtn");
   const menu=document.getElementById("detailMenu");
   menuBtn.onclick=(e)=>{e.stopPropagation();menu.classList.toggle("show")};
+  const detailPlay=document.getElementById("detailPlayFrom");
+  if(detailPlay)detailPlay.onclick=()=>openAudioSource(m.audio);
 }
 
 function setCaptureEditMode(m=null){
@@ -1595,6 +1774,15 @@ function openEdit(id){
   anchor.value=m.anchor||"";
   pendingImageData=m.imageData||"";
   pendingImageAnalysis=m.imageAnalysis||null;
+  const existingAudio=m.audio||null;
+  pendingAudioKind=existingAudio?.kind||"podcast";
+  audioTitle.value=existingAudio?.title||"";
+  audioPart.value=existingAudio?.part||"";
+  audioTime.value=existingAudio?.time||"";
+  audioUrl.value=existingAudio?.url||"";
+  setAudioKind(pendingAudioKind);
+  audioInline.classList.toggle("show",!!existingAudio);
+  audioToggle.classList.toggle("active",!!existingAudio);
 
   if(pendingImageData){
     photoPreview.src=pendingImageData;
@@ -1808,6 +1996,21 @@ function compressImage(file){
     reader.onerror=reject;reader.readAsDataURL(file);
   });
 }
+
+audioToggle.onclick=()=>{
+  const show=!audioInline.classList.contains("show");
+  audioInline.classList.toggle("show",show);
+  audioToggle.classList.toggle("active",show);
+  if(show)setTimeout(()=>audioTitle.focus(),80);
+};
+audioClose.onclick=()=>{
+  audioInline.classList.remove("show");
+  audioToggle.classList.remove("active");
+};
+podcastKind.onclick=()=>setAudioKind("podcast");
+audiobookKind.onclick=()=>setAudioKind("audiobook");
+audioTime.addEventListener("blur",()=>{audioTime.value=normalizePlayTime(audioTime.value)});
+
 photoInput.addEventListener("change",async()=>{
   const file=photoInput.files?.[0]; if(!file)return;
   try{
@@ -1933,6 +2136,7 @@ function openCapture(){
   photoInline.classList.remove("show");
   voiceInline.classList.remove("show");
   voiceToggle.classList.remove("active");
+  clearAudioDraft();
 
   modal.style.display="block";modal.setAttribute("aria-hidden","false");
   document.body.style.overflow="hidden";
@@ -1979,8 +2183,9 @@ document.getElementById("save").onclick=()=>{
   const capturedThought=thought.value.trim();
   const existing=editingId!==null?moments.find(x=>String(x.id)===String(editingId)):null;
   const isReflection=existing?.source==="Reflection";
+  const audioDraft=isReflection?null:currentAudioDraft();
 
-  if(!isReflection && !pendingImageData && !capturedThought && !source.value.trim() && !anchor.value.trim()){
+  if(!isReflection && !pendingImageData && !capturedThought && !source.value.trim() && !anchor.value.trim() && !audioDraft){
     showToast("Add something to capture.");
     return;
   }
@@ -1996,11 +2201,12 @@ document.getElementById("save").onclick=()=>{
     moments[idx]={
       ...moments[idx],
       thought:capturedThought,
-      source:isReflection?"Reflection":source.value.trim(),
-      anchor:isReflection?(moments[idx].anchor||""):anchor.value.trim(),
+      source:isReflection?"Reflection":(source.value.trim()||audioSourceLabel(audioDraft)),
+      anchor:isReflection?(moments[idx].anchor||""):(anchor.value.trim()||(audioDraft?.time||"")),
+      audio:isReflection?(moments[idx].audio||null):audioDraft,
       imageData:isReflection?(moments[idx].imageData||""):pendingImageData,
       imageAnalysis:isReflection?(moments[idx].imageAnalysis||null):pendingImageAnalysis,
-      captureType:isReflection?(moments[idx].captureType||"reflection"):(pendingImageData?"photo+thought":"thought"),
+      captureType:isReflection?(moments[idx].captureType||"reflection"):(audioDraft?"audio":(pendingImageData?"photo+thought":"thought")),
       updatedAt:new Date().toISOString()
       // Intentionally preserve id, original display date, parentId and creation history.
     };
@@ -2037,9 +2243,10 @@ document.getElementById("save").onclick=()=>{
     date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
     createdAt:new Date().toISOString(),
     thought:capturedThought,
-    source:source.value.trim(),
-    anchor:anchor.value.trim(),
-    captureType:pendingImageData?"photo+thought":"thought",
+    source:source.value.trim()||audioSourceLabel(audioDraft),
+    anchor:anchor.value.trim()||(audioDraft?.time||""),
+    audio:audioDraft,
+    captureType:audioDraft?"audio":(pendingImageData?"photo+thought":"thought"),
     imageData:pendingImageData,
     imageAnalysis:pendingImageAnalysis
   };
@@ -2064,6 +2271,7 @@ document.getElementById("save").onclick=()=>{
   photoInput.value="";
   voiceInline.classList.remove("show");
   voiceToggle.classList.remove("active");
+  clearAudioDraft();
   closeCapture();
   view="timeline";
   render();
