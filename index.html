@@ -1,4 +1,4 @@
-<!-- v2.0 -->
+<!-- v2.0.1 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -347,6 +347,16 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
   letter-spacing:.05em
 }
 
+
+.linked-reflections{
+  margin-top:14px;padding-top:12px;border-top:1px solid var(--line)
+}
+.linked-reflection{
+  margin-top:9px;padding:12px;border-radius:14px;
+  background:rgba(255,255,255,.035);border:1px solid var(--line)
+}
+.linked-reflection .label{margin-bottom:5px}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -508,7 +518,11 @@ function toggleGoDeeper(id){
 function saveInstantReflection(id){
   const el=document.getElementById("instantReflection-"+id);
   const v=el?.value.trim();
-  if(!v)return;
+  if(!v){
+    showToast("Add a reflection first.");
+    return;
+  }
+
   const parent=moments.find(m=>String(m.id)===String(id));
   const item={
     id:crypto.randomUUID?crypto.randomUUID():Date.now(),
@@ -519,14 +533,22 @@ function saveInstantReflection(id){
     parentId:id,
     anchor:parent?.thought ? "From a captured moment" : ""
   };
+
   moments.unshift(item);
-  saveData();
+  try{
+    saveData();
+  }catch(e){
+    moments.shift();
+    showToast("Couldn't save reflection. Browser storage may be full.");
+    return;
+  }
+
   justAdded=item.id;
   goDeepId=null;
+  view="timeline";
   render();
   showToast("Reflection saved.");
 }
-
 function render(){
   document.body.classList.remove("keyboard-open");
   document.getElementById("timelineTab").classList.toggle("active",view==="timeline");
@@ -557,6 +579,7 @@ function renderTimeline(){
       <div class="date">${esc(m.date)}</div>
       <div class="thought">${esc(m.thought)||"Captured moment"}</div>
       ${(m.source||m.anchor)?`<div class="source">${esc(m.source||"")}${m.source&&m.anchor?" · ":""}${esc(m.anchor||"")}</div>`:""}
+      ${isReflection&&m.parentId?`<div class="source">↳ Linked to an earlier moment</div>`:""}
       ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
       ${!isReflection?`<div class="go-deeper-wrap">
         <button class="go-deeper-btn" type="button" data-deep="${m.id}">${open?"Close":"Go deeper →"}</button>
@@ -609,6 +632,15 @@ function detail(id){
     ${!isReflection&&m.anchor?`<div class="source">Anchor: ${esc(m.anchor)}</div>`:""}
     ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
     ${m.updatedAt?`<div class="edited-note">Edited ${esc(new Date(m.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}))}</div>`:""}
+    ${!isReflection && moments.some(r=>String(r.parentId)===String(m.id))?`<div class="linked-reflections">
+      <div class="label">REFLECTIONS ON THIS MOMENT</div>
+      ${moments.filter(r=>String(r.parentId)===String(m.id)).map(r=>`
+        <div class="linked-reflection" onclick="detail('${r.id}')">
+          <div class="label">REFLECTION</div>
+          <div class="thought" style="font-size:15px">${esc(r.thought)}</div>
+          <div class="date">${esc(r.date)}</div>
+        </div>`).join("")}
+    </div>`:""}
     ${!isReflection?`<div class="go-deeper-panel" style="margin-top:14px">
       <div class="go-deeper-kicker">GO DEEPER</div>
       <div class="go-deeper-question">${esc(getGoDeeperPrompt(m))}</div>
@@ -730,7 +762,10 @@ function addReflection(){
   const el=document.getElementById("reflection");
   const v=el?.value.trim(); if(!v)return;
   const item={id:crypto.randomUUID?crypto.randomUUID():Date.now(),date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),createdAt:new Date().toISOString(),thought:v,source:"Reflection"};
-  moments.unshift(item); saveData(); justAdded=item.id; view="timeline"; render(); showToast("Reflection saved.");
+  moments.unshift(item);
+  try{ saveData(); }
+  catch(e){ moments.shift(); showToast("Couldn't save reflection. Browser storage may be full."); return; }
+  justAdded=item.id; view="timeline"; render(); showToast("Reflection saved.");
 }
 
 function compressImage(file){
