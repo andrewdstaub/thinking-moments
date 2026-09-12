@@ -1,4 +1,4 @@
-<!-- v2.5 -->
+<!-- v3.0 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -61,13 +61,13 @@ body::before{
   pointer-events:none;
 }
 body{min-height:100dvh}
-.app{max-width:560px;margin:auto;min-height:100dvh;padding:calc(18px + env(safe-area-inset-top)) 18px calc(112px + var(--safe-bottom))}
+.app{max-width:560px;margin:auto;min-height:100dvh;padding:calc(18px + env(safe-area-inset-top)) 18px calc(104px + var(--safe-bottom))}
 header{padding:4px 4px 16px}
 h1{font-size:27px;line-height:1.08;margin:0 0 7px;letter-spacing:-.7px}
 header p{margin:0;color:var(--muted);font-size:15px} h1{background:linear-gradient(90deg,#fff 0%,#c8d0ff 48%,#9cf0cc 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-nav{display:flex;gap:8px;margin:8px 0 18px}
-nav button{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:16px;padding:12px;color:var(--muted);font-weight:700;backdrop-filter:blur(14px)}
-nav button.active{background:linear-gradient(135deg,rgba(140,240,199,.16),rgba(154,167,255,.14));color:#fff;border-color:rgba(140,240,199,.26);box-shadow:0 8px 30px rgba(0,0,0,.16)}
+
+
+
 .card{background:linear-gradient(180deg,rgba(25,33,58,.88),rgba(16,23,42,.88));border:1px solid var(--line);border-radius:24px;padding:18px;margin-bottom:13px;box-shadow:0 16px 45px rgba(0,0,0,.20);backdrop-filter:blur(18px)}
 .date,.source,.label{color:var(--accent);font-weight:800;letter-spacing:.10em}
 .label{color:var(--accent);font-weight:800;letter-spacing:.10em}
@@ -75,13 +75,7 @@ nav button.active{background:linear-gradient(135deg,rgba(140,240,199,.16),rgba(1
 .thought{font-size:18px;line-height:1.34}
 .source{font-size:13px;margin-top:10px}
 .empty{text-align:center;color:var(--muted);padding:54px 22px;line-height:1.5}
-.capture{
-  position:fixed;left:18px;right:18px;bottom:calc(14px + var(--safe-bottom));
-  max-width:524px;margin:auto;border:1px solid rgba(255,255,255,.10);border-radius:19px;
-  background:linear-gradient(135deg,#8cf0c7 0%,#9aa7ff 52%,#ff9ecf 100%);
-  color:#0b1020;padding:17px;font-size:16px;font-weight:850;
-  box-shadow:0 16px 44px rgba(70,87,170,.34);z-index:20
-}
+
 .toast{
   position:fixed;left:50%;bottom:calc(88px + var(--safe-bottom));transform:translateX(-50%);
   background:#24231f;color:white;padding:10px 14px;border-radius:999px;font-size:14px;
@@ -574,6 +568,150 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 .echo-search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:18px;display:grid;place-items:center}
 .search-summary{margin:-8px 2px 14px;color:var(--muted);font-size:12px;line-height:1.4}
 
+
+/* V3.0 — capture-first architecture */
+#appHeader{padding:4px 4px 14px}
+#appHeader.home-header{
+  position:absolute;
+  top:calc(18px + env(safe-area-inset-top));
+  left:22px;right:22px;
+  padding:0;
+  text-align:center;
+  pointer-events:none;
+}
+#appHeader.home-header h1{
+  font-size:15px;
+  line-height:1.3;
+  letter-spacing:-.15px;
+  margin:0;
+  color:rgba(245,247,255,.72);
+  -webkit-text-fill-color:rgba(245,247,255,.72);
+  background:none;
+}
+#appHeader.home-header p{display:none}
+
+.capture-home{
+  min-height:calc(100dvh - 126px - env(safe-area-inset-top) - var(--safe-bottom));
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:52px 8px 28px;
+}
+.capture-home-kicker{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.17em;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:16px;
+}
+.capture-home-title{
+  max-width:330px;
+  margin:0 auto 26px;
+  font-size:29px;
+  line-height:1.08;
+  letter-spacing:-.8px;
+  font-weight:850;
+}
+.capture-orb{
+  width:min(68vw,270px);
+  aspect-ratio:1;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:50%;
+  padding:0;
+  color:#0b1020;
+  background:
+    radial-gradient(circle at 32% 24%,rgba(255,255,255,.88),transparent 20%),
+    linear-gradient(145deg,#8cf0c7 0%,#9aa7ff 50%,#ff9ecf 100%);
+  box-shadow:
+    0 34px 90px rgba(73,88,184,.35),
+    inset 0 1px 0 rgba(255,255,255,.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:8px;
+  font:inherit;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+.capture-orb:active{
+  transform:scale(.975);
+  box-shadow:0 20px 55px rgba(73,88,184,.32),inset 0 1px 0 rgba(255,255,255,.45);
+}
+.capture-orb-plus{
+  font-size:46px;
+  line-height:1;
+  font-weight:500;
+}
+.capture-orb-label{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.2px;
+}
+.capture-home-note{
+  max-width:300px;
+  margin:24px auto 0;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.45;
+}
+.capture-home-recent{
+  margin-top:18px;
+  border:0;
+  background:transparent;
+  color:rgba(245,247,255,.66);
+  font:inherit;
+  font-size:12px;
+  font-weight:750;
+  padding:8px 12px;
+}
+.bottom-nav{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:calc(12px + var(--safe-bottom));
+  width:min(calc(100% - 28px),532px);
+  z-index:30;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  padding:7px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:22px;
+  background:rgba(10,15,29,.82);
+  box-shadow:0 16px 50px rgba(0,0,0,.32);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+}
+.bottom-nav button{
+  min-height:54px;
+  border:0;
+  border-radius:16px;
+  background:transparent;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  font:inherit;
+  font-size:11px;
+  font-weight:800;
+}
+.bottom-nav button.active{
+  color:#fff;
+  background:linear-gradient(135deg,rgba(140,240,199,.14),rgba(154,167,255,.12));
+}
+.nav-icon{
+  font-size:20px;
+  line-height:1;
+  font-weight:500;
+}
+body.keyboard-open .bottom-nav{display:none}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -581,18 +719,24 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 </head>
 <body>
 <div class="app">
-<header>
+<header id="appHeader">
   <h1>Capture the moments that make you think.</h1>
   <p>See where they take you.</p>
 </header>
 
-<nav>
-  <button id="timelineTab" class="active">Timeline</button>
-  <button id="reflectTab">Reflect</button>
-</nav>
-
 <main id="main"></main>
-<button class="capture" id="captureBtn">＋ Capture a moment</button>
+
+<nav class="bottom-nav" aria-label="Primary">
+  <button id="captureTab" class="active" aria-label="Capture">
+    <span class="nav-icon">＋</span><span>Capture</span>
+  </button>
+  <button id="timelineTab" aria-label="Timeline">
+    <span class="nav-icon">◫</span><span>Timeline</span>
+  </button>
+  <button id="reflectTab" aria-label="Reflect">
+    <span class="nav-icon">↻</span><span>Reflect</span>
+  </button>
+</nav>
 </div>
 
 <div class="toast" id="toast">Saved.</div>
@@ -657,7 +801,7 @@ const seed=[
 ];
 
 let moments=JSON.parse(localStorage.getItem(KEY)||"null")||seed;
-let view="timeline";
+let view="capture";
 let justAdded=null;
 let goDeepId=null;
 let editingId=null;
@@ -825,23 +969,39 @@ function saveInstantReflection(id){
   render();
   showToast("Reflection saved to Reflect.");
 }
+function renderCaptureHome(){
+  const captured=moments.filter(m=>m.source!=="Reflection");
+  const count=captured.length;
+  main.innerHTML=`<section class="capture-home">
+    <div class="capture-home-kicker">ECHO</div>
+    <h2 class="capture-home-title">What made you stop and think?</h2>
+    <button class="capture-orb" id="homeCaptureBtn" type="button" aria-label="Capture a moment">
+      <span class="capture-orb-plus">＋</span>
+      <span class="capture-orb-label">Capture a moment</span>
+    </button>
+    <p class="capture-home-note">Tap the moment it matters. Add as much—or as little—as you need.</p>
+    ${count?`<button class="capture-home-recent" id="recentTimelineBtn" type="button">${count} ${count===1?"Moment":"Moments"} captured · View timeline →</button>`:""}
+  </section>`;
+  document.getElementById("homeCaptureBtn").onclick=openCapture;
+  const recent=document.getElementById("recentTimelineBtn");
+  if(recent) recent.onclick=()=>{view="timeline";render()};
+}
+
 function render(){
   document.body.classList.remove("keyboard-open");
+
+  const header=document.getElementById("appHeader");
+  header.classList.toggle("home-header",view==="capture");
+
+  document.getElementById("captureTab").classList.toggle("active",view==="capture");
   document.getElementById("timelineTab").classList.toggle("active",view==="timeline");
   document.getElementById("reflectTab").classList.toggle("active",view==="reflect");
-  const cap=document.getElementById("captureBtn");
-  if(view==="reflect"){
-    cap.style.display="none";
-  } else {
-    cap.style.display="block";
-    cap.textContent="＋ Capture a moment";
-    cap.style.maxWidth="524px";
-    cap.style.left="18px";
-    cap.style.right="18px";
-    cap.style.margin="auto";
-  }
-  if(view==="timeline") renderTimeline(); else renderReflect();
+
+  if(view==="capture") renderCaptureHome();
+  else if(view==="timeline") renderTimeline();
+  else renderReflect();
 }
+
 function momentDate(m){
   if(m.createdAt){
     const d=new Date(m.createdAt);
@@ -1463,10 +1623,8 @@ function closeCapture(){
 
 function setKeyboardState(on){
   document.body.classList.toggle("keyboard-open", !!on);
-  if(view==="reflect"){
-    document.getElementById("captureBtn").style.display="none";
-  }
 }
+
 ["focusin","focusout"].forEach(evt=>{
   document.addEventListener(evt,e=>{
     if(e.target && (e.target.tagName==="TEXTAREA" || e.target.tagName==="INPUT")){
@@ -1476,9 +1634,12 @@ function setKeyboardState(on){
   });
 });
 
+document.getElementById("captureTab").onclick=()=>{
+  if(view==="capture") openCapture();
+  else { view="capture"; render(); }
+};
 document.getElementById("timelineTab").onclick=()=>{view="timeline";render()};
 document.getElementById("reflectTab").onclick=()=>{view="reflect";render()};
-document.getElementById("captureBtn").onclick=openCapture;
 document.getElementById("close").onclick=()=>{
   closeCapture();
   editingId=null;
@@ -1576,7 +1737,7 @@ document.getElementById("save").onclick=()=>{
   closeCapture();
   view="timeline";
   render();
-  showToast("Moment saved · Go deeper when you want.");
+  showToast("Moment saved.");
 };
 render();
 </script>
