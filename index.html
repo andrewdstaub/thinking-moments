@@ -1,4 +1,4 @@
-<!-- v3.0 -->
+<!-- v3.1 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -712,6 +712,15 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 }
 body.keyboard-open .bottom-nav{display:none}
 
+
+.press-note{
+  margin-top:10px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.4;
+  font-weight:650;
+}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -849,67 +858,107 @@ function getEchoResponse(m){
   const raw=(m?.thought||"").trim();
   const t=raw.toLowerCase();
 
-  // V2.4 prototype: one useful response, chosen contextually.
-  // This is local rule-based logic, not a claim of live AI intelligence.
+  // V3.1 PRESS ON IT engine.
+  // Prototype-only local logic: production should use a language model that reads
+  // the exact Moment and identifies its highest-leverage assumption, implication,
+  // tension, contradiction, missing variable, counterexample, boundary, or question.
   if(!raw && m?.imageData){
     return {
-      type:"QUESTION WORTH SITTING WITH",
-      text:"What in this image made you stop—and why did it feel worth keeping?"
+      type:"PRESS ON IT",
+      text:"What claim or detail in this image is actually doing the work—and what would change if it were wrong?"
     };
   }
 
-  if(/\b(always|never|everyone|nobody|obvious|impossible|must)\b/.test(t)){
+  // Pull a useful phrase from the user's own Moment so the response is visibly grounded.
+  const clean=raw.replace(/\s+/g," ").replace(/[“”"]/g,"").trim();
+  const clauses=clean.split(/[.!?;:—–]+/).map(s=>s.trim()).filter(s=>s.length>12);
+  const claim=(clauses[0]||clean).slice(0,150);
+  const shortClaim=claim.length>105?claim.slice(0,102).trim()+"…":claim;
+
+  // Explicit uncertainty: expose what would resolve it.
+  if(/\b(maybe|perhaps|wonder|what if|might|could be|i think|i'm not sure|not sure)\b/.test(t)){
+    return {
+      type:"WHAT WOULD SETTLE IT?",
+      text:`You’re entertaining the possibility that “${shortClaim}” is true. What evidence would move this from an interesting possibility to something you actually believe?`
+    };
+  }
+
+  // Absolutes / universal claims: test boundary.
+  if(/\b(always|never|everyone|nobody|everybody|nothing|everything|must|only way|impossible)\b/.test(t)){
+    return {
+      type:"WHERE DOES IT BREAK?",
+      text:`“${shortClaim}” is a strong claim. What is the strongest real counterexample—and would the idea survive it?`
+    };
+  }
+
+  // Causal language: interrogate mechanism vs correlation.
+  if(/\b(causes?|creates?|leads? to|results? in|makes? us|makes? people|because|drives?|shapes?|determines?)\b/.test(t)){
+    return {
+      type:"PRESS ON THE CAUSE",
+      text:`If “${shortClaim}” is causal rather than merely associated, what is the mechanism connecting the two—and what else could explain the same outcome?`
+    };
+  }
+
+  // Better-than / systems / environment / efficiency claims: surface responsibility and tradeoff.
+  if(/\b(system|systems|environment|default|defaults|discipline|willpower|motivation|habit|habits)\b/.test(t)){
     return {
       type:"ANOTHER ANGLE",
-      text:"What evidence or experience would make you soften this conclusion?"
+      text:`If “${shortClaim}” is right, where does individual responsibility still matter—and where might blaming the individual be a design failure?`
     };
   }
 
-  if(/\b(discipline|motivation|willpower|habit|routine)\b/.test(t)){
+  // "Should" claims often conceal a value premise.
+  if(/\b(should|ought|supposed to|have to|need to|deserve|right thing|wrong thing)\b/.test(t)){
     return {
-      type:"IF THAT'S TRUE…",
-      text:"Where could you redesign the environment so the better choice requires less willpower?"
+      type:"UNDERNEATH THIS…",
+      text:`What value is hiding inside “${shortClaim}”—and would someone with a different value hierarchy reach the same conclusion?`
     };
   }
 
-  if(/\b(should|supposed to|have to|need to)\b/.test(t)){
+  // Comparisons / superiority claims: ask for criteria and tradeoff.
+  if(/\b(better|worse|more important|less important|stronger|weaker|effective|efficient)\b/.test(t)){
     return {
-      type:"ANOTHER ANGLE",
-      text:"Which part of this expectation is genuinely yours—and which part may have been handed to you?"
+      type:"WHAT'S THE TRADEOFF?",
+      text:`By what standard is “${shortClaim}” better—and what might be lost if you optimize too heavily for that standard?`
     };
   }
 
-  if(/\b(parent|parenting|child|kid|son|daughter|marriage|wife|husband|relationship)\b/.test(t)){
+  // Identity / confidence / competence / character claims: test directionality.
+  if(/\b(confidence|competence|identity|character|self[- ]?worth|courage|resilience)\b/.test(t)){
     return {
-      type:"QUESTION WORTH SITTING WITH",
-      text:"What might become clearer if you tried to describe this from the other person's experience?"
+      type:"TEST THE DIRECTION",
+      text:`Does “${shortClaim}” have to work in that direction—or could the relationship sometimes run backward? What would that change?`
     };
   }
 
-  if(/\b(work|school|teacher|business|project|career)\b/.test(t)){
+  // Relationships: distinguish observation from interpretation without generic feelings prompt.
+  if(/\b(parent|parenting|child|kid|son|daughter|marriage|wife|husband|partner|relationship|friend)\b/.test(t)){
     return {
-      type:"IF THAT'S TRUE…",
-      text:"What is the smallest real-world experiment that could test this idea?"
+      type:"SEPARATE SIGNAL FROM STORY",
+      text:`In “${shortClaim},” what is directly observable—and what part is your interpretation of what it means?`
     };
   }
 
-  if(/\b(maybe|what if|wonder|could|might)\b/.test(t)){
+  // Work/school/business: force falsifiable test.
+  if(/\b(work|school|teacher|student|business|career|project|company|customer)\b/.test(t)){
     return {
-      type:"IF THAT'S TRUE…",
-      text:"If this turned out to be true, what would it change about the way you act or decide?"
+      type:"TEST THE IDEA",
+      text:`What small real-world test could make “${shortClaim}” prove itself wrong—not just confirm what you already suspect?`
     };
   }
 
+  // Questions: make the user's current hypothesis explicit and falsifiable.
   if(/\?/.test(raw)){
     return {
-      type:"QUESTION WORTH SITTING WITH",
-      text:"What answer are you currently leaning toward—and what would change your mind?"
+      type:"PRESS ON THE QUESTION",
+      text:"What answer are you currently leaning toward—and what specific evidence would force you to abandon that answer?"
     };
   }
 
+  // Default: stay grounded in the exact captured language and attack the premise.
   return {
-    type:"GO DEEPER",
-    text:"What about this felt important enough to stop you—and what might it be asking you to reconsider?"
+    type:"PRESS ON IT",
+    text:`What has to be true for “${shortClaim}” to hold up—and which of those assumptions are you least certain about?`
   };
 }
 
@@ -1074,6 +1123,7 @@ function renderMomentCard(m){
       ${open?`<div class="echo-response-panel">
         <div class="echo-response-kicker">${esc(response.type)}</div>
         <div class="echo-response-text">${esc(response.text)}</div>
+        <div class="press-note">ECHO is pressing on this Moment—not asking you to explain it again.</div>
         <textarea class="instant-reflect" id="instantReflection-${m.id}" placeholder="What comes up for you?"></textarea>
         <div class="echo-response-actions">
           <button type="button" onclick="toggleEchoResponse('${m.id}')">Not now</button>
