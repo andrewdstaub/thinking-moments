@@ -1,4 +1,4 @@
-<!-- v1.9 -->
+<!-- v2.0 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -317,6 +317,36 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
   line-height:1.4;
 }
 
+
+.detail-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px
+}
+.detail-menu-wrap{position:relative}
+.detail-menu-btn{
+  width:42px;height:42px;border-radius:14px;border:1px solid var(--line);
+  background:rgba(255,255,255,.045);color:var(--ink);font-size:21px;font-weight:900;
+  display:grid;place-items:center
+}
+.detail-menu{
+  position:absolute;right:0;top:48px;min-width:152px;z-index:10;
+  padding:6px;border:1px solid var(--line);border-radius:15px;
+  background:#151d34;box-shadow:0 18px 50px rgba(0,0,0,.38);display:none
+}
+.detail-menu.show{display:block}
+.detail-menu button{
+  width:100%;text-align:left;border:0;background:transparent;color:var(--ink);
+  border-radius:10px;padding:11px 12px;font-weight:750
+}
+.detail-menu button:active{background:rgba(255,255,255,.06)}
+.detail-menu .danger{color:#ffb2ce}
+.edited-note{font-size:11px;color:var(--muted);margin-top:9px}
+.editing-badge{
+  display:inline-flex;align-items:center;gap:6px;margin:0 0 12px;
+  padding:7px 10px;border-radius:999px;border:1px solid rgba(154,167,255,.22);
+  background:rgba(154,167,255,.08);color:#cbd1ff;font-size:11px;font-weight:850;
+  letter-spacing:.05em
+}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -349,10 +379,10 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 
     <p class="helper">Add whatever helps you remember the moment. Nothing here is required.</p>
 
-    <label class="field-label" for="thought">What made you stop and think?</label>
+    <label class="field-label" id="thoughtLabel" for="thought">What made you stop and think?</label>
     <textarea id="thought" placeholder="Type here, or use Voice to add to your thought"></textarea>
 
-    <div class="composer-tools">
+    <div class="composer-tools" id="composerTools">
       <button class="composer-tool" id="voiceToggle" type="button">🎙 <span>Voice</span></button>
       <label class="composer-tool" for="photoInput">▧ <span>Photo</span></label>
       <input id="photoInput" type="file" accept="image/*" style="display:none">
@@ -381,10 +411,10 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
       </div>
     </div>
 
-    <label class="field-label" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+    <label class="field-label" id="sourceLabel" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
     <input id="source" placeholder="Podcast, book, conversation, article...">
 
-    <label class="field-label" for="anchor">Anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+    <label class="field-label" id="anchorLabel" for="anchor">Anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
     <input id="anchor" placeholder="Timestamp, page, link, or cue">
 
     <button class="save" id="save">Save moment</button>
@@ -403,10 +433,17 @@ let moments=JSON.parse(localStorage.getItem(KEY)||"null")||seed;
 let view="timeline";
 let justAdded=null;
 let goDeepId=null;
+let editingId=null;
 
 const main=document.getElementById("main");
 const modal=document.getElementById("modal");
 const thought=document.getElementById("thought");
+const thoughtLabel=document.getElementById("thoughtLabel");
+const captureTitle=document.getElementById("captureTitle");
+const saveBtn=document.getElementById("save");
+const composerTools=document.getElementById("composerTools");
+const sourceLabel=document.getElementById("sourceLabel");
+const anchorLabel=document.getElementById("anchorLabel");
 const source=document.getElementById("source");
 const anchor=document.getElementById("anchor");
 const photoInput=document.getElementById("photoInput");
@@ -476,6 +513,7 @@ function saveInstantReflection(id){
   const item={
     id:crypto.randomUUID?crypto.randomUUID():Date.now(),
     date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+    createdAt:new Date().toISOString(),
     thought:v,
     source:"Reflection",
     parentId:id,
@@ -552,20 +590,113 @@ function renderTimeline(){
 }
 function detail(id){
   const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
-  main.innerHTML=`<button class="detailBack" onclick="render()">← Timeline</button>
+  const isReflection=m.source==="Reflection";
+  main.innerHTML=`<div class="detail-head">
+    <button class="detailBack" onclick="render()">← Timeline</button>
+    <div class="detail-menu-wrap">
+      <button class="detail-menu-btn" id="detailMenuBtn" aria-label="More options">•••</button>
+      <div class="detail-menu" id="detailMenu">
+        <button type="button" onclick="openEdit('${m.id}')">Edit</button>
+        <button type="button" class="danger" onclick="deleteItem('${m.id}')">Delete</button>
+      </div>
+    </div>
+  </div>
   <article class="card">
-    <div class="date">${esc(m.date)}</div>
+    <div class="label">${isReflection?"REFLECTION":"MOMENT"}</div>
+    <div class="date" style="margin-top:8px">${esc(m.date)}</div>
     <div class="thought">${esc(m.thought)||"Captured moment"}</div>
-    ${m.source?`<div class="source">${esc(m.source)}</div>`:""}
-    ${m.anchor?`<div class="source">Anchor: ${esc(m.anchor)}</div>`:""}
+    ${!isReflection&&m.source?`<div class="source">${esc(m.source)}</div>`:""}
+    ${!isReflection&&m.anchor?`<div class="source">Anchor: ${esc(m.anchor)}</div>`:""}
     ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
-    ${m.source!=="Reflection"?`<div class="go-deeper-panel" style="margin-top:14px">
+    ${m.updatedAt?`<div class="edited-note">Edited ${esc(new Date(m.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}))}</div>`:""}
+    ${!isReflection?`<div class="go-deeper-panel" style="margin-top:14px">
       <div class="go-deeper-kicker">GO DEEPER</div>
       <div class="go-deeper-question">${esc(getGoDeeperPrompt(m))}</div>
     </div>`:""}
-    <button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>
+    ${!isReflection?`<button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>`:""}
   </article>`;
+
+  const menuBtn=document.getElementById("detailMenuBtn");
+  const menu=document.getElementById("detailMenu");
+  menuBtn.onclick=(e)=>{e.stopPropagation();menu.classList.toggle("show")};
 }
+
+function setCaptureEditMode(m=null){
+  const isEditing=!!m;
+  const isReflection=m?.source==="Reflection";
+
+  captureTitle.textContent=isEditing?(isReflection?"Edit reflection":"Edit moment"):"Capture a moment";
+  saveBtn.textContent=isEditing?"Save changes":"Save moment";
+  thoughtLabel.textContent=isReflection?"What do you think now?":"What made you stop and think?";
+
+  // Reflections are deliberately simple: edit the reflection itself.
+  composerTools.style.display=isReflection?"none":"flex";
+  sourceLabel.style.display=isReflection?"none":"block";
+  source.style.display=isReflection?"none":"block";
+  anchorLabel.style.display=isReflection?"none":"block";
+  anchor.style.display=isReflection?"none":"block";
+
+  if(isEditing){
+    const oldBadge=document.getElementById("editingBadge");
+    if(!oldBadge){
+      const badge=document.createElement("div");
+      badge.id="editingBadge";
+      badge.className="editing-badge";
+      badge.textContent=isReflection?"Editing reflection":"Editing original moment";
+      thoughtLabel.parentNode.insertBefore(badge,thoughtLabel);
+    }else{
+      oldBadge.textContent=isReflection?"Editing reflection":"Editing original moment";
+      oldBadge.style.display="inline-flex";
+    }
+  }else{
+    const badge=document.getElementById("editingBadge");
+    if(badge)badge.style.display="none";
+  }
+}
+
+function openEdit(id){
+  const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
+  editingId=m.id;
+  setCaptureEditMode(m);
+
+  thought.value=m.thought||"";
+  source.value=m.source==="Reflection"?"":(m.source||"");
+  anchor.value=m.anchor||"";
+  pendingImageData=m.imageData||"";
+
+  if(pendingImageData){
+    photoPreview.src=pendingImageData;
+    photoPreview.classList.add("show");
+    photoInline.classList.add("show");
+  }else{
+    photoPreview.src="";
+    photoPreview.classList.remove("show");
+    photoInline.classList.remove("show");
+  }
+
+  voiceInline.classList.remove("show");
+  voiceToggle.classList.remove("active");
+  modal.style.display="block";
+  modal.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  setTimeout(()=>thought.focus(),150);
+}
+
+function deleteItem(id){
+  const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
+  const kind=m.source==="Reflection"?"reflection":"moment";
+  if(!confirm(`Delete this ${kind}? This can't be undone.`))return;
+
+  moments=moments.filter(x=>String(x.id)!==String(id));
+  // Also detach any child reflections from a deleted parent rather than deleting them.
+  moments=moments.map(x=>String(x.parentId)===String(id)?{...x,parentId:null}:x);
+  saveData();
+  goDeepId=null;
+  view="timeline";
+  render();
+  showToast(`${kind[0].toUpperCase()+kind.slice(1)} deleted.`);
+}
+
 function renderReflect(){
   const userMoments=moments.filter(m=>m.source!=="Reflection");
   if(userMoments.length<2){
@@ -598,7 +729,7 @@ function renderReflect(){
 function addReflection(){
   const el=document.getElementById("reflection");
   const v=el?.value.trim(); if(!v)return;
-  const item={id:crypto.randomUUID?crypto.randomUUID():Date.now(),date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),thought:v,source:"Reflection"};
+  const item={id:crypto.randomUUID?crypto.randomUUID():Date.now(),date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),createdAt:new Date().toISOString(),thought:v,source:"Reflection"};
   moments.unshift(item); saveData(); justAdded=item.id; view="timeline"; render(); showToast("Reflection saved.");
 }
 
@@ -726,14 +857,32 @@ voiceStop.addEventListener("click",()=>{
 });
 
 function openCapture(){
+  editingId=null;
+  setCaptureEditMode(null);
+
+  // New capture starts clean. Switching among text/voice/photo after this
+  // never clears any part of the draft.
+  thought.value="";
+  source.value="";
+  anchor.value="";
+  pendingImageData="";
+  photoInput.value="";
+  photoPreview.src="";
+  photoPreview.classList.remove("show");
+  photoInline.classList.remove("show");
+  voiceInline.classList.remove("show");
+  voiceToggle.classList.remove("active");
+
   modal.style.display="block";modal.setAttribute("aria-hidden","false");
   document.body.style.overflow="hidden";
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
   voiceSeconds=0; updateVoiceTimer();
-    setTimeout(()=>thought.focus(),180);
+  setTimeout(()=>thought.focus(),180);
 }
 function closeCapture(){
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
   modal.style.display="none";modal.setAttribute("aria-hidden","true");
   document.body.style.overflow="";
 }
@@ -756,24 +905,73 @@ function setKeyboardState(on){
 document.getElementById("timelineTab").onclick=()=>{view="timeline";render()};
 document.getElementById("reflectTab").onclick=()=>{view="reflect";render()};
 document.getElementById("captureBtn").onclick=openCapture;
-document.getElementById("close").onclick=closeCapture;
+document.getElementById("close").onclick=()=>{
+  closeCapture();
+  editingId=null;
+  setCaptureEditMode(null);
+};
 document.getElementById("save").onclick=()=>{
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
-  let capturedThought=thought.value.trim();
-  if(!pendingImageData && !capturedThought && !source.value.trim() && !anchor.value.trim()){
+
+  const capturedThought=thought.value.trim();
+  const existing=editingId!==null?moments.find(x=>String(x.id)===String(editingId)):null;
+  const isReflection=existing?.source==="Reflection";
+
+  if(!isReflection && !pendingImageData && !capturedThought && !source.value.trim() && !anchor.value.trim()){
     showToast("Add something to capture.");
     return;
   }
+  if(isReflection && !capturedThought){
+    showToast("Add something to your reflection.");
+    return;
+  }
+
+  if(existing){
+    const idx=moments.findIndex(x=>String(x.id)===String(editingId));
+    const original={...moments[idx]};
+
+    moments[idx]={
+      ...moments[idx],
+      thought:capturedThought,
+      source:isReflection?"Reflection":source.value.trim(),
+      anchor:isReflection?(moments[idx].anchor||""):anchor.value.trim(),
+      imageData:isReflection?(moments[idx].imageData||""):pendingImageData,
+      captureType:isReflection?(moments[idx].captureType||"reflection"):(pendingImageData?"photo+thought":"thought"),
+      updatedAt:new Date().toISOString()
+      // Intentionally preserve id, original display date, parentId and creation history.
+    };
+
+    try{
+      saveData();
+    }catch(e){
+      moments[idx]=original;
+      showToast("Couldn't save the edit.");
+      return;
+    }
+
+    const savedId=editingId;
+    editingId=null;
+    closeCapture();
+    setCaptureEditMode(null);
+    view="timeline";
+    render();
+    showToast(isReflection?"Reflection updated.":"Moment updated.");
+    setTimeout(()=>detail(savedId),120);
+    return;
+  }
+
   const item={
     id:crypto.randomUUID?crypto.randomUUID():Date.now(),
     date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+    createdAt:new Date().toISOString(),
     thought:capturedThought,
     source:source.value.trim(),
     anchor:anchor.value.trim(),
     captureType:pendingImageData?"photo+thought":"thought",
     imageData:pendingImageData
   };
+
   try{
     moments.unshift(item); saveData();
   }catch(e){
@@ -781,12 +979,21 @@ document.getElementById("save").onclick=()=>{
     showToast("Storage is full. Try a smaller image.");
     return;
   }
+
   justAdded=item.id;
   goDeepId=item.id;
   thought.value=source.value=anchor.value="";
-  pendingImageData=""; photoPreview.src=""; photoPreview.classList.remove("show"); photoInline.classList.remove("show"); photoInput.value="";
-  voiceInline.classList.remove("show"); voiceToggle.classList.remove("active");
-  closeCapture(); view="timeline"; render(); showToast("Moment saved.");
+  pendingImageData="";
+  photoPreview.src="";
+  photoPreview.classList.remove("show");
+  photoInline.classList.remove("show");
+  photoInput.value="";
+  voiceInline.classList.remove("show");
+  voiceToggle.classList.remove("active");
+  closeCapture();
+  view="timeline";
+  render();
+  showToast("Moment saved.");
 };
 render();
 </script>
