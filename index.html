@@ -188,25 +188,28 @@ function detail(id){
 }
 function renderReflect(){
   const userMoments=moments.filter(m=>m.source!=="Reflection");
-  const enough=userMoments.length>=5;
-  if(!enough){
+  if(userMoments.length<2){
     main.innerHTML=`<section class="card reflect-card">
       <div class="label">REFLECT</div>
       <h2>Keep capturing.</h2>
-      <p class="reflect-note">Patterns will appear here as your timeline grows. Thinking Moments will avoid forcing connections before there is enough evidence.</p>
+      <p class="reflect-note">Once you have a few moments in your timeline, you can come back here to revisit one and see what it brings up now.</p>
     </section>`;
     return;
   }
-  const latest=userMoments[0];
-  const earliest=userMoments[userMoments.length-1];
+
+  // Revisit one prior non-reflection moment rather than forcing a connection
+  // between two unrelated moments. Choose an older moment, not the newest.
+  const prior=userMoments[userMoments.length-1];
+
   main.innerHTML=`<section class="card reflect">
     <div class="label">REFLECT</div>
-    <h2>What do you notice?</h2>
-    <p class="reflect-note">These are simply two points in your timeline—not a claim that they are connected.</p>
-    <div class="label" style="margin-top:20px">Earlier</div>
-    <div class="thought">${esc(earliest?.thought||"—")}</div>
-    <div class="label" style="margin-top:18px">Recent</div>
-    <div class="thought">${esc(latest?.thought||"—")}</div>
+    <h2>Look back. Think forward.</h2>
+    <p class="reflect-note">Revisit something you captured and see what it brings up now.</p>
+
+    <div class="label" style="margin-top:20px">You captured</div>
+    <div class="thought">${esc(prior?.thought||"—")}</div>
+    ${(prior?.source||prior?.anchor)?`<div class="source">${esc(prior.source||"")}${prior.source&&prior.anchor?" · ":""}${esc(prior.anchor||"")}</div>`:""}
+
     <label class="field-label" for="reflection">What do you think now?</label>
     <textarea id="reflection" placeholder="Add a reflection (optional)"></textarea>
     <button class="save" onclick="addReflection()">Save reflection</button>
