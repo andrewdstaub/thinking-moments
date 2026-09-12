@@ -1,3 +1,4 @@
+<!-- v1.7 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -157,6 +158,70 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 .notice-title{font-size:17px;font-weight:800;line-height:1.3}
 .notice-copy{margin-top:7px;color:var(--muted);font-size:14px;line-height:1.45}
 
+
+.voice-recorder{
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:22px;
+  padding:20px 16px 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.02));
+  text-align:center;
+}
+.voice-visual{
+  position:relative;
+  width:108px;height:108px;margin:2px auto 14px;
+  display:grid;place-items:center;
+}
+.voice-ring,.voice-ring::before,.voice-ring::after{
+  content:"";
+  position:absolute;inset:0;border-radius:50%;
+  border:1px solid rgba(140,240,199,.20);
+}
+.voice-ring::before{inset:10px;border-color:rgba(154,167,255,.22)}
+.voice-ring::after{inset:20px;border-color:rgba(255,158,207,.20)}
+.voice-orb{
+  position:relative;z-index:2;
+  width:68px;height:68px;border:0;border-radius:50%;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff 55%,#ff9ecf);
+  color:#0b1020;font-size:29px;
+  box-shadow:0 14px 38px rgba(94,114,211,.30);
+}
+.voice-visual.listening .voice-ring{
+  animation:echoPulse 1.2s ease-out infinite;
+}
+.voice-visual.listening .voice-ring::before{
+  animation:echoPulse 1.2s .15s ease-out infinite;
+}
+.voice-visual.listening .voice-ring::after{
+  animation:echoPulse 1.2s .30s ease-out infinite;
+}
+@keyframes echoPulse{
+  0%{transform:scale(.86);opacity:.95}
+  100%{transform:scale(1.28);opacity:0}
+}
+.voice-time{
+  font-variant-numeric:tabular-nums;
+  font-size:32px;font-weight:800;letter-spacing:.02em;
+  margin:4px 0 2px;
+}
+.voice-status{font-size:14px;color:var(--muted);margin-bottom:14px}
+.voice-actions{display:flex;gap:8px;justify-content:center}
+.voice-action{
+  flex:1;border:1px solid var(--line);border-radius:14px;
+  padding:11px 12px;background:rgba(255,255,255,.045);
+  color:var(--ink);font-weight:750;
+}
+.voice-action.primary{
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);
+  color:#0b1020;border:0;
+}
+.voice-action.danger{
+  color:#ffc0d7;
+}
+.voice-hint{
+  margin-top:12px;font-size:12px;line-height:1.45;color:var(--muted);
+}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -201,13 +266,21 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
     </div>
 
     <div class="mode-panel" id="voicePanel">
-      <div class="voice-box">
-        <button class="voice-orb" id="voiceBtn" type="button">🎙</button>
-        <div id="voiceStatus" style="font-weight:800">Tap to speak</div>
-        <p class="capture-note">If live transcription isn't available in this browser, use the iPhone keyboard microphone in the text field below.</p>
+      <div class="voice-recorder">
+        <div class="voice-visual" id="voiceVisual">
+          <div class="voice-ring"></div>
+          <button class="voice-orb" id="voiceBtn" type="button" aria-label="Start voice capture">🎙</button>
+        </div>
+        <div class="voice-time" id="voiceTime">0:00</div>
+        <div class="voice-status" id="voiceStatus">Tap the microphone and speak naturally.</div>
+        <div class="voice-actions">
+          <button class="voice-action danger" id="voiceClear" type="button">Clear</button>
+          <button class="voice-action primary" id="voiceStop" type="button">Stop</button>
+        </div>
+        <div class="voice-hint">Your words become the moment. You can edit the transcript before saving.</div>
       </div>
-      <label class="field-label" for="voiceText">Your words</label>
-      <textarea id="voiceText" placeholder="Your voice transcription will appear here"></textarea>
+      <label class="field-label" for="voiceText">Transcript</label>
+      <textarea id="voiceText" placeholder="Your transcript will appear here"></textarea>
     </div>
 
     <div class="mode-panel" id="photoPanel">
@@ -254,9 +327,16 @@ const photoInput=document.getElementById("photoInput");
 const photoPreview=document.getElementById("photoPreview");
 const voiceBtn=document.getElementById("voiceBtn");
 const voiceStatus=document.getElementById("voiceStatus");
+const voiceVisual=document.getElementById("voiceVisual");
+const voiceTime=document.getElementById("voiceTime");
+const voiceStop=document.getElementById("voiceStop");
+const voiceClear=document.getElementById("voiceClear");
 const toast=document.getElementById("toast");
 let captureMode="type";
 let pendingImageData="";
+let voiceSeconds=0;
+let voiceTimer=null;
+let voiceRunning=false;
 
 function saveData(){localStorage.setItem(KEY,JSON.stringify(moments))}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -389,32 +469,87 @@ photoInput.addEventListener("change",async()=>{
 
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 let recognition=null;
+
+function updateVoiceTimer(){
+  const m=Math.floor(voiceSeconds/60);
+  const s=String(voiceSeconds%60).padStart(2,"0");
+  voiceTime.textContent=`${m}:${s}`;
+}
+function startVoiceUI(){
+  if(voiceRunning)return;
+  voiceRunning=true;
+  voiceVisual.classList.add("listening");
+  voiceStatus.textContent="Listening…";
+  voiceTimer=setInterval(()=>{voiceSeconds++;updateVoiceTimer()},1000);
+}
+function stopVoiceUI(){
+  voiceRunning=false;
+  voiceVisual.classList.remove("listening");
+  if(voiceTimer){clearInterval(voiceTimer);voiceTimer=null;}
+  voiceStatus.textContent=voiceText.value.trim()?"Transcript ready. Edit it if you want.":"Stopped.";
+}
+function clearVoice(){
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
+  voiceSeconds=0;updateVoiceTimer();
+  voiceText.value="";
+  voiceStatus.textContent="Tap the microphone and speak naturally.";
+}
+
 if(SpeechRecognition){
   recognition=new SpeechRecognition();
-  recognition.continuous=false;
+  recognition.continuous=true;
   recognition.interimResults=true;
   recognition.lang="en-US";
-  recognition.onstart=()=>{voiceBtn.classList.add("listening");voiceStatus.textContent="Listening…"};
+  let finalTranscript="";
+  recognition.onstart=()=>{startVoiceUI()};
   recognition.onresult=(event)=>{
-    let text="";
-    for(let i=event.resultIndex;i<event.results.length;i++) text+=event.results[i][0].transcript;
-    voiceText.value=text.trim();
+    let interim="";
+    for(let i=event.resultIndex;i<event.results.length;i++){
+      const chunk=event.results[i][0].transcript;
+      if(event.results[i].isFinal) finalTranscript+=chunk+" ";
+      else interim+=chunk;
+    }
+    voiceText.value=(finalTranscript+interim).trim();
   };
-  recognition.onend=()=>{voiceBtn.classList.remove("listening");voiceStatus.textContent="Tap to speak again"};
-  recognition.onerror=()=>{voiceBtn.classList.remove("listening");voiceStatus.textContent="Use the keyboard microphone below"};
+  recognition.onend=()=>{
+    if(voiceRunning){
+      // Some mobile browsers stop automatically; treat as a graceful finish.
+      stopVoiceUI();
+    }
+  };
+  recognition.onerror=()=>{
+    stopVoiceUI();
+    voiceStatus.textContent="Live transcription isn't available here. Use the iPhone keyboard microphone in the transcript box.";
+  };
 }
+
 voiceBtn.addEventListener("click",()=>{
   if(recognition){
-    try{recognition.start()}catch(e){}
+    try{
+      if(voiceRunning){recognition.stop();stopVoiceUI();}
+      else{recognition.start();}
+    }catch(e){
+      voiceText.focus();
+      voiceStatus.textContent="Use the iPhone keyboard microphone in the transcript box.";
+    }
   }else{
     voiceText.focus();
-    voiceStatus.textContent="Use the iPhone keyboard microphone";
+    voiceStatus.textContent="Use the iPhone keyboard microphone in the transcript box.";
   }
 });
+voiceStop.addEventListener("click",()=>{
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
+});
+voiceClear.addEventListener("click",clearVoice);
 
 function openCapture(){
   modal.style.display="block";modal.setAttribute("aria-hidden","false");
   document.body.style.overflow="hidden";
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
+  voiceSeconds=0; updateVoiceTimer();
   captureMode="type";
   document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active",b.dataset.mode==="type"));
   document.querySelectorAll(".mode-panel").forEach(p=>p.classList.remove("active"));
@@ -446,6 +581,8 @@ document.getElementById("reflectTab").onclick=()=>{view="reflect";render()};
 document.getElementById("captureBtn").onclick=openCapture;
 document.getElementById("close").onclick=closeCapture;
 document.getElementById("save").onclick=()=>{
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
   let capturedThought="";
   if(captureMode==="type") capturedThought=thought.value.trim();
   if(captureMode==="voice") capturedThought=voiceText.value.trim();
