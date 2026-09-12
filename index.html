@@ -10,8 +10,15 @@
 <title>Thinking Moments</title>
 <style>
 :root{
-  --bg:#f4f1ea; --card:#fffdf8; --ink:#24231f; --muted:#777269;
-  --line:#ddd8ce; --accent:#30342f; --safe-bottom:env(safe-area-inset-bottom);
+  --bg:#f1eee8;
+  --card:#fbfaf7;
+  --ink:#1f2622;
+  --muted:#737a73;
+  --line:#d6d2ca;
+  --accent:#3f5a4b;
+  --accent-soft:#e7ede8;
+  --accent-deep:#2f4438;
+  --safe-bottom:env(safe-area-inset-bottom);
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -22,9 +29,10 @@ h1{font-size:27px;line-height:1.08;margin:0 0 7px;letter-spacing:-.7px}
 header p{margin:0;color:var(--muted);font-size:15px}
 nav{display:flex;gap:8px;margin:8px 0 18px}
 nav button{flex:1;border:1px solid var(--line);background:transparent;border-radius:14px;padding:11px;color:var(--muted);font-weight:650}
-nav button.active{background:var(--card);color:var(--ink);box-shadow:0 1px 3px #0000000b}
-.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:17px;margin-bottom:12px}
+nav button.active{background:var(--accent-soft);color:var(--accent-deep);border-color:#c8d4cb;box-shadow:0 1px 3px #0000000a}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:17px;margin-bottom:12px}
 .date,.source,.label{font-size:12px;color:var(--muted)}
+.label{color:#587060;font-weight:700;letter-spacing:.08em}
 .date{margin-bottom:8px}
 .thought{font-size:18px;line-height:1.34}
 .source{font-size:13px;margin-top:10px}
@@ -32,7 +40,7 @@ nav button.active{background:var(--card);color:var(--ink);box-shadow:0 1px 3px #
 .capture{
   position:fixed;left:18px;right:18px;bottom:calc(14px + var(--safe-bottom));
   max-width:524px;margin:auto;border:0;border-radius:18px;background:var(--accent);color:white;
-  padding:17px;font-size:16px;font-weight:750;box-shadow:0 10px 30px #0003;z-index:20
+  padding:17px;font-size:16px;font-weight:750;box-shadow:0 10px 28px #1f2d2530;z-index:20
 }
 .toast{
   position:fixed;left:50%;bottom:calc(88px + var(--safe-bottom));transform:translateX(-50%);
@@ -58,11 +66,12 @@ textarea,input{
 }
 textarea{min-height:170px;resize:none;font-size:18px;line-height:1.4}
 input{font-size:16px}
-textarea:focus,input:focus{outline:3px solid #8cb5df55;border-color:#6e9ec7}
+textarea:focus,input:focus{outline:3px solid #89a99540;border-color:#6f8f7b}
 .save{
   width:100%;margin-top:14px;padding:14px;border:0;border-radius:14px;background:var(--accent);color:white;font-weight:750;font-size:16px
 }
 .reflect-card h2{font-size:22px;margin:0 0 8px}
+.reflect,.reflect-card{background:linear-gradient(180deg,#fbfaf7 0%,#f7f4ee 100%)}
 .reflect-note{color:var(--muted);line-height:1.5;margin:0}
 .reflect textarea{min-height:120px}
 .reflect{padding-bottom:96px}
@@ -148,12 +157,9 @@ function render(){
   document.getElementById("reflectTab").classList.toggle("active",view==="reflect");
   const cap=document.getElementById("captureBtn");
   if(view==="reflect"){
-    cap.textContent="＋ Capture";
-    cap.style.maxWidth="220px";
-    cap.style.left="auto";
-    cap.style.right="18px";
-    cap.style.margin="0";
+    cap.style.display="none";
   } else {
+    cap.style.display="block";
     cap.textContent="＋ Capture a moment";
     cap.style.maxWidth="524px";
     cap.style.left="18px";
@@ -233,6 +239,9 @@ function closeCapture(){
 
 function setKeyboardState(on){
   document.body.classList.toggle("keyboard-open", !!on);
+  if(view==="reflect"){
+    document.getElementById("captureBtn").style.display="none";
+  }
 }
 ["focusin","focusout"].forEach(evt=>{
   document.addEventListener(evt,e=>{
