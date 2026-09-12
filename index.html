@@ -1,4 +1,4 @@
-<!-- v2.4 -->
+<!-- v2.5 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -565,6 +565,15 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
   line-height:1.45;
 }
 
+
+.echo-search-wrap{position:relative;margin:2px 0 18px}
+.echo-search{width:100%;box-sizing:border-box;min-height:46px;padding:0 42px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.055);color:var(--ink);font:inherit;font-size:15px;outline:none;-webkit-appearance:none;backdrop-filter:blur(14px)}
+.echo-search:focus{border-color:rgba(140,240,199,.42);background:rgba(255,255,255,.075)}
+.echo-search::placeholder{color:var(--muted)}
+.echo-search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:16px}
+.echo-search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:18px;display:grid;place-items:center}
+.search-summary{margin:-8px 2px 14px;color:var(--muted);font-size:12px;line-height:1.4}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -654,6 +663,8 @@ let goDeepId=null;
 let editingId=null;
 let reflectFocusId=null;
 let echoResponseId=null;
+let timelineSearch="";
+let reflectSearch="";
 
 const main=document.getElementById("main");
 const modal=document.getElementById("modal");
@@ -913,15 +924,41 @@ function renderMomentCard(m){
   </article>`;
 }
 
-function renderTimeline(){
-  const timelineMoments=moments
-    .filter(m=>m.source!=="Reflection")
-    .slice()
-    .sort((a,b)=>momentDate(b)-momentDate(a));
 
+function searchBarHTML(kind,value){
+  const label=kind==="timeline"?"Search moments":"Search reflections";
+  return `<div class="echo-search-wrap"><span class="echo-search-icon">⌕</span><input class="echo-search" id="${kind}Search" type="search" placeholder="${label}" value="${esc(value)}" autocomplete="off">${value?`<button class="echo-search-clear" id="${kind}SearchClear" type="button" aria-label="Clear search">×</button>`:""}</div>`;
+}
+function searchableMomentText(m){return [m.thought,m.source,m.anchor].filter(Boolean).join(" ").toLowerCase()}
+function searchableReflectionText(r){
+  const p=r.parentId?moments.find(m=>String(m.id)===String(r.parentId)):null;
+  return [r.thought,r.anchor,p?.thought,p?.source,p?.anchor].filter(Boolean).join(" ").toLowerCase();
+}
+function wireSearch(kind){
+  const input=document.getElementById(kind+"Search"); if(!input)return;
+  input.addEventListener("input",()=>{
+    if(kind==="timeline")timelineSearch=input.value; else reflectSearch=input.value;
+    const pos=input.selectionStart;
+    if(kind==="timeline")renderTimeline(); else renderReflect();
+    const next=document.getElementById(kind+"Search");
+    if(next){next.focus({preventScroll:true});try{next.setSelectionRange(pos,pos)}catch(e){}}
+  });
+  const clear=document.getElementById(kind+"SearchClear");
+  if(clear)clear.onclick=()=>{
+    if(kind==="timeline")timelineSearch="";else reflectSearch="";
+    if(kind==="timeline")renderTimeline();else renderReflect();
+    document.getElementById(kind+"Search")?.focus({preventScroll:true});
+  };
+}
+function renderTimeline(){
+  const q=timelineSearch.trim().toLowerCase();
+  const allTimelineMoments=moments.filter(m=>m.source!=="Reflection").slice().sort((a,b)=>momentDate(b)-momentDate(a));
+  const timelineMoments=q?allTimelineMoments.filter(m=>searchableMomentText(m).includes(q)):allTimelineMoments;
+  if(!allTimelineMoments.length){
+    main.innerHTML=searchBarHTML("timeline",timelineSearch)+'<div class="empty">Your timeline is empty.<br><br>Capture the first moment that makes you think.</div>';wireSearch("timeline");return;
+  }
   if(!timelineMoments.length){
-    main.innerHTML='<div class="empty">Your timeline is empty.<br><br>Capture the first moment that makes you think.</div>';
-    return;
+    main.innerHTML=searchBarHTML("timeline",timelineSearch)+`<div class="search-summary">No Moments match “${esc(timelineSearch)}”.</div>`;wireSearch("timeline");return;
   }
 
   const now=new Date();
@@ -937,7 +974,7 @@ function renderTimeline(){
 
   const ordered=[...groups.values()].sort((a,b)=>a.rank-b.rank);
 
-  main.innerHTML=ordered.map(group=>`
+  main.innerHTML=searchBarHTML("timeline",timelineSearch)+(q?`<div class="search-summary">${timelineMoments.length} ${timelineMoments.length===1?"Moment":"Moments"} found</div>`:"")+ordered.map(group=>`
     <section class="timeline-section ${group.type==="month"?"month-section":""}">
       <div class="timeline-section-head">
         <div class="timeline-section-title">${esc(group.label)}</div>
@@ -971,6 +1008,7 @@ function renderTimeline(){
     };
   });
 
+  wireSearch("timeline");
   justAdded=null;
 }
 function detail(id){
@@ -1123,10 +1161,9 @@ function deleteItem(id){
 }
 
 function renderReflect(){
-  const reflections=moments
-    .filter(m=>m.source==="Reflection")
-    .slice()
-    .sort((a,b)=>momentDate(b)-momentDate(a));
+  const allReflections=moments.filter(m=>m.source==="Reflection").slice().sort((a,b)=>momentDate(b)-momentDate(a));
+  const q=reflectSearch.trim().toLowerCase();
+  const reflections=q?allReflections.filter(r=>searchableReflectionText(r).includes(q)):allReflections;
 
   // Focused view: one original Moment and every Reflection attached to it.
   if(reflectFocusId){
@@ -1167,9 +1204,9 @@ function renderReflect(){
   }
 
   // No saved reflections yet: retain the useful revisit prompt.
-  if(!reflections.length){
+  if(!allReflections.length){
     const previous=moments.find(m=>m.source!=="Reflection");
-    main.innerHTML=`<div class="reflectHero">
+    main.innerHTML=searchBarHTML("reflect",reflectSearch)+`<div class="reflectHero">
       <div class="eyebrow">REFLECT</div>
       <h2>Look back. Think forward.</h2>
       <p>Revisit something you captured and see what it brings up now.</p>
@@ -1183,10 +1220,16 @@ function renderReflect(){
         <div class="go-deeper-question">${esc(getEchoResponse(previous).text)}</div>
       </div>
     </article>`:`<div class="reflect-empty">Capture a few Moments first. Reflection becomes more useful once there is something worth returning to.</div>`}`;
+    wireSearch("reflect");
     return;
   }
 
-  // V2.3: organize Reflections by when the Reflection itself happened.
+  if(!reflections.length){
+    main.innerHTML=searchBarHTML("reflect",reflectSearch)+`<div class="search-summary">No Reflections match “${esc(reflectSearch)}”.</div>`;
+    wireSearch("reflect"); return;
+  }
+
+  // V2.5: organize Reflections by when the Reflection itself happened.
   const now=new Date();
   const groups=new Map();
 
@@ -1200,7 +1243,7 @@ function renderReflect(){
 
   const ordered=[...groups.values()].sort((a,b)=>a.rank-b.rank);
 
-  main.innerHTML=`<div class="reflectHero">
+  main.innerHTML=searchBarHTML("reflect",reflectSearch)+(q?`<div class="search-summary">${reflections.length} ${reflections.length===1?"Reflection":"Reflections"} found</div>`:"")+`<div class="reflectHero">
     <div class="eyebrow">REFLECT</div>
     <h2>Look back. Think forward.</h2>
     <p>Your reflections are organized by when you had them—not when the original Moment was captured.</p>
@@ -1251,6 +1294,7 @@ function renderReflect(){
       renderReflect();
     };
   });
+  wireSearch("reflect");
 }
 
 function addReflection(){
