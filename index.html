@@ -1,4 +1,4 @@
-<!-- v3.1 -->
+<!-- v3.2 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -721,6 +721,14 @@ body.keyboard-open .bottom-nav{display:none}
   font-weight:650;
 }
 
+
+.image-context-hint{
+  margin:7px 2px 0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.4;
+}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -854,21 +862,64 @@ function showToast(msg="Saved."){
   setTimeout(()=>toast.classList.remove("show"),900)
 }
 
+
+function inferImageContext(m){
+  if(!m?.imageData) return "";
+  const text=(m.thought||"").trim();
+  const source=(m.source||"").trim();
+  const anchor=(m.anchor||"").trim();
+
+  // V3.2 prototype bridge:
+  // Any user-supplied words about the image become the semantic grounding.
+  // Production ECHO should replace this with actual multimodal vision + OCR.
+  return [text,source,anchor].filter(Boolean).join(" · ");
+}
+
+function getImageEchoResponse(m){
+  const context=inferImageContext(m);
+  const t=context.toLowerCase();
+
+  // If the user has supplied image context, press directly on that context.
+  if(context){
+    const clean=context.replace(/\s+/g," ").replace(/[“”"]/g,"").trim();
+    const short=clean.length>115?clean.slice(0,112).trim()+"…":clean;
+
+    if(/\b(quote|says|text|screenshot|article|book|page|post|message)\b/.test(t)){
+      return {
+        type:"PRESS ON THE CONTENT",
+        text:`The image is preserving “${short}.” What is the strongest assumption inside that idea—and what would make it fail?`
+      };
+    }
+    if(/\b(nature|river|lake|mountain|sunset|sunrise|forest|sky|water|landscape|view)\b/.test(t)){
+      return {
+        type:"PRESS ON THE MOMENT",
+        text:`You chose to preserve this scene alongside “${short}.” What, specifically, is the scene making visible that the words alone do not capture?`
+      };
+    }
+    return {
+      type:"PRESS ON THE IMAGE",
+      text:`You attached this image to “${short}.” Which visible detail carries the meaning for you—and how would your interpretation change if that detail were absent?`
+    };
+  }
+
+  // No textual grounding exists. Be transparent instead of pretending the prototype saw the image.
+  return {
+    type:"LOOK CLOSER",
+    text:"This Moment is image-only. What specific detail made you stop—the subject, contrast, expression, wording, setting, or something else?"
+  };
+}
+
 function getEchoResponse(m){
   const raw=(m?.thought||"").trim();
   const t=raw.toLowerCase();
+
+  // V3.2: image/screenshot Moments get image-grounded treatment first.
+  if(m?.imageData) return getImageEchoResponse(m);
 
   // V3.1 PRESS ON IT engine.
   // Prototype-only local logic: production should use a language model that reads
   // the exact Moment and identifies its highest-leverage assumption, implication,
   // tension, contradiction, missing variable, counterexample, boundary, or question.
-  if(!raw && m?.imageData){
-    return {
-      type:"PRESS ON IT",
-      text:"What claim or detail in this image is actually doing the work—and what would change if it were wrong?"
-    };
-  }
-
   // Pull a useful phrase from the user's own Moment so the response is visibly grounded.
   const clean=raw.replace(/\s+/g," ").replace(/[“”"]/g,"").trim();
   const clauses=clean.split(/[.!?;:—–]+/).map(s=>s.trim()).filter(s=>s.length>12);
@@ -1123,7 +1174,7 @@ function renderMomentCard(m){
       ${open?`<div class="echo-response-panel">
         <div class="echo-response-kicker">${esc(response.type)}</div>
         <div class="echo-response-text">${esc(response.text)}</div>
-        <div class="press-note">ECHO is pressing on this Moment—not asking you to explain it again.</div>
+        <div class="press-note">ECHO is pressing on what you captured—not asking you to explain it again.</div>
         <textarea class="instant-reflect" id="instantReflection-${m.id}" placeholder="What comes up for you?"></textarea>
         <div class="echo-response-actions">
           <button type="button" onclick="toggleEchoResponse('${m.id}')">Not now</button>
