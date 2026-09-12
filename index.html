@@ -65,6 +65,9 @@ textarea:focus,input:focus{outline:3px solid #8cb5df55;border-color:#6e9ec7}
 .reflect-card h2{font-size:22px;margin:0 0 8px}
 .reflect-note{color:var(--muted);line-height:1.5;margin:0}
 .reflect textarea{min-height:120px}
+.reflect{padding-bottom:96px}
+body.keyboard-open .capture{display:none}
+body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 .detailBack{border:0;background:none;padding:0 0 15px;color:var(--muted);font-size:14px}
 .smallbtn{margin-top:12px;border:1px solid var(--line);background:transparent;border-radius:12px;padding:10px}
 .moment-new{animation:fadeIn .25s ease}
@@ -140,8 +143,23 @@ function showToast(msg="Saved."){
   setTimeout(()=>toast.classList.remove("show"),900)
 }
 function render(){
+  document.body.classList.remove("keyboard-open");
   document.getElementById("timelineTab").classList.toggle("active",view==="timeline");
   document.getElementById("reflectTab").classList.toggle("active",view==="reflect");
+  const cap=document.getElementById("captureBtn");
+  if(view==="reflect"){
+    cap.textContent="＋ Capture";
+    cap.style.maxWidth="220px";
+    cap.style.left="auto";
+    cap.style.right="18px";
+    cap.style.margin="0";
+  } else {
+    cap.textContent="＋ Capture a moment";
+    cap.style.maxWidth="524px";
+    cap.style.left="18px";
+    cap.style.right="18px";
+    cap.style.margin="auto";
+  }
   if(view==="timeline") renderTimeline(); else renderReflect();
 }
 function renderTimeline(){
@@ -209,6 +227,19 @@ function closeCapture(){
   modal.style.display="none";modal.setAttribute("aria-hidden","true");
   document.body.style.overflow="";
 }
+
+function setKeyboardState(on){
+  document.body.classList.toggle("keyboard-open", !!on);
+}
+["focusin","focusout"].forEach(evt=>{
+  document.addEventListener(evt,e=>{
+    if(e.target && (e.target.tagName==="TEXTAREA" || e.target.tagName==="INPUT")){
+      if(evt==="focusin") setKeyboardState(true);
+      else setTimeout(()=>setKeyboardState(false),120);
+    }
+  });
+});
+
 document.getElementById("timelineTab").onclick=()=>{view="timeline";render()};
 document.getElementById("reflectTab").onclick=()=>{view="reflect";render()};
 document.getElementById("captureBtn").onclick=openCapture;
