@@ -1,4 +1,4 @@
-<!-- v2.0.2 -->
+<!-- v2.1 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -374,6 +374,44 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
   color:var(--accent);font-size:12px;font-weight:800;padding:0
 }
 
+
+.reflection-stack{display:flex;flex-direction:column;gap:12px}
+.reflect-card{
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:14px;
+  background:rgba(255,255,255,.035)
+}
+.reflect-card .prompt{
+  margin-top:8px;
+  font-size:14px;
+  line-height:1.45;
+  color:var(--muted)
+}
+.reflection-answer{
+  margin-top:10px;
+  padding:11px 12px;
+  border-radius:14px;
+  background:rgba(140,240,199,.05);
+  border:1px solid rgba(140,240,199,.14)
+}
+.reflection-count{
+  display:inline-flex;
+  margin-top:9px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--accent);
+  font-size:12px;
+  font-weight:800
+}
+.reflect-empty{
+  padding:26px 16px;
+  text-align:center;
+  color:var(--muted);
+  line-height:1.5
+}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -461,6 +499,7 @@ let view="timeline";
 let justAdded=null;
 let goDeepId=null;
 let editingId=null;
+let reflectFocusId=null;
 
 const main=document.getElementById("main");
 const modal=document.getElementById("modal");
@@ -562,9 +601,10 @@ function saveInstantReflection(id){
 
   justAdded=item.id;
   goDeepId=null;
-  view="timeline";
+  reflectFocusId=id;
+  view="reflect";
   render();
-  showToast("Reflection saved.");
+  showToast("Reflection saved to Reflect.");
 }
 function render(){
   document.body.classList.remove("keyboard-open");
@@ -584,23 +624,29 @@ function render(){
   if(view==="timeline") renderTimeline(); else renderReflect();
 }
 function renderTimeline(){
-  if(!moments.length){
+  const timelineMoments=moments.filter(m=>m.source!=="Reflection");
+
+  if(!timelineMoments.length){
     main.innerHTML='<div class="empty">Your timeline is empty.<br><br>Capture the first moment that makes you think.</div>';
     return;
   }
 
-  main.innerHTML=moments.map(m=>{
-    const isReflection=m.source==="Reflection";
+  main.innerHTML=timelineMoments.map(m=>{
     const open=String(goDeepId)===String(m.id);
+    const reflectionCount=moments.filter(r=>r.source==="Reflection"&&String(r.parentId)===String(m.id)).length;
+
     return `<article class="card ${m.id===justAdded?"moment-new":""}" data-id="${m.id}">
       <div class="date">${esc(m.date)}</div>
       <div class="thought">${esc(m.thought)||"Captured moment"}</div>
       ${(m.source||m.anchor)?`<div class="source">${esc(m.source||"")}${m.source&&m.anchor?" · ":""}${esc(m.anchor||"")}</div>`:""}
-      ${isReflection&&m.parentId?`
-        <button class="parent-jump" type="button" data-parent="${m.parentId}">↳ View original moment</button>
-      `:""}
       ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
-      ${!isReflection?`<div class="go-deeper-wrap">
+
+      ${reflectionCount?`
+        <button class="reflection-count" type="button" data-reflect-parent="${m.id}">
+          ${reflectionCount} ${reflectionCount===1?"reflection":"reflections"} · View →
+        </button>`:""}
+
+      <div class="go-deeper-wrap">
         <button class="go-deeper-btn" type="button" data-deep="${m.id}">${open?"Close":"Go deeper →"}</button>
         ${open?`<div class="go-deeper-panel">
           <div class="go-deeper-kicker">GO DEEPER</div>
@@ -612,7 +658,7 @@ function renderTimeline(){
             <button class="primary" type="button" onclick="saveInstantReflection('${m.id}')">Save reflection</button>
           </div>
         </div>`:""}
-      </div>`:""}
+      </div>
     </article>`;
   }).join("");
 
@@ -622,18 +668,23 @@ function renderTimeline(){
       detail(c.dataset.id);
     };
   });
+
   document.querySelectorAll("[data-deep]").forEach(b=>{
     b.onclick=(e)=>{
       e.stopPropagation();
       toggleGoDeeper(b.dataset.deep);
     };
   });
-  document.querySelectorAll("[data-parent]").forEach(b=>{
+
+  document.querySelectorAll("[data-reflect-parent]").forEach(b=>{
     b.onclick=(e)=>{
       e.stopPropagation();
-      detail(b.dataset.parent);
+      view="reflect";
+      reflectFocusId=b.dataset.reflectParent;
+      render();
     };
   });
+
   justAdded=null;
 }
 function detail(id){
@@ -644,7 +695,7 @@ function detail(id){
     : null;
 
   main.innerHTML=`<div class="detail-head">
-    <button class="detailBack" onclick="render()">← Timeline</button>
+    <button class="detailBack" onclick="${isReflection?'view=\'reflect\';render()':'view=\'timeline\';render()'}">← ${isReflection?"Reflect":"Timeline"}</button>
     <div class="detail-menu-wrap">
       <button class="detail-menu-btn" id="detailMenuBtn" aria-label="More options">•••</button>
       <div class="detail-menu" id="detailMenu">
@@ -769,40 +820,115 @@ function deleteItem(id){
   moments=moments.map(x=>String(x.parentId)===String(id)?{...x,parentId:null}:x);
   saveData();
   goDeepId=null;
-  view="timeline";
+  if(kind==="reflection"){
+    reflectFocusId=m.parentId||null;
+    view="reflect";
+  }else{
+    reflectFocusId=null;
+    view="timeline";
+  }
   render();
   showToast(`${kind[0].toUpperCase()+kind.slice(1)} deleted.`);
 }
 
 function renderReflect(){
-  const userMoments=moments.filter(m=>m.source!=="Reflection");
-  if(userMoments.length<2){
-    main.innerHTML=`<section class="card reflect-card">
-      <div class="label">REFLECT</div>
-      <h2>Keep capturing.</h2>
-      <p class="reflect-note">Once you have a few moments in your timeline, you can come back here to revisit one and see what it brings up now.</p>
-    </section>`;
+  const reflections=moments.filter(m=>m.source==="Reflection");
+
+  if(reflectFocusId){
+    const parent=moments.find(m=>String(m.id)===String(reflectFocusId));
+    const linked=reflections.filter(r=>String(r.parentId)===String(reflectFocusId));
+
+    main.innerHTML=`<button class="detailBack" id="allReflectionsBtn">← All reflections</button>
+      ${parent?`<article class="reflect-card" style="margin-top:12px">
+        <div class="label">ORIGINAL MOMENT</div>
+        <div class="date" style="margin-top:7px">${esc(parent.date)}</div>
+        <div class="thought">${esc(parent.thought)||"Captured moment"}</div>
+        ${(parent.source||parent.anchor)?`<div class="source">${esc(parent.source||"")}${parent.source&&parent.anchor?" · ":""}${esc(parent.anchor||"")}</div>`:""}
+        ${parent.imageData?`<img class="moment-image" src="${parent.imageData}" alt="Original captured image">`:""}
+        <button class="smallbtn" type="button" id="viewParentMoment">View full moment →</button>
+      </article>`:""}
+
+      <div style="height:12px"></div>
+      <div class="label">REFLECTIONS</div>
+      ${linked.length?`<div class="reflection-stack" style="margin-top:10px">
+        ${linked.map(r=>`<article class="reflect-card" data-reflection-id="${r.id}">
+          <div class="date">${esc(r.date)}</div>
+          <div class="reflection-answer">${esc(r.thought)}</div>
+          ${r.updatedAt?`<div class="edited-note">Edited ${esc(new Date(r.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}))}</div>`:""}
+        </article>`).join("")}
+      </div>`:`<div class="reflect-empty">No reflections have been saved for this Moment yet.</div>`}`;
+
+    document.getElementById("allReflectionsBtn").onclick=()=>{
+      reflectFocusId=null;
+      renderReflect();
+    };
+    if(parent){
+      document.getElementById("viewParentMoment").onclick=()=>detail(parent.id);
+    }
+    document.querySelectorAll("[data-reflection-id]").forEach(card=>{
+      card.onclick=()=>detail(card.dataset.reflectionId);
+    });
     return;
   }
 
-  // Revisit one prior non-reflection moment rather than forcing a connection
-  // between two unrelated moments. Choose an older moment, not the newest.
-  const prior=userMoments[userMoments.length-1];
+  if(!reflections.length){
+    const previous=moments.find(m=>m.source!=="Reflection");
+    main.innerHTML=`<div class="reflectHero">
+      <div class="eyebrow">REFLECT</div>
+      <h2>Look back. Think forward.</h2>
+      <p>Revisit something you captured and see what it brings up now.</p>
+    </div>
+    ${previous?`<article class="reflect-card">
+      <div class="label">YOU CAPTURED</div>
+      <div class="date" style="margin-top:7px">${esc(previous.date)}</div>
+      <div class="thought">${esc(previous.thought)||"Captured moment"}</div>
+      <div class="go-deeper-panel" style="margin-top:12px">
+        <div class="go-deeper-kicker">WHAT DO YOU THINK NOW?</div>
+        <div class="go-deeper-question">${esc(getGoDeeperPrompt(previous))}</div>
+      </div>
+    </article>`:`<div class="reflect-empty">Capture a few Moments first. Reflection becomes more useful once there is something worth returning to.</div>`}`;
+    return;
+  }
 
-  main.innerHTML=`<section class="card reflect">
-    <div class="label">REFLECT</div>
+  const groups=[];
+  reflections.forEach(r=>{
+    const parent=moments.find(m=>String(m.id)===String(r.parentId));
+    groups.push({r,parent});
+  });
+
+  main.innerHTML=`<div class="reflectHero">
+    <div class="eyebrow">REFLECT</div>
     <h2>Look back. Think forward.</h2>
-    <p class="reflect-note">Revisit something you captured and see what it brings up now.</p>
+    <p>Your reflections live here, connected to the Moments that sparked them.</p>
+  </div>
+  <div class="reflection-stack">
+    ${groups.map(({r,parent})=>`<article class="reflect-card" data-reflection-id="${r.id}">
+      <div class="label">REFLECTION</div>
+      <div class="date" style="margin-top:7px">${esc(r.date)}</div>
+      <div class="reflection-answer">${esc(r.thought)}</div>
+      ${parent?`<div class="prompt">
+        From: <strong>${esc((parent.thought||"Captured moment").slice(0,120))}${(parent.thought||"").length>120?"…":""}</strong>
+      </div>
+      <button class="parent-jump" type="button" data-reflect-parent="${parent.id}">View original moment →</button>`:
+      `<div class="prompt">The original Moment is no longer available.</div>`}
+    </article>`).join("")}
+  </div>`;
 
-    <div class="label" style="margin-top:20px">You captured</div>
-    <div class="thought">${esc(prior?.thought||"—")}</div>
-    ${(prior?.source||prior?.anchor)?`<div class="source">${esc(prior.source||"")}${prior.source&&prior.anchor?" · ":""}${esc(prior.anchor||"")}</div>`:""}
-
-    <label class="field-label" for="reflection">What do you think now?</label>
-    <textarea id="reflection" placeholder="Add a reflection (optional)"></textarea>
-    <button class="save" onclick="addReflection()">Save reflection</button>
-  </section>`;
+  document.querySelectorAll("[data-reflection-id]").forEach(card=>{
+    card.onclick=(e)=>{
+      if(e.target.closest("button"))return;
+      detail(card.dataset.reflectionId);
+    };
+  });
+  document.querySelectorAll("[data-reflect-parent]").forEach(b=>{
+    b.onclick=(e)=>{
+      e.stopPropagation();
+      reflectFocusId=b.dataset.reflectParent;
+      renderReflect();
+    };
+  });
 }
+
 function addReflection(){
   const el=document.getElementById("reflection");
   const v=el?.value.trim(); if(!v)return;
@@ -1034,10 +1160,18 @@ document.getElementById("save").onclick=()=>{
     editingId=null;
     closeCapture();
     setCaptureEditMode(null);
-    view="timeline";
-    render();
-    showToast(isReflection?"Reflection updated.":"Moment updated.");
-    setTimeout(()=>detail(savedId),120);
+    if(isReflection){
+      const edited=moments.find(x=>String(x.id)===String(savedId));
+      reflectFocusId=edited?.parentId||null;
+      view="reflect";
+      render();
+      showToast("Reflection updated.");
+    }else{
+      view="timeline";
+      render();
+      showToast("Moment updated.");
+      setTimeout(()=>detail(savedId),120);
+    }
     return;
   }
 
