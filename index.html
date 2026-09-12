@@ -3,44 +3,50 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f4f1ea">
+<meta name="theme-color" content="#0b1020">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Thinking Moments">
 <link rel="manifest" href="manifest.json">
 <title>Thinking Moments</title>
 <style>
 :root{
-  --bg:#f1eee8;
-  --card:#fbfaf7;
-  --ink:#1f2622;
-  --muted:#737a73;
-  --line:#d6d2ca;
-  --accent:#3f5a4b;
-  --accent-soft:#e7ede8;
-  --accent-deep:#2f4438;
+  --bg:#0b1020;
+  --bg2:#11182c;
+  --card:rgba(20,27,48,.78);
+  --card-solid:#151d34;
+  --ink:#f7f8ff;
+  --muted:#aeb7cc;
+  --line:rgba(255,255,255,.10);
+  --accent:#8cf0c7;
+  --accent2:#9aa7ff;
+  --accent3:#ff9ecf;
+  --accent-soft:rgba(140,240,199,.12);
+  --accent-deep:#07140f;
   --safe-bottom:env(safe-area-inset-bottom);
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+html,body{margin:0;background:radial-gradient(circle at 15% 0%,rgba(154,167,255,.18),transparent 30%),radial-gradient(circle at 100% 18%,rgba(255,158,207,.12),transparent 28%),linear-gradient(180deg,var(--bg2),var(--bg));color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 body{min-height:100vh}
 .app{max-width:560px;margin:auto;min-height:100vh;padding:calc(18px + env(safe-area-inset-top)) 18px calc(112px + var(--safe-bottom))}
 header{padding:4px 4px 16px}
 h1{font-size:27px;line-height:1.08;margin:0 0 7px;letter-spacing:-.7px}
-header p{margin:0;color:var(--muted);font-size:15px}
+header p{margin:0;color:var(--muted);font-size:15px} h1{background:linear-gradient(90deg,#fff 0%,#c8d0ff 48%,#9cf0cc 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 nav{display:flex;gap:8px;margin:8px 0 18px}
-nav button{flex:1;border:1px solid var(--line);background:transparent;border-radius:14px;padding:11px;color:var(--muted);font-weight:650}
-nav button.active{background:var(--accent-soft);color:var(--accent-deep);border-color:#c8d4cb;box-shadow:0 1px 3px #0000000a}
-.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:17px;margin-bottom:12px}
-.date,.source,.label{font-size:12px;color:var(--muted)}
-.label{color:#587060;font-weight:700;letter-spacing:.08em}
+nav button{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:16px;padding:12px;color:var(--muted);font-weight:700;backdrop-filter:blur(14px)}
+nav button.active{background:linear-gradient(135deg,rgba(140,240,199,.16),rgba(154,167,255,.14));color:#fff;border-color:rgba(140,240,199,.26);box-shadow:0 8px 30px rgba(0,0,0,.16)}
+.card{background:linear-gradient(180deg,rgba(25,33,58,.88),rgba(16,23,42,.88));border:1px solid var(--line);border-radius:24px;padding:18px;margin-bottom:13px;box-shadow:0 16px 45px rgba(0,0,0,.20);backdrop-filter:blur(18px)}
+.date,.source,.label{color:var(--accent);font-weight:800;letter-spacing:.10em}
+.label{color:var(--accent);font-weight:800;letter-spacing:.10em}
 .date{margin-bottom:8px}
 .thought{font-size:18px;line-height:1.34}
 .source{font-size:13px;margin-top:10px}
 .empty{text-align:center;color:var(--muted);padding:54px 22px;line-height:1.5}
 .capture{
   position:fixed;left:18px;right:18px;bottom:calc(14px + var(--safe-bottom));
-  max-width:524px;margin:auto;border:0;border-radius:18px;background:var(--accent);color:white;
-  padding:17px;font-size:16px;font-weight:750;box-shadow:0 10px 28px #1f2d2530;z-index:20
+  max-width:524px;margin:auto;border:1px solid rgba(255,255,255,.10);border-radius:19px;
+  background:linear-gradient(135deg,#8cf0c7 0%,#9aa7ff 52%,#ff9ecf 100%);
+  color:#0b1020;padding:17px;font-size:16px;font-weight:850;
+  box-shadow:0 16px 44px rgba(70,87,170,.34);z-index:20
 }
 .toast{
   position:fixed;left:50%;bottom:calc(88px + var(--safe-bottom));transform:translateX(-50%);
@@ -52,9 +58,8 @@ nav button.active{background:var(--accent-soft);color:var(--accent-deep);border-
   position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:40
 }
 .sheet{
-  position:absolute;inset:0;background:var(--card);display:flex;flex-direction:column;
-  padding:calc(18px + env(safe-area-inset-top)) 18px calc(18px + var(--safe-bottom));
-  overflow:auto
+  position:absolute;inset:0;background:radial-gradient(circle at 10% 0%,rgba(154,167,255,.20),transparent 35%),linear-gradient(180deg,#10172a,#0b1020);
+  display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top)) 18px calc(18px + var(--safe-bottom));overflow:auto
 }
 .sheet-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
 .sheet h2{margin:0;font-size:24px}
@@ -62,25 +67,44 @@ nav button.active{background:var(--accent-soft);color:var(--accent-deep);border-
 .sheet .helper{color:var(--muted);font-size:14px;line-height:1.4;margin:0 0 14px}
 .field-label{font-size:14px;font-weight:700;margin:14px 0 7px}
 textarea,input{
-  width:100%;border:1px solid var(--line);border-radius:16px;padding:14px;font:inherit;background:white;color:var(--ink)
+  width:100%;border:1px solid var(--line);border-radius:16px;padding:14px;font:inherit;background:rgba(255,255,255,.055);color:var(--ink)
 }
 textarea{min-height:170px;resize:none;font-size:18px;line-height:1.4}
 input{font-size:16px}
-textarea:focus,input:focus{outline:3px solid #89a99540;border-color:#6f8f7b}
-.save{
-  width:100%;margin-top:14px;padding:14px;border:0;border-radius:14px;background:var(--accent);color:white;font-weight:750;font-size:16px
-}
+textarea:focus,input:focus{outline:3px solid rgba(140,240,199,.18);border-color:rgba(140,240,199,.60)}
+.save{width:100%;margin-top:14px;padding:14px;border:0;border-radius:14px;background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;font-weight:850;font-size:16px}
 .reflect-card h2{font-size:22px;margin:0 0 8px}
-.reflect,.reflect-card{background:linear-gradient(180deg,#fbfaf7 0%,#f7f4ee 100%)}
+.reflect,.reflect-card{background:linear-gradient(180deg,rgba(26,34,58,.92),rgba(16,23,42,.92))}
 .reflect-note{color:var(--muted);line-height:1.5;margin:0}
 .reflect textarea{min-height:120px}
 .reflect{padding-bottom:96px}
-body.keyboard-open .capture{display:none}
+body.keyboard-open .capture{
+  position:fixed;left:18px;right:18px;bottom:calc(14px + var(--safe-bottom));
+  max-width:524px;margin:auto;border:1px solid rgba(255,255,255,.10);border-radius:19px;
+  background:linear-gradient(135deg,#8cf0c7 0%,#9aa7ff 52%,#ff9ecf 100%);
+  color:#0b1020;padding:17px;font-size:16px;font-weight:850;
+  box-shadow:0 16px 44px rgba(70,87,170,.34);z-index:20
+}
 body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 .detailBack{border:0;background:none;padding:0 0 15px;color:var(--muted);font-size:14px}
 .smallbtn{margin-top:12px;border:1px solid var(--line);background:transparent;border-radius:12px;padding:10px}
 .moment-new{animation:fadeIn .25s ease}
 @keyframes fadeIn{from{opacity:.2;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+.capture-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:2px 0 10px}
+.mode-btn{border:1px solid var(--line);background:rgba(255,255,255,.045);color:var(--muted);border-radius:14px;padding:11px 8px;font-weight:750}
+.mode-btn.active{background:var(--accent-soft);color:var(--accent);border-color:rgba(140,240,199,.28)}
+.mode-panel{display:none}.mode-panel.active{display:block}
+.voice-box,.photo-box{border:1px dashed rgba(255,255,255,.18);border-radius:18px;padding:18px;text-align:center;background:rgba(255,255,255,.025)}
+.voice-orb{width:72px;height:72px;margin:4px auto 12px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;font-size:30px;box-shadow:0 12px 35px rgba(94,114,211,.28)}
+.voice-orb.listening{animation:pulse 1s infinite alternate}
+@keyframes pulse{from{transform:scale(1);box-shadow:0 12px 35px rgba(94,114,211,.28)}to{transform:scale(1.07);box-shadow:0 14px 42px rgba(140,240,199,.45)}}
+.capture-note{font-size:13px;color:var(--muted);line-height:1.45;margin:8px 0 0}
+.photo-preview{display:none;margin-top:12px;width:100%;max-height:260px;object-fit:contain;border-radius:14px;border:1px solid var(--line)}
+.photo-preview.show{display:block}
+.attach-btn{display:inline-block;border:0;border-radius:14px;background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;padding:12px 14px;font-weight:800}
+.moment-image{width:100%;max-height:320px;object-fit:cover;border-radius:16px;margin-top:12px;border:1px solid var(--line)}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -111,10 +135,39 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
       <button class="dismiss" id="close">Cancel</button>
     </div>
 
-    <p class="helper">Don’t organize it. Just save what made you stop and think.</p>
+    <p class="helper">Capture it however it arrived: typed, spoken, or seen.</p>
 
-    <label class="field-label" for="thought">What made you stop and think?</label>
-    <textarea id="thought" placeholder="Type the thought, quote, question, or reaction here"></textarea>
+    <div class="capture-modes">
+      <button class="mode-btn active" data-mode="type">Type</button>
+      <button class="mode-btn" data-mode="voice">Voice</button>
+      <button class="mode-btn" data-mode="photo">Photo</button>
+    </div>
+
+    <div class="mode-panel active" id="typePanel">
+      <label class="field-label" for="thought">What made you stop and think?</label>
+      <textarea id="thought" placeholder="Type the thought, quote, question, or reaction here"></textarea>
+    </div>
+
+    <div class="mode-panel" id="voicePanel">
+      <div class="voice-box">
+        <button class="voice-orb" id="voiceBtn" type="button">🎙</button>
+        <div id="voiceStatus" style="font-weight:800">Tap to speak</div>
+        <p class="capture-note">If live transcription isn't available in this browser, use the iPhone keyboard microphone in the text field below.</p>
+      </div>
+      <label class="field-label" for="voiceText">Your words</label>
+      <textarea id="voiceText" placeholder="Your voice transcription will appear here"></textarea>
+    </div>
+
+    <div class="mode-panel" id="photoPanel">
+      <div class="photo-box">
+        <label class="attach-btn" for="photoInput">＋ Add screenshot or photo</label>
+        <input id="photoInput" type="file" accept="image/*" style="display:none">
+        <img id="photoPreview" class="photo-preview" alt="Selected image preview">
+        <p class="capture-note">For this prototype, the image is compressed and stored locally in this browser.</p>
+      </div>
+      <label class="field-label" for="photoThought">What caught your attention? <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+      <textarea id="photoThought" placeholder="Add a thought, quote, question, or reaction"></textarea>
+    </div>
 
     <label class="field-label" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
     <input id="source" placeholder="Podcast, book, conversation, article...">
@@ -143,7 +196,15 @@ const modal=document.getElementById("modal");
 const thought=document.getElementById("thought");
 const source=document.getElementById("source");
 const anchor=document.getElementById("anchor");
+const voiceText=document.getElementById("voiceText");
+const photoThought=document.getElementById("photoThought");
+const photoInput=document.getElementById("photoInput");
+const photoPreview=document.getElementById("photoPreview");
+const voiceBtn=document.getElementById("voiceBtn");
+const voiceStatus=document.getElementById("voiceStatus");
 const toast=document.getElementById("toast");
+let captureMode="type";
+let pendingImageData="";
 
 function saveData(){localStorage.setItem(KEY,JSON.stringify(moments))}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -177,6 +238,7 @@ function renderTimeline(){
     <div class="date">${esc(m.date)}</div>
     <div class="thought">${esc(m.thought)||"Captured moment"}</div>
     ${(m.source||m.anchor)?`<div class="source">${esc(m.source||"")}${m.source&&m.anchor?" · ":""}${esc(m.anchor||"")}</div>`:""}
+    ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
   </article>`).join("");
   document.querySelectorAll(".card[data-id]").forEach(c=>c.onclick=()=>detail(c.dataset.id));
   justAdded=null;
@@ -189,6 +251,7 @@ function detail(id){
     <div class="thought">${esc(m.thought)||"Captured moment"}</div>
     ${m.source?`<div class="source">${esc(m.source)}</div>`:""}
     ${m.anchor?`<div class="source">Anchor: ${esc(m.anchor)}</div>`:""}
+    ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
     <button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>
   </article>`;
 }
@@ -227,9 +290,83 @@ function addReflection(){
   const item={id:crypto.randomUUID?crypto.randomUUID():Date.now(),date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),thought:v,source:"Reflection"};
   moments.unshift(item); saveData(); justAdded=item.id; view="timeline"; render(); showToast("Reflection saved.");
 }
+
+document.querySelectorAll(".mode-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    captureMode=btn.dataset.mode;
+    document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active",b===btn));
+    document.querySelectorAll(".mode-panel").forEach(p=>p.classList.remove("active"));
+    document.getElementById(captureMode+"Panel").classList.add("active");
+    setTimeout(()=>{
+      if(captureMode==="type") thought.focus();
+      if(captureMode==="voice") voiceText.focus();
+      if(captureMode==="photo") photoThought.focus();
+    },80);
+  });
+});
+
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=1200;
+        let w=img.width,h=img.height;
+        if(Math.max(w,h)>max){
+          const scale=max/Math.max(w,h);w=Math.round(w*scale);h=Math.round(h*scale);
+        }
+        const canvas=document.createElement("canvas");
+        canvas.width=w;canvas.height=h;
+        canvas.getContext("2d").drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL("image/jpeg",0.72));
+      };
+      img.onerror=reject;img.src=reader.result;
+    };
+    reader.onerror=reject;reader.readAsDataURL(file);
+  });
+}
+photoInput.addEventListener("change",async()=>{
+  const file=photoInput.files?.[0]; if(!file)return;
+  try{
+    pendingImageData=await compressImage(file);
+    photoPreview.src=pendingImageData;
+    photoPreview.classList.add("show");
+  }catch(e){showToast("Couldn't load image.");}
+});
+
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null;
+if(SpeechRecognition){
+  recognition=new SpeechRecognition();
+  recognition.continuous=false;
+  recognition.interimResults=true;
+  recognition.lang="en-US";
+  recognition.onstart=()=>{voiceBtn.classList.add("listening");voiceStatus.textContent="Listening…"};
+  recognition.onresult=(event)=>{
+    let text="";
+    for(let i=event.resultIndex;i<event.results.length;i++) text+=event.results[i][0].transcript;
+    voiceText.value=text.trim();
+  };
+  recognition.onend=()=>{voiceBtn.classList.remove("listening");voiceStatus.textContent="Tap to speak again"};
+  recognition.onerror=()=>{voiceBtn.classList.remove("listening");voiceStatus.textContent="Use the keyboard microphone below"};
+}
+voiceBtn.addEventListener("click",()=>{
+  if(recognition){
+    try{recognition.start()}catch(e){}
+  }else{
+    voiceText.focus();
+    voiceStatus.textContent="Use the iPhone keyboard microphone";
+  }
+});
+
 function openCapture(){
   modal.style.display="block";modal.setAttribute("aria-hidden","false");
   document.body.style.overflow="hidden";
+  captureMode="type";
+  document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active",b.dataset.mode==="type"));
+  document.querySelectorAll(".mode-panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById("typePanel").classList.add("active");
   setTimeout(()=>thought.focus(),180);
 }
 function closeCapture(){
@@ -257,15 +394,34 @@ document.getElementById("reflectTab").onclick=()=>{view="reflect";render()};
 document.getElementById("captureBtn").onclick=openCapture;
 document.getElementById("close").onclick=closeCapture;
 document.getElementById("save").onclick=()=>{
+  let capturedThought="";
+  if(captureMode==="type") capturedThought=thought.value.trim();
+  if(captureMode==="voice") capturedThought=voiceText.value.trim();
+  if(captureMode==="photo") capturedThought=photoThought.value.trim();
+
+  if(captureMode==="photo" && !pendingImageData && !capturedThought){
+    showToast("Add a photo or thought.");
+    return;
+  }
   const item={
     id:crypto.randomUUID?crypto.randomUUID():Date.now(),
     date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
-    thought:thought.value.trim(),
+    thought:capturedThought,
     source:source.value.trim(),
-    anchor:anchor.value.trim()
+    anchor:anchor.value.trim(),
+    captureType:captureMode,
+    imageData:captureMode==="photo"?pendingImageData:""
   };
-  moments.unshift(item); saveData(); justAdded=item.id;
-  thought.value=source.value=anchor.value="";
+  try{
+    moments.unshift(item); saveData();
+  }catch(e){
+    moments.shift();
+    showToast("Storage is full. Try a smaller image.");
+    return;
+  }
+  justAdded=item.id;
+  thought.value=voiceText.value=photoThought.value=source.value=anchor.value="";
+  pendingImageData=""; photoPreview.src=""; photoPreview.classList.remove("show"); photoInput.value="";
   closeCapture(); view="timeline"; render(); showToast("Saved.");
 };
 render();
