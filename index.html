@@ -1,4 +1,4 @@
-<!-- v1.7 -->
+<!-- v1.8 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -222,6 +222,35 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
   margin-top:12px;font-size:12px;line-height:1.45;color:var(--muted);
 }
 
+
+.composer-tools{display:flex;gap:9px;margin:10px 0 4px}
+.composer-tool{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  border:1px solid var(--line);border-radius:15px;padding:12px;
+  background:rgba(255,255,255,.045);color:var(--ink);font-weight:800;
+}
+.composer-tool.active{background:var(--accent-soft);border-color:rgba(140,240,199,.30);color:var(--accent)}
+.voice-inline{
+  display:none;margin-top:10px;padding:14px;border-radius:18px;
+  border:1px solid rgba(140,240,199,.18);
+  background:linear-gradient(135deg,rgba(140,240,199,.07),rgba(154,167,255,.07))
+}
+.voice-inline.show{display:block}
+.voice-inline-top{display:flex;align-items:center;gap:12px;text-align:left}
+.mini-orb{
+  width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020
+}
+.mini-orb.listening{animation:miniPulse .9s ease-in-out infinite alternate}
+@keyframes miniPulse{to{transform:scale(1.09);box-shadow:0 0 0 9px rgba(140,240,199,.08)}}
+.voice-inline-title{font-weight:800}
+.voice-inline-time{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.photo-inline{display:none;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.03)}
+.photo-inline.show{display:block}
+.photo-inline .photo-preview{display:block;margin:0;width:100%;max-height:260px;object-fit:contain}
+.photo-inline-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 3px 1px;font-size:12px;color:var(--muted)}
+.photo-inline-row button{border:0;background:transparent;color:#ffc0d7;font-weight:750}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -252,46 +281,38 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
       <button class="dismiss" id="close">Cancel</button>
     </div>
 
-    <p class="helper">Capture it however it arrived: typed, spoken, or seen.</p>
+    <p class="helper">Add whatever helps you remember the moment. Nothing here is required.</p>
 
-    <div class="capture-modes">
-      <button class="mode-btn active" data-mode="type">Type</button>
-      <button class="mode-btn" data-mode="voice">Voice</button>
-      <button class="mode-btn" data-mode="photo">Photo</button>
+    <label class="field-label" for="thought">What made you stop and think?</label>
+    <textarea id="thought" placeholder="Type here, or use Voice to add to your thought"></textarea>
+
+    <div class="composer-tools">
+      <button class="composer-tool" id="voiceToggle" type="button">🎙 <span>Voice</span></button>
+      <label class="composer-tool" for="photoInput">▧ <span>Photo</span></label>
+      <input id="photoInput" type="file" accept="image/*" style="display:none">
     </div>
 
-    <div class="mode-panel active" id="typePanel">
-      <label class="field-label" for="thought">What made you stop and think?</label>
-      <textarea id="thought" placeholder="Type the thought, quote, question, or reaction here"></textarea>
-    </div>
-
-    <div class="mode-panel" id="voicePanel">
-      <div class="voice-recorder">
-        <div class="voice-visual" id="voiceVisual">
-          <div class="voice-ring"></div>
-          <button class="voice-orb" id="voiceBtn" type="button" aria-label="Start voice capture">🎙</button>
+    <div class="voice-inline" id="voiceInline">
+      <div class="voice-inline-top">
+        <div class="mini-orb" id="voiceVisual"><span>🎙</span></div>
+        <div>
+          <div class="voice-inline-title" id="voiceStatus">Ready to listen</div>
+          <div class="voice-inline-time" id="voiceTime">0:00</div>
         </div>
-        <div class="voice-time" id="voiceTime">0:00</div>
-        <div class="voice-status" id="voiceStatus">Tap the microphone and speak naturally.</div>
-        <div class="voice-actions">
-          <button class="voice-action danger" id="voiceClear" type="button">Clear</button>
-          <button class="voice-action primary" id="voiceStop" type="button">Stop</button>
-        </div>
-        <div class="voice-hint">Your words become the moment. You can edit the transcript before saving.</div>
       </div>
-      <label class="field-label" for="voiceText">Transcript</label>
-      <textarea id="voiceText" placeholder="Your transcript will appear here"></textarea>
+      <p class="capture-note">Your words are added to the same thought above. You can keep typing before or after you speak.</p>
+      <div class="voice-actions">
+        <button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button>
+        <button class="voice-action" id="voiceStop" type="button">Stop</button>
+      </div>
     </div>
 
-    <div class="mode-panel" id="photoPanel">
-      <div class="photo-box">
-        <label class="attach-btn" for="photoInput">＋ Add screenshot or photo</label>
-        <input id="photoInput" type="file" accept="image/*" style="display:none">
-        <img id="photoPreview" class="photo-preview" alt="Selected image preview">
-        <p class="capture-note">For this prototype, the image is compressed and stored locally in this browser.</p>
+    <div class="photo-inline" id="photoInline">
+      <img id="photoPreview" class="photo-preview" alt="Selected image preview">
+      <div class="photo-inline-row">
+        <span>Photo attached to this moment</span>
+        <button type="button" id="removePhoto">Remove</button>
       </div>
-      <label class="field-label" for="photoThought">What caught your attention? <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-      <textarea id="photoThought" placeholder="Add a thought, quote, question, or reaction"></textarea>
     </div>
 
     <label class="field-label" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
@@ -321,11 +342,13 @@ const modal=document.getElementById("modal");
 const thought=document.getElementById("thought");
 const source=document.getElementById("source");
 const anchor=document.getElementById("anchor");
-const voiceText=document.getElementById("voiceText");
-const photoThought=document.getElementById("photoThought");
 const photoInput=document.getElementById("photoInput");
 const photoPreview=document.getElementById("photoPreview");
 const voiceBtn=document.getElementById("voiceBtn");
+const voiceToggle=document.getElementById("voiceToggle");
+const voiceInline=document.getElementById("voiceInline");
+const photoInline=document.getElementById("photoInline");
+const removePhoto=document.getElementById("removePhoto");
 const voiceStatus=document.getElementById("voiceStatus");
 const voiceVisual=document.getElementById("voiceVisual");
 const voiceTime=document.getElementById("voiceTime");
@@ -423,20 +446,6 @@ function addReflection(){
   moments.unshift(item); saveData(); justAdded=item.id; view="timeline"; render(); showToast("Reflection saved.");
 }
 
-document.querySelectorAll(".mode-btn").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    captureMode=btn.dataset.mode;
-    document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active",b===btn));
-    document.querySelectorAll(".mode-panel").forEach(p=>p.classList.remove("active"));
-    document.getElementById(captureMode+"Panel").classList.add("active");
-    setTimeout(()=>{
-      if(captureMode==="type") thought.focus();
-      if(captureMode==="voice") voiceText.focus();
-      if(captureMode==="photo") photoThought.focus();
-    },80);
-  });
-});
-
 function compressImage(file){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -464,7 +473,15 @@ photoInput.addEventListener("change",async()=>{
     pendingImageData=await compressImage(file);
     photoPreview.src=pendingImageData;
     photoPreview.classList.add("show");
+    photoInline.classList.add("show");
   }catch(e){showToast("Couldn't load image.");}
+});
+removePhoto.addEventListener("click",()=>{
+  pendingImageData="";
+  photoPreview.src="";
+  photoPreview.classList.remove("show");
+  photoInline.classList.remove("show");
+  photoInput.value="";
 });
 
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -486,13 +503,13 @@ function stopVoiceUI(){
   voiceRunning=false;
   voiceVisual.classList.remove("listening");
   if(voiceTimer){clearInterval(voiceTimer);voiceTimer=null;}
-  voiceStatus.textContent=voiceText.value.trim()?"Transcript ready. Edit it if you want.":"Stopped.";
+  voiceStatus.textContent=thought.value.trim()?"Added to your thought.":"Stopped.";
 }
 function clearVoice(){
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
   voiceSeconds=0;updateVoiceTimer();
-  voiceText.value="";
+  
   voiceStatus.textContent="Tap the microphone and speak naturally.";
 }
 
@@ -502,7 +519,8 @@ if(SpeechRecognition){
   recognition.interimResults=true;
   recognition.lang="en-US";
   let finalTranscript="";
-  recognition.onstart=()=>{startVoiceUI()};
+  let startingText="";
+  recognition.onstart=()=>{startingText=thought.value.trim();finalTranscript="";startVoiceUI()};
   recognition.onresult=(event)=>{
     let interim="";
     for(let i=event.resultIndex;i<event.results.length;i++){
@@ -510,7 +528,8 @@ if(SpeechRecognition){
       if(event.results[i].isFinal) finalTranscript+=chunk+" ";
       else interim+=chunk;
     }
-    voiceText.value=(finalTranscript+interim).trim();
+    const spoken=(finalTranscript+interim).trim();
+    thought.value=[startingText,spoken].filter(Boolean).join(startingText&&spoken?" ":"");
   };
   recognition.onend=()=>{
     if(voiceRunning){
@@ -524,18 +543,24 @@ if(SpeechRecognition){
   };
 }
 
+voiceToggle.addEventListener("click",()=>{
+  const showing=voiceInline.classList.toggle("show");
+  voiceToggle.classList.toggle("active",showing);
+  if(showing) voiceStatus.textContent="Ready to listen";
+});
+
 voiceBtn.addEventListener("click",()=>{
   if(recognition){
     try{
       if(voiceRunning){recognition.stop();stopVoiceUI();}
       else{recognition.start();}
     }catch(e){
-      voiceText.focus();
-      voiceStatus.textContent="Use the iPhone keyboard microphone in the transcript box.";
+      thought.focus();
+      voiceStatus.textContent="Use the iPhone keyboard microphone in the thought box.";
     }
   }else{
-    voiceText.focus();
-    voiceStatus.textContent="Use the iPhone keyboard microphone in the transcript box.";
+    thought.focus();
+    voiceStatus.textContent="Use the iPhone keyboard microphone in the thought box.";
   }
 });
 voiceStop.addEventListener("click",()=>{
@@ -550,11 +575,7 @@ function openCapture(){
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
   voiceSeconds=0; updateVoiceTimer();
-  captureMode="type";
-  document.querySelectorAll(".mode-btn").forEach(b=>b.classList.toggle("active",b.dataset.mode==="type"));
-  document.querySelectorAll(".mode-panel").forEach(p=>p.classList.remove("active"));
-  document.getElementById("typePanel").classList.add("active");
-  setTimeout(()=>thought.focus(),180);
+    setTimeout(()=>thought.focus(),180);
 }
 function closeCapture(){
   modal.style.display="none";modal.setAttribute("aria-hidden","true");
@@ -583,13 +604,9 @@ document.getElementById("close").onclick=closeCapture;
 document.getElementById("save").onclick=()=>{
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
-  let capturedThought="";
-  if(captureMode==="type") capturedThought=thought.value.trim();
-  if(captureMode==="voice") capturedThought=voiceText.value.trim();
-  if(captureMode==="photo") capturedThought=photoThought.value.trim();
-
-  if(captureMode==="photo" && !pendingImageData && !capturedThought){
-    showToast("Add a photo or thought.");
+  let capturedThought=thought.value.trim();
+  if(!pendingImageData && !capturedThought && !source.value.trim() && !anchor.value.trim()){
+    showToast("Add something to capture.");
     return;
   }
   const item={
@@ -598,8 +615,8 @@ document.getElementById("save").onclick=()=>{
     thought:capturedThought,
     source:source.value.trim(),
     anchor:anchor.value.trim(),
-    captureType:captureMode,
-    imageData:captureMode==="photo"?pendingImageData:""
+    captureType:pendingImageData?"photo+thought":"thought",
+    imageData:pendingImageData
   };
   try{
     moments.unshift(item); saveData();
@@ -609,8 +626,9 @@ document.getElementById("save").onclick=()=>{
     return;
   }
   justAdded=item.id;
-  thought.value=voiceText.value=photoThought.value=source.value=anchor.value="";
-  pendingImageData=""; photoPreview.src=""; photoPreview.classList.remove("show"); photoInput.value="";
+  thought.value=source.value=anchor.value="";
+  pendingImageData=""; photoPreview.src=""; photoPreview.classList.remove("show"); photoInline.classList.remove("show"); photoInput.value="";
+  voiceInline.classList.remove("show"); voiceToggle.classList.remove("active");
   closeCapture(); view="timeline"; render(); showToast("Saved.");
 };
 render();
