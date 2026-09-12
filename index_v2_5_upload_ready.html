@@ -1,0 +1,1584 @@
+<!-- v2.5 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Thinking Moments">
+<link rel="manifest" href="manifest.json">
+<title>Thinking Moments</title>
+<style>
+:root{
+  --bg:#0b1020;
+  --bg2:#11182c;
+  --card:rgba(20,27,48,.78);
+  --card-solid:#151d34;
+  --ink:#f7f8ff;
+  --muted:#aeb7cc;
+  --line:rgba(255,255,255,.10);
+  --accent:#8cf0c7;
+  --accent2:#9aa7ff;
+  --accent3:#ff9ecf;
+  --accent-soft:rgba(140,240,199,.12);
+  --accent-deep:#07140f;
+  --safe-bottom:env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box}
+html{
+  background:#0b1020;
+  min-height:100%;
+  overscroll-behavior:none;
+}
+html,body{
+  margin:0;
+  min-height:100%;
+  background:#0b1020;
+  color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overscroll-behavior:none;
+}
+body{
+  min-height:100dvh;
+  position:relative;
+  background:
+    radial-gradient(circle at 15% 0%,rgba(154,167,255,.18),transparent 30%),
+    radial-gradient(circle at 100% 18%,rgba(255,158,207,.12),transparent 28%),
+    linear-gradient(180deg,var(--bg2),var(--bg));
+  background-attachment:fixed;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:-20vh 0;
+  z-index:-1;
+  background:
+    radial-gradient(circle at 15% 8%,rgba(154,167,255,.18),transparent 30%),
+    radial-gradient(circle at 95% 22%,rgba(255,158,207,.12),transparent 28%),
+    linear-gradient(180deg,var(--bg2),var(--bg));
+  pointer-events:none;
+}
+body{min-height:100dvh}
+.app{max-width:560px;margin:auto;min-height:100dvh;padding:calc(18px + env(safe-area-inset-top)) 18px calc(112px + var(--safe-bottom))}
+header{padding:4px 4px 16px}
+h1{font-size:27px;line-height:1.08;margin:0 0 7px;letter-spacing:-.7px}
+header p{margin:0;color:var(--muted);font-size:15px} h1{background:linear-gradient(90deg,#fff 0%,#c8d0ff 48%,#9cf0cc 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav{display:flex;gap:8px;margin:8px 0 18px}
+nav button{flex:1;border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:16px;padding:12px;color:var(--muted);font-weight:700;backdrop-filter:blur(14px)}
+nav button.active{background:linear-gradient(135deg,rgba(140,240,199,.16),rgba(154,167,255,.14));color:#fff;border-color:rgba(140,240,199,.26);box-shadow:0 8px 30px rgba(0,0,0,.16)}
+.card{background:linear-gradient(180deg,rgba(25,33,58,.88),rgba(16,23,42,.88));border:1px solid var(--line);border-radius:24px;padding:18px;margin-bottom:13px;box-shadow:0 16px 45px rgba(0,0,0,.20);backdrop-filter:blur(18px)}
+.date,.source,.label{color:var(--accent);font-weight:800;letter-spacing:.10em}
+.label{color:var(--accent);font-weight:800;letter-spacing:.10em}
+.date{margin-bottom:8px}
+.thought{font-size:18px;line-height:1.34}
+.source{font-size:13px;margin-top:10px}
+.empty{text-align:center;color:var(--muted);padding:54px 22px;line-height:1.5}
+.capture{
+  position:fixed;left:18px;right:18px;bottom:calc(14px + var(--safe-bottom));
+  max-width:524px;margin:auto;border:1px solid rgba(255,255,255,.10);border-radius:19px;
+  background:linear-gradient(135deg,#8cf0c7 0%,#9aa7ff 52%,#ff9ecf 100%);
+  color:#0b1020;padding:17px;font-size:16px;font-weight:850;
+  box-shadow:0 16px 44px rgba(70,87,170,.34);z-index:20
+}
+.toast{
+  position:fixed;left:50%;bottom:calc(88px + var(--safe-bottom));transform:translateX(-50%);
+  background:#24231f;color:white;padding:10px 14px;border-radius:999px;font-size:14px;
+  opacity:0;pointer-events:none;transition:.2s;z-index:50
+}
+.toast.show{opacity:1}
+.modal{
+  position:fixed;inset:0;min-height:100dvh;background:rgba(0,0,0,.42);display:none;z-index:40
+}
+.sheet{
+  position:absolute;inset:0;background:radial-gradient(circle at 10% 0%,rgba(154,167,255,.20),transparent 35%),linear-gradient(180deg,#10172a,#0b1020);
+  display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top)) 18px calc(18px + var(--safe-bottom));overflow:auto
+}
+.sheet-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.sheet h2{margin:0;font-size:24px}
+.sheet .dismiss{border:0;background:transparent;color:var(--muted);font-size:16px;padding:8px 0 8px 12px}
+.sheet .helper{color:var(--muted);font-size:14px;line-height:1.4;margin:0 0 14px}
+.field-label{font-size:14px;font-weight:700;margin:14px 0 7px}
+textarea,input{
+  width:100%;border:1px solid var(--line);border-radius:16px;padding:14px;font:inherit;background:rgba(255,255,255,.055);color:var(--ink)
+}
+textarea{min-height:170px;resize:none;font-size:18px;line-height:1.4}
+input{font-size:16px}
+textarea:focus,input:focus{outline:3px solid rgba(140,240,199,.18);border-color:rgba(140,240,199,.60)}
+.save{width:100%;margin-top:14px;padding:14px;border:0;border-radius:14px;background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;font-weight:850;font-size:16px}
+.reflect-card h2{font-size:22px;margin:0 0 8px}
+.reflect,.reflect-card{background:linear-gradient(180deg,rgba(26,34,58,.92),rgba(16,23,42,.92))}
+.reflect-note{color:var(--muted);line-height:1.5;margin:0}
+.reflect textarea{min-height:120px}
+.reflect{padding-bottom:96px}
+body.keyboard-open .capture{
+  position:fixed;left:18px;right:18px;bottom:calc(14px + var(--safe-bottom));
+  max-width:524px;margin:auto;border:1px solid rgba(255,255,255,.10);border-radius:19px;
+  background:linear-gradient(135deg,#8cf0c7 0%,#9aa7ff 52%,#ff9ecf 100%);
+  color:#0b1020;padding:17px;font-size:16px;font-weight:850;
+  box-shadow:0 16px 44px rgba(70,87,170,.34);z-index:20
+}
+body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
+.detailBack{border:0;background:none;padding:0 0 15px;color:var(--muted);font-size:14px}
+.smallbtn{margin-top:12px;border:1px solid var(--line);background:transparent;border-radius:12px;padding:10px}
+.moment-new{animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:.2;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+.capture-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:2px 0 10px}
+.mode-btn{border:1px solid var(--line);background:rgba(255,255,255,.045);color:var(--muted);border-radius:14px;padding:11px 8px;font-weight:750}
+.mode-btn.active{background:var(--accent-soft);color:var(--accent);border-color:rgba(140,240,199,.28)}
+.mode-panel{display:none}.mode-panel.active{display:block}
+.voice-box,.photo-box{border:1px dashed rgba(255,255,255,.18);border-radius:18px;padding:18px;text-align:center;background:rgba(255,255,255,.025)}
+.voice-orb{width:72px;height:72px;margin:4px auto 12px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;font-size:30px;box-shadow:0 12px 35px rgba(94,114,211,.28)}
+.voice-orb.listening{animation:pulse 1s infinite alternate}
+@keyframes pulse{from{transform:scale(1);box-shadow:0 12px 35px rgba(94,114,211,.28)}to{transform:scale(1.07);box-shadow:0 14px 42px rgba(140,240,199,.45)}}
+.capture-note{font-size:13px;color:var(--muted);line-height:1.45;margin:8px 0 0}
+.photo-preview{display:none;margin-top:12px;width:100%;max-height:260px;object-fit:contain;border-radius:14px;border:1px solid var(--line)}
+.photo-preview.show{display:block}
+.attach-btn{display:inline-block;border:0;border-radius:14px;background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;padding:12px 14px;font-weight:800}
+.moment-image{width:100%;max-height:320px;object-fit:cover;border-radius:16px;margin-top:12px;border:1px solid var(--line)}
+
+
+.notice-card{
+  background:linear-gradient(135deg,rgba(140,240,199,.10),rgba(154,167,255,.10));
+  border:1px solid rgba(140,240,199,.22);
+  border-radius:22px;
+  padding:16px;
+  margin:0 0 14px;
+  box-shadow:0 14px 36px rgba(0,0,0,.16);
+}
+.notice-eyebrow{
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.12em;
+  color:var(--accent);
+  margin-bottom:8px;
+}
+.notice-title{font-size:17px;font-weight:800;line-height:1.3}
+.notice-copy{margin-top:7px;color:var(--muted);font-size:14px;line-height:1.45}
+
+
+.voice-recorder{
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:22px;
+  padding:20px 16px 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.02));
+  text-align:center;
+}
+.voice-visual{
+  position:relative;
+  width:108px;height:108px;margin:2px auto 14px;
+  display:grid;place-items:center;
+}
+.voice-ring,.voice-ring::before,.voice-ring::after{
+  content:"";
+  position:absolute;inset:0;border-radius:50%;
+  border:1px solid rgba(140,240,199,.20);
+}
+.voice-ring::before{inset:10px;border-color:rgba(154,167,255,.22)}
+.voice-ring::after{inset:20px;border-color:rgba(255,158,207,.20)}
+.voice-orb{
+  position:relative;z-index:2;
+  width:68px;height:68px;border:0;border-radius:50%;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff 55%,#ff9ecf);
+  color:#0b1020;font-size:29px;
+  box-shadow:0 14px 38px rgba(94,114,211,.30);
+}
+.voice-visual.listening .voice-ring{
+  animation:echoPulse 1.2s ease-out infinite;
+}
+.voice-visual.listening .voice-ring::before{
+  animation:echoPulse 1.2s .15s ease-out infinite;
+}
+.voice-visual.listening .voice-ring::after{
+  animation:echoPulse 1.2s .30s ease-out infinite;
+}
+@keyframes echoPulse{
+  0%{transform:scale(.86);opacity:.95}
+  100%{transform:scale(1.28);opacity:0}
+}
+.voice-time{
+  font-variant-numeric:tabular-nums;
+  font-size:32px;font-weight:800;letter-spacing:.02em;
+  margin:4px 0 2px;
+}
+.voice-status{font-size:14px;color:var(--muted);margin-bottom:14px}
+.voice-actions{display:flex;gap:8px;justify-content:center}
+.voice-action{
+  flex:1;border:1px solid var(--line);border-radius:14px;
+  padding:11px 12px;background:rgba(255,255,255,.045);
+  color:var(--ink);font-weight:750;
+}
+.voice-action.primary{
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);
+  color:#0b1020;border:0;
+}
+.voice-action.danger{
+  color:#ffc0d7;
+}
+.voice-hint{
+  margin-top:12px;font-size:12px;line-height:1.45;color:var(--muted);
+}
+
+
+.composer-tools{display:flex;gap:9px;margin:10px 0 4px}
+.composer-tool{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  border:1px solid var(--line);border-radius:15px;padding:12px;
+  background:rgba(255,255,255,.045);color:var(--ink);font-weight:800;
+}
+.composer-tool.active{background:var(--accent-soft);border-color:rgba(140,240,199,.30);color:var(--accent)}
+.voice-inline{
+  display:none;margin-top:10px;padding:14px;border-radius:18px;
+  border:1px solid rgba(140,240,199,.18);
+  background:linear-gradient(135deg,rgba(140,240,199,.07),rgba(154,167,255,.07))
+}
+.voice-inline.show{display:block}
+.voice-inline-top{display:flex;align-items:center;gap:12px;text-align:left}
+.mini-orb{
+  width:48px;height:48px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020
+}
+.mini-orb.listening{animation:miniPulse .9s ease-in-out infinite alternate}
+@keyframes miniPulse{to{transform:scale(1.09);box-shadow:0 0 0 9px rgba(140,240,199,.08)}}
+.voice-inline-title{font-weight:800}
+.voice-inline-time{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.photo-inline{display:none;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.03)}
+.photo-inline.show{display:block}
+.photo-inline .photo-preview{display:block;margin:0;width:100%;max-height:260px;object-fit:contain}
+.photo-inline-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 3px 1px;font-size:12px;color:var(--muted)}
+.photo-inline-row button{border:0;background:transparent;color:#ffc0d7;font-weight:750}
+
+
+.go-deeper-wrap{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+}
+.go-deeper-btn{
+  width:100%;
+  border:1px solid rgba(140,240,199,.20);
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(140,240,199,.08),rgba(154,167,255,.08));
+  color:var(--accent);
+  padding:11px 12px;
+  font-weight:850;
+  letter-spacing:.01em;
+}
+.go-deeper-panel{
+  margin-top:10px;
+  border:1px solid rgba(140,240,199,.20);
+  border-radius:17px;
+  padding:14px;
+  background:linear-gradient(135deg,rgba(140,240,199,.065),rgba(154,167,255,.055));
+}
+.go-deeper-kicker{
+  color:var(--accent);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.13em;
+  margin-bottom:7px;
+}
+.go-deeper-question{
+  font-size:16px;
+  line-height:1.45;
+  font-weight:720;
+}
+.go-deeper-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.go-deeper-actions button{
+  flex:1;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+  background:rgba(255,255,255,.04);
+  color:var(--ink);
+  font-weight:750;
+}
+.go-deeper-actions .primary{
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);
+  color:#0b1020;
+  border:0;
+}
+.instant-reflect{
+  width:100%;
+  margin-top:10px;
+  min-height:92px;
+}
+.saved-meaning{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:8px;
+  line-height:1.4;
+}
+
+
+.detail-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px
+}
+.detail-menu-wrap{position:relative}
+.detail-menu-btn{
+  width:42px;height:42px;border-radius:14px;border:1px solid var(--line);
+  background:rgba(255,255,255,.045);color:var(--ink);font-size:21px;font-weight:900;
+  display:grid;place-items:center
+}
+.detail-menu{
+  position:absolute;right:0;top:48px;min-width:152px;z-index:10;
+  padding:6px;border:1px solid var(--line);border-radius:15px;
+  background:#151d34;box-shadow:0 18px 50px rgba(0,0,0,.38);display:none
+}
+.detail-menu.show{display:block}
+.detail-menu button{
+  width:100%;text-align:left;border:0;background:transparent;color:var(--ink);
+  border-radius:10px;padding:11px 12px;font-weight:750
+}
+.detail-menu button:active{background:rgba(255,255,255,.06)}
+.detail-menu .danger{color:#ffb2ce}
+.edited-note{font-size:11px;color:var(--muted);margin-top:9px}
+.editing-badge{
+  display:inline-flex;align-items:center;gap:6px;margin:0 0 12px;
+  padding:7px 10px;border-radius:999px;border:1px solid rgba(154,167,255,.22);
+  background:rgba(154,167,255,.08);color:#cbd1ff;font-size:11px;font-weight:850;
+  letter-spacing:.05em
+}
+
+
+.linked-reflections{
+  margin-top:14px;padding-top:12px;border-top:1px solid var(--line)
+}
+.linked-reflection{
+  margin-top:9px;padding:12px;border-radius:14px;
+  background:rgba(255,255,255,.035);border:1px solid var(--line)
+}
+.linked-reflection .label{margin-bottom:5px}
+
+
+.original-moment-link{
+  margin-top:14px;padding:13px;border:1px solid rgba(154,167,255,.20);
+  border-radius:15px;background:rgba(154,167,255,.055)
+}
+.original-moment-link .label{margin-bottom:6px}
+.original-moment-link .thought{font-size:15px;line-height:1.4}
+.original-moment-link button{
+  margin-top:10px;width:100%;border:1px solid var(--line);border-radius:12px;
+  padding:10px 12px;background:rgba(255,255,255,.045);color:var(--ink);
+  font-weight:800
+}
+.parent-jump{
+  display:inline-flex;margin-top:8px;border:0;background:transparent;
+  color:var(--accent);font-size:12px;font-weight:800;padding:0
+}
+
+
+.reflection-stack{display:flex;flex-direction:column;gap:12px}
+.reflect-card{
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:14px;
+  background:rgba(255,255,255,.035)
+}
+.reflect-card .prompt{
+  margin-top:8px;
+  font-size:14px;
+  line-height:1.45;
+  color:var(--muted)
+}
+.reflection-answer{
+  margin-top:10px;
+  padding:11px 12px;
+  border-radius:14px;
+  background:rgba(140,240,199,.05);
+  border:1px solid rgba(140,240,199,.14)
+}
+.reflection-count{
+  display:inline-flex;
+  margin-top:9px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:var(--accent);
+  font-size:12px;
+  font-weight:800
+}
+.reflect-empty{
+  padding:26px 16px;
+  text-align:center;
+  color:var(--muted);
+  line-height:1.5
+}
+
+
+.timeline-section{
+  margin:0 0 26px;
+}
+.timeline-section-head{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 10px;
+  padding:6px 0 6px;
+  background:transparent;
+}
+.timeline-section-title{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink);
+}
+.timeline-section-count{
+  font-size:11px;
+  font-weight:750;
+  color:var(--muted);
+}
+.timeline-section.month-section{
+  margin-top:8px;
+}
+.timeline-section.month-section .card{
+  padding-top:13px;
+  padding-bottom:13px;
+}
+.timeline-section.month-section .thought{
+  font-size:16px;
+}
+.timeline-section.month-section .moment-image{
+  max-height:220px;
+  object-fit:cover;
+}
+.timeline-section-spine{
+  height:1px;
+  background:linear-gradient(90deg,var(--line),transparent);
+  margin:4px 0 14px;
+}
+
+
+.reflect-time-section{
+  margin:0 0 26px;
+}
+.reflect-time-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 10px;
+  padding:6px 0;
+}
+.reflect-time-title{
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink);
+}
+.reflect-time-count{
+  font-size:11px;
+  font-weight:750;
+  color:var(--muted);
+}
+.reflect-origin{
+  margin-top:10px;
+  padding-top:9px;
+  border-top:1px solid var(--line);
+  font-size:12px;
+  line-height:1.4;
+  color:var(--muted);
+}
+
+
+.echo-response{
+  margin-top:12px;
+  border-top:1px solid var(--line);
+  padding-top:11px;
+}
+.echo-response-trigger{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border:0;
+  background:transparent;
+  color:var(--accent);
+  padding:4px 0;
+  font-size:12px;
+  font-weight:850;
+  text-align:left;
+}
+.echo-response-trigger span:last-child{
+  color:var(--muted);
+  font-weight:700;
+}
+.echo-response-panel{
+  margin-top:10px;
+  border:1px solid rgba(140,240,199,.18);
+  border-radius:16px;
+  padding:14px;
+  background:linear-gradient(135deg,rgba(140,240,199,.055),rgba(154,167,255,.045));
+}
+.echo-response-kicker{
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.13em;
+  color:var(--accent);
+  margin-bottom:7px;
+}
+.echo-response-text{
+  font-size:16px;
+  line-height:1.48;
+  font-weight:720;
+}
+.echo-response-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.echo-response-actions button{
+  flex:1;
+  min-height:42px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.04);
+  color:var(--ink);
+  font-weight:760;
+}
+.echo-response-actions .primary{
+  border:0;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);
+  color:#0b1020;
+}
+.echo-new-value{
+  margin:10px 0 0;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(140,240,199,.16);
+  background:rgba(140,240,199,.045);
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+}
+
+
+.echo-search-wrap{position:relative;margin:2px 0 18px}
+.echo-search{width:100%;box-sizing:border-box;min-height:46px;padding:0 42px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.055);color:var(--ink);font:inherit;font-size:15px;outline:none;-webkit-appearance:none;backdrop-filter:blur(14px)}
+.echo-search:focus{border-color:rgba(140,240,199,.42);background:rgba(255,255,255,.075)}
+.echo-search::placeholder{color:var(--muted)}
+.echo-search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;font-size:16px}
+.echo-search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:18px;display:grid;place-items:center}
+.search-summary{margin:-8px 2px 14px;color:var(--muted);font-size:12px;line-height:1.4}
+
+@media (min-width:700px){
+  .modal{display:none!important}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>Capture the moments that make you think.</h1>
+  <p>See where they take you.</p>
+</header>
+
+<nav>
+  <button id="timelineTab" class="active">Timeline</button>
+  <button id="reflectTab">Reflect</button>
+</nav>
+
+<main id="main"></main>
+<button class="capture" id="captureBtn">＋ Capture a moment</button>
+</div>
+
+<div class="toast" id="toast">Saved.</div>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="captureTitle">
+    <div class="sheet-top">
+      <h2 id="captureTitle">Capture a moment</h2>
+      <button class="dismiss" id="close">Cancel</button>
+    </div>
+
+    <p class="helper">Add whatever helps you remember the moment. Nothing here is required.</p>
+
+    <label class="field-label" id="thoughtLabel" for="thought">What made you stop and think?</label>
+    <textarea id="thought" placeholder="Type here, or use Voice to add to your thought"></textarea>
+
+    <div class="composer-tools" id="composerTools">
+      <button class="composer-tool" id="voiceToggle" type="button">🎙 <span>Voice</span></button>
+      <label class="composer-tool" for="photoInput">▧ <span>Photo</span></label>
+      <input id="photoInput" type="file" accept="image/*" style="display:none">
+    </div>
+
+    <div class="voice-inline" id="voiceInline">
+      <div class="voice-inline-top">
+        <div class="mini-orb" id="voiceVisual"><span>🎙</span></div>
+        <div>
+          <div class="voice-inline-title" id="voiceStatus">Ready to listen</div>
+          <div class="voice-inline-time" id="voiceTime">0:00</div>
+        </div>
+      </div>
+      <p class="capture-note">Your words are added to the same thought above. You can keep typing before or after you speak.</p>
+      <div class="voice-actions">
+        <button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button>
+        <button class="voice-action" id="voiceStop" type="button">Stop</button>
+      </div>
+    </div>
+
+    <div class="photo-inline" id="photoInline">
+      <img id="photoPreview" class="photo-preview" alt="Selected image preview">
+      <div class="photo-inline-row">
+        <span>Photo attached to this moment</span>
+        <button type="button" id="removePhoto">Remove</button>
+      </div>
+    </div>
+
+    <label class="field-label" id="sourceLabel" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+    <input id="source" placeholder="Podcast, book, conversation, article...">
+
+    <label class="field-label" id="anchorLabel" for="anchor">Anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+    <input id="anchor" placeholder="Timestamp, page, link, or cue">
+
+    <button class="save" id="save">Save moment</button>
+  </div>
+</div>
+
+<script>
+const KEY="echo_v1";
+const seed=[
+ {id:"s1",date:"Sep 11, 2026",thought:"Maybe discipline isn't the problem. Maybe my environment is.",source:"Podcast — The Knowledge Project",anchor:"42:18"},
+ {id:"s2",date:"Sep 6, 2026",thought:"I keep returning to the idea that the questions we ask shape the lives we build.",source:"Conversation",anchor:"Dinner"},
+ {id:"s3",date:"Aug 29, 2026",thought:"What if changing my mind is evidence of progress rather than inconsistency?",source:"Book — Thinking in Bets",anchor:"p. 117"}
+];
+
+let moments=JSON.parse(localStorage.getItem(KEY)||"null")||seed;
+let view="timeline";
+let justAdded=null;
+let goDeepId=null;
+let editingId=null;
+let reflectFocusId=null;
+let echoResponseId=null;
+let timelineSearch="";
+let reflectSearch="";
+
+const main=document.getElementById("main");
+const modal=document.getElementById("modal");
+const thought=document.getElementById("thought");
+const thoughtLabel=document.getElementById("thoughtLabel");
+const captureTitle=document.getElementById("captureTitle");
+const saveBtn=document.getElementById("save");
+const composerTools=document.getElementById("composerTools");
+const sourceLabel=document.getElementById("sourceLabel");
+const anchorLabel=document.getElementById("anchorLabel");
+const source=document.getElementById("source");
+const anchor=document.getElementById("anchor");
+const photoInput=document.getElementById("photoInput");
+const photoPreview=document.getElementById("photoPreview");
+const voiceBtn=document.getElementById("voiceBtn");
+const voiceToggle=document.getElementById("voiceToggle");
+const voiceInline=document.getElementById("voiceInline");
+const photoInline=document.getElementById("photoInline");
+const removePhoto=document.getElementById("removePhoto");
+const voiceStatus=document.getElementById("voiceStatus");
+const voiceVisual=document.getElementById("voiceVisual");
+const voiceTime=document.getElementById("voiceTime");
+const voiceStop=document.getElementById("voiceStop");
+const toast=document.getElementById("toast");
+let pendingImageData="";
+let voiceSeconds=0;
+let voiceTimer=null;
+let voiceRunning=false;
+
+function saveData(){localStorage.setItem(KEY,JSON.stringify(moments))}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function showToast(msg="Saved."){
+  toast.textContent=msg;toast.classList.add("show");
+  setTimeout(()=>toast.classList.remove("show"),900)
+}
+
+function getEchoResponse(m){
+  const raw=(m?.thought||"").trim();
+  const t=raw.toLowerCase();
+
+  // V2.4 prototype: one useful response, chosen contextually.
+  // This is local rule-based logic, not a claim of live AI intelligence.
+  if(!raw && m?.imageData){
+    return {
+      type:"QUESTION WORTH SITTING WITH",
+      text:"What in this image made you stop—and why did it feel worth keeping?"
+    };
+  }
+
+  if(/\b(always|never|everyone|nobody|obvious|impossible|must)\b/.test(t)){
+    return {
+      type:"ANOTHER ANGLE",
+      text:"What evidence or experience would make you soften this conclusion?"
+    };
+  }
+
+  if(/\b(discipline|motivation|willpower|habit|routine)\b/.test(t)){
+    return {
+      type:"IF THAT'S TRUE…",
+      text:"Where could you redesign the environment so the better choice requires less willpower?"
+    };
+  }
+
+  if(/\b(should|supposed to|have to|need to)\b/.test(t)){
+    return {
+      type:"ANOTHER ANGLE",
+      text:"Which part of this expectation is genuinely yours—and which part may have been handed to you?"
+    };
+  }
+
+  if(/\b(parent|parenting|child|kid|son|daughter|marriage|wife|husband|relationship)\b/.test(t)){
+    return {
+      type:"QUESTION WORTH SITTING WITH",
+      text:"What might become clearer if you tried to describe this from the other person's experience?"
+    };
+  }
+
+  if(/\b(work|school|teacher|business|project|career)\b/.test(t)){
+    return {
+      type:"IF THAT'S TRUE…",
+      text:"What is the smallest real-world experiment that could test this idea?"
+    };
+  }
+
+  if(/\b(maybe|what if|wonder|could|might)\b/.test(t)){
+    return {
+      type:"IF THAT'S TRUE…",
+      text:"If this turned out to be true, what would it change about the way you act or decide?"
+    };
+  }
+
+  if(/\?/.test(raw)){
+    return {
+      type:"QUESTION WORTH SITTING WITH",
+      text:"What answer are you currently leaning toward—and what would change your mind?"
+    };
+  }
+
+  return {
+    type:"GO DEEPER",
+    text:"What about this felt important enough to stop you—and what might it be asking you to reconsider?"
+  };
+}
+
+function getGoDeeperPrompt(m){
+  return getEchoResponse(m).text;
+}
+
+function shouldSurfaceEchoResponse(m){
+  // Restraint matters: never force the prompt open.
+  // A newly saved Moment gets a quiet invitation; older Moments keep it available on demand.
+  return !!m;
+}
+
+function toggleEchoResponse(id){
+  echoResponseId=String(echoResponseId)===String(id)?null:id;
+  goDeepId=echoResponseId;
+  renderTimeline();
+}
+
+function toggleGoDeeper(id){
+  toggleEchoResponse(id);
+}
+
+function saveInstantReflection(id){
+  const el=document.getElementById("instantReflection-"+id);
+  const v=el?.value.trim();
+  if(!v){
+    showToast("Add a reflection first.");
+    return;
+  }
+
+  const parent=moments.find(m=>String(m.id)===String(id));
+  const item={
+    id:crypto.randomUUID?crypto.randomUUID():Date.now(),
+    date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+    createdAt:new Date().toISOString(),
+    thought:v,
+    source:"Reflection",
+    parentId:id,
+    anchor:parent?.thought ? "From a captured moment" : ""
+  };
+
+  moments.unshift(item);
+  try{
+    saveData();
+  }catch(e){
+    moments.shift();
+    showToast("Couldn't save reflection. Browser storage may be full.");
+    return;
+  }
+
+  justAdded=item.id;
+  goDeepId=null;
+  echoResponseId=null;
+  reflectFocusId=id;
+  view="reflect";
+  render();
+  showToast("Reflection saved to Reflect.");
+}
+function render(){
+  document.body.classList.remove("keyboard-open");
+  document.getElementById("timelineTab").classList.toggle("active",view==="timeline");
+  document.getElementById("reflectTab").classList.toggle("active",view==="reflect");
+  const cap=document.getElementById("captureBtn");
+  if(view==="reflect"){
+    cap.style.display="none";
+  } else {
+    cap.style.display="block";
+    cap.textContent="＋ Capture a moment";
+    cap.style.maxWidth="524px";
+    cap.style.left="18px";
+    cap.style.right="18px";
+    cap.style.margin="auto";
+  }
+  if(view==="timeline") renderTimeline(); else renderReflect();
+}
+function momentDate(m){
+  if(m.createdAt){
+    const d=new Date(m.createdAt);
+    if(!Number.isNaN(d.getTime())) return d;
+  }
+  if(m.date){
+    const d=new Date(m.date);
+    if(!Number.isNaN(d.getTime())) return d;
+  }
+  return new Date(0);
+}
+
+function startOfLocalDay(d){
+  return new Date(d.getFullYear(),d.getMonth(),d.getDate());
+}
+
+function startOfWeekMonday(d){
+  const x=startOfLocalDay(d);
+  const day=x.getDay();
+  const diff=(day+6)%7;
+  x.setDate(x.getDate()-diff);
+  return x;
+}
+
+function timelineBucket(m,now=new Date()){
+  const d=startOfLocalDay(momentDate(m));
+  const thisWeek=startOfWeekMonday(now);
+  const lastWeek=new Date(thisWeek);
+  lastWeek.setDate(lastWeek.getDate()-7);
+
+  if(d>=thisWeek){
+    return {key:"this-week",label:"This Week",rank:0,type:"recent"};
+  }
+  if(d>=lastWeek && d<thisWeek){
+    return {key:"last-week",label:"Last Week",rank:1,type:"recent"};
+  }
+
+  if(d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth()){
+    return {key:"earlier-this-month",label:"Earlier This Month",rank:2,type:"recent"};
+  }
+
+  const key=`month-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+  const label=d.toLocaleDateString("en-US",{month:"long",year:"numeric"});
+  const monthRank=(now.getFullYear()-d.getFullYear())*12+(now.getMonth()-d.getMonth());
+  return {key,label,rank:100+monthRank,type:"month"};
+}
+
+function renderMomentCard(m){
+  const open=String(echoResponseId)===String(m.id) || String(goDeepId)===String(m.id);
+  const reflectionCount=moments.filter(r=>r.source==="Reflection"&&String(r.parentId)===String(m.id)).length;
+  const response=getEchoResponse(m);
+
+  return `<article class="card ${m.id===justAdded?"moment-new":""}" data-id="${m.id}">
+    <div class="date">${esc(m.date)}</div>
+    <div class="thought">${esc(m.thought)||"Captured moment"}</div>
+    ${(m.source||m.anchor)?`<div class="source">${esc(m.source||"")}${m.source&&m.anchor?" · ":""}${esc(m.anchor||"")}</div>`:""}
+    ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
+
+    ${reflectionCount?`
+      <button class="reflection-count" type="button" data-reflect-parent="${m.id}">
+        ${reflectionCount} ${reflectionCount===1?"reflection":"reflections"} · View →
+      </button>`:""}
+
+    ${shouldSurfaceEchoResponse(m)?`<div class="echo-response">
+      <button class="echo-response-trigger" type="button" data-deep="${m.id}">
+        <span>${open?"Close":"Go deeper →"}</span>
+        <span>${open?"":"optional"}</span>
+      </button>
+
+      ${open?`<div class="echo-response-panel">
+        <div class="echo-response-kicker">${esc(response.type)}</div>
+        <div class="echo-response-text">${esc(response.text)}</div>
+        <textarea class="instant-reflect" id="instantReflection-${m.id}" placeholder="What comes up for you?"></textarea>
+        <div class="echo-response-actions">
+          <button type="button" onclick="toggleEchoResponse('${m.id}')">Not now</button>
+          <button class="primary" type="button" onclick="saveInstantReflection('${m.id}')">Save reflection</button>
+        </div>
+      </div>`:""}
+    </div>`:""}
+  </article>`;
+}
+
+
+function searchBarHTML(kind,value){
+  const label=kind==="timeline"?"Search moments":"Search reflections";
+  return `<div class="echo-search-wrap"><span class="echo-search-icon">⌕</span><input class="echo-search" id="${kind}Search" type="search" placeholder="${label}" value="${esc(value)}" autocomplete="off">${value?`<button class="echo-search-clear" id="${kind}SearchClear" type="button" aria-label="Clear search">×</button>`:""}</div>`;
+}
+function searchableMomentText(m){return [m.thought,m.source,m.anchor].filter(Boolean).join(" ").toLowerCase()}
+function searchableReflectionText(r){
+  const p=r.parentId?moments.find(m=>String(m.id)===String(r.parentId)):null;
+  return [r.thought,r.anchor,p?.thought,p?.source,p?.anchor].filter(Boolean).join(" ").toLowerCase();
+}
+function wireSearch(kind){
+  const input=document.getElementById(kind+"Search"); if(!input)return;
+  input.addEventListener("input",()=>{
+    if(kind==="timeline")timelineSearch=input.value; else reflectSearch=input.value;
+    const pos=input.selectionStart;
+    if(kind==="timeline")renderTimeline(); else renderReflect();
+    const next=document.getElementById(kind+"Search");
+    if(next){next.focus({preventScroll:true});try{next.setSelectionRange(pos,pos)}catch(e){}}
+  });
+  const clear=document.getElementById(kind+"SearchClear");
+  if(clear)clear.onclick=()=>{
+    if(kind==="timeline")timelineSearch="";else reflectSearch="";
+    if(kind==="timeline")renderTimeline();else renderReflect();
+    document.getElementById(kind+"Search")?.focus({preventScroll:true});
+  };
+}
+function renderTimeline(){
+  const q=timelineSearch.trim().toLowerCase();
+  const allTimelineMoments=moments.filter(m=>m.source!=="Reflection").slice().sort((a,b)=>momentDate(b)-momentDate(a));
+  const timelineMoments=q?allTimelineMoments.filter(m=>searchableMomentText(m).includes(q)):allTimelineMoments;
+  if(!allTimelineMoments.length){
+    main.innerHTML=searchBarHTML("timeline",timelineSearch)+'<div class="empty">Your timeline is empty.<br><br>Capture the first moment that makes you think.</div>';wireSearch("timeline");return;
+  }
+  if(!timelineMoments.length){
+    main.innerHTML=searchBarHTML("timeline",timelineSearch)+`<div class="search-summary">No Moments match “${esc(timelineSearch)}”.</div>`;wireSearch("timeline");return;
+  }
+
+  const now=new Date();
+  const groups=new Map();
+
+  timelineMoments.forEach(m=>{
+    const bucket=timelineBucket(m,now);
+    if(!groups.has(bucket.key)){
+      groups.set(bucket.key,{...bucket,items:[]});
+    }
+    groups.get(bucket.key).items.push(m);
+  });
+
+  const ordered=[...groups.values()].sort((a,b)=>a.rank-b.rank);
+
+  main.innerHTML=searchBarHTML("timeline",timelineSearch)+(q?`<div class="search-summary">${timelineMoments.length} ${timelineMoments.length===1?"Moment":"Moments"} found</div>`:"")+ordered.map(group=>`
+    <section class="timeline-section ${group.type==="month"?"month-section":""}">
+      <div class="timeline-section-head">
+        <div class="timeline-section-title">${esc(group.label)}</div>
+        <div class="timeline-section-count">${group.items.length} ${group.items.length===1?"moment":"moments"}</div>
+      </div>
+      <div class="timeline-section-spine"></div>
+      ${group.items.map(renderMomentCard).join("")}
+    </section>
+  `).join("");
+
+  document.querySelectorAll(".card[data-id]").forEach(c=>{
+    c.onclick=(e)=>{
+      if(e.target.closest("button,textarea,input,label"))return;
+      detail(c.dataset.id);
+    };
+  });
+
+  document.querySelectorAll("[data-deep]").forEach(b=>{
+    b.onclick=(e)=>{
+      e.stopPropagation();
+      toggleGoDeeper(b.dataset.deep);
+    };
+  });
+
+  document.querySelectorAll("[data-reflect-parent]").forEach(b=>{
+    b.onclick=(e)=>{
+      e.stopPropagation();
+      view="reflect";
+      reflectFocusId=b.dataset.reflectParent;
+      render();
+    };
+  });
+
+  wireSearch("timeline");
+  justAdded=null;
+}
+function detail(id){
+  const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
+  const isReflection=m.source==="Reflection";
+  const parent=isReflection && m.parentId
+    ? moments.find(x=>String(x.id)===String(m.parentId))
+    : null;
+
+  main.innerHTML=`<div class="detail-head">
+    <button class="detailBack" onclick="${isReflection?'view=\'reflect\';render()':'view=\'timeline\';render()'}">← ${isReflection?"Reflect":"Timeline"}</button>
+    <div class="detail-menu-wrap">
+      <button class="detail-menu-btn" id="detailMenuBtn" aria-label="More options">•••</button>
+      <div class="detail-menu" id="detailMenu">
+        <button type="button" onclick="openEdit('${m.id}')">Edit</button>
+        <button type="button" class="danger" onclick="deleteItem('${m.id}')">Delete</button>
+      </div>
+    </div>
+  </div>
+  <article class="card">
+    <div class="label">${isReflection?"REFLECTION":"MOMENT"}</div>
+    <div class="date" style="margin-top:8px">${esc(m.date)}</div>
+    <div class="thought">${esc(m.thought)||"Captured moment"}</div>
+    ${!isReflection&&m.source?`<div class="source">${esc(m.source)}</div>`:""}
+    ${!isReflection&&m.anchor?`<div class="source">Anchor: ${esc(m.anchor)}</div>`:""}
+    ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
+    ${m.updatedAt?`<div class="edited-note">Edited ${esc(new Date(m.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}))}</div>`:""}
+
+    ${isReflection && parent ? `<div class="original-moment-link">
+      <div class="label">ORIGINAL MOMENT</div>
+      <div class="date">${esc(parent.date)}</div>
+      <div class="thought">${esc(parent.thought)||"Captured moment"}</div>
+      ${(parent.source||parent.anchor)?`<div class="source">${esc(parent.source||"")}${parent.source&&parent.anchor?" · ":""}${esc(parent.anchor||"")}</div>`:""}
+      ${parent.imageData?`<img class="moment-image" src="${parent.imageData}" alt="Original captured image">`:""}
+      <button type="button" onclick="detail('${parent.id}')">View full original moment →</button>
+    </div>`:""}
+
+    ${isReflection && m.parentId && !parent ? `<div class="original-moment-link">
+      <div class="label">ORIGINAL MOMENT</div>
+      <div class="source">The original moment is no longer available.</div>
+    </div>`:""}
+    ${isReflection && !m.parentId ? `<div class="original-moment-link">
+      <div class="label">REFLECTION TYPE</div>
+      <div class="source">Standalone reflection</div>
+    </div>`:""}
+
+    ${!isReflection && moments.some(r=>String(r.parentId)===String(m.id))?`<div class="linked-reflections">
+      <div class="label">REFLECTIONS ON THIS MOMENT</div>
+      ${moments.filter(r=>String(r.parentId)===String(m.id)).map(r=>`
+        <div class="linked-reflection" onclick="detail('${r.id}')">
+          <div class="label">REFLECTION</div>
+          <div class="thought" style="font-size:15px">${esc(r.thought)}</div>
+          <div class="date">${esc(r.date)}</div>
+        </div>`).join("")}
+    </div>`:""}
+
+    ${!isReflection?`<div class="go-deeper-panel" style="margin-top:14px">
+      <div class="go-deeper-kicker">${esc(getEchoResponse(m).type)}</div>
+      <div class="go-deeper-question">${esc(getEchoResponse(m).text)}</div>
+    </div>`:""}
+    ${!isReflection?`<button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>`:""}
+  </article>`;
+
+  const menuBtn=document.getElementById("detailMenuBtn");
+  const menu=document.getElementById("detailMenu");
+  menuBtn.onclick=(e)=>{e.stopPropagation();menu.classList.toggle("show")};
+}
+
+function setCaptureEditMode(m=null){
+  const isEditing=!!m;
+  const isReflection=m?.source==="Reflection";
+
+  captureTitle.textContent=isEditing?(isReflection?"Edit reflection":"Edit moment"):"Capture a moment";
+  saveBtn.textContent=isEditing?"Save changes":"Save moment";
+  thoughtLabel.textContent=isReflection?"What do you think now?":"What made you stop and think?";
+
+  // Reflections are deliberately simple: edit the reflection itself.
+  composerTools.style.display=isReflection?"none":"flex";
+  sourceLabel.style.display=isReflection?"none":"block";
+  source.style.display=isReflection?"none":"block";
+  anchorLabel.style.display=isReflection?"none":"block";
+  anchor.style.display=isReflection?"none":"block";
+
+  if(isEditing){
+    const oldBadge=document.getElementById("editingBadge");
+    if(!oldBadge){
+      const badge=document.createElement("div");
+      badge.id="editingBadge";
+      badge.className="editing-badge";
+      badge.textContent=isReflection?"Editing reflection":"Editing original moment";
+      thoughtLabel.parentNode.insertBefore(badge,thoughtLabel);
+    }else{
+      oldBadge.textContent=isReflection?"Editing reflection":"Editing original moment";
+      oldBadge.style.display="inline-flex";
+    }
+  }else{
+    const badge=document.getElementById("editingBadge");
+    if(badge)badge.style.display="none";
+  }
+}
+
+function openEdit(id){
+  const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
+  editingId=m.id;
+  setCaptureEditMode(m);
+
+  thought.value=m.thought||"";
+  source.value=m.source==="Reflection"?"":(m.source||"");
+  anchor.value=m.anchor||"";
+  pendingImageData=m.imageData||"";
+
+  if(pendingImageData){
+    photoPreview.src=pendingImageData;
+    photoPreview.classList.add("show");
+    photoInline.classList.add("show");
+  }else{
+    photoPreview.src="";
+    photoPreview.classList.remove("show");
+    photoInline.classList.remove("show");
+  }
+
+  voiceInline.classList.remove("show");
+  voiceToggle.classList.remove("active");
+  modal.style.display="block";
+  modal.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  setTimeout(()=>thought.focus(),150);
+}
+
+function deleteItem(id){
+  const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
+  const kind=m.source==="Reflection"?"reflection":"moment";
+  if(!confirm(`Delete this ${kind}? This can't be undone.`))return;
+
+  moments=moments.filter(x=>String(x.id)!==String(id));
+  // Also detach any child reflections from a deleted parent rather than deleting them.
+  moments=moments.map(x=>String(x.parentId)===String(id)?{...x,parentId:null}:x);
+  saveData();
+  goDeepId=null;
+  echoResponseId=null;
+  if(kind==="reflection"){
+    reflectFocusId=m.parentId||null;
+    view="reflect";
+  }else{
+    reflectFocusId=null;
+    view="timeline";
+  }
+  render();
+  showToast(`${kind[0].toUpperCase()+kind.slice(1)} deleted.`);
+}
+
+function renderReflect(){
+  const allReflections=moments.filter(m=>m.source==="Reflection").slice().sort((a,b)=>momentDate(b)-momentDate(a));
+  const q=reflectSearch.trim().toLowerCase();
+  const reflections=q?allReflections.filter(r=>searchableReflectionText(r).includes(q)):allReflections;
+
+  // Focused view: one original Moment and every Reflection attached to it.
+  if(reflectFocusId){
+    const parent=moments.find(m=>String(m.id)===String(reflectFocusId));
+    const linked=reflections.filter(r=>String(r.parentId)===String(reflectFocusId));
+
+    main.innerHTML=`<button class="detailBack" id="allReflectionsBtn">← All reflections</button>
+      ${parent?`<article class="reflect-card" style="margin-top:12px">
+        <div class="label">ORIGINAL MOMENT</div>
+        <div class="date" style="margin-top:7px">${esc(parent.date)}</div>
+        <div class="thought">${esc(parent.thought)||"Captured moment"}</div>
+        ${(parent.source||parent.anchor)?`<div class="source">${esc(parent.source||"")}${parent.source&&parent.anchor?" · ":""}${esc(parent.anchor||"")}</div>`:""}
+        ${parent.imageData?`<img class="moment-image" src="${parent.imageData}" alt="Original captured image">`:""}
+        <button class="smallbtn" type="button" id="viewParentMoment">View full moment →</button>
+      </article>`:""}
+
+      <div style="height:16px"></div>
+      <div class="label">REFLECTIONS ON THIS MOMENT</div>
+      ${linked.length?`<div class="reflection-stack" style="margin-top:10px">
+        ${linked.map(r=>`<article class="reflect-card" data-reflection-id="${r.id}">
+          <div class="date">${esc(r.date)}</div>
+          <div class="reflection-answer">${esc(r.thought)}</div>
+          ${r.updatedAt?`<div class="edited-note">Edited ${esc(new Date(r.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}))}</div>`:""}
+        </article>`).join("")}
+      </div>`:`<div class="reflect-empty">No reflections have been saved for this Moment yet.</div>`}`;
+
+    document.getElementById("allReflectionsBtn").onclick=()=>{
+      reflectFocusId=null;
+      renderReflect();
+    };
+    if(parent){
+      document.getElementById("viewParentMoment").onclick=()=>detail(parent.id);
+    }
+    document.querySelectorAll("[data-reflection-id]").forEach(card=>{
+      card.onclick=()=>detail(card.dataset.reflectionId);
+    });
+    return;
+  }
+
+  // No saved reflections yet: retain the useful revisit prompt.
+  if(!allReflections.length){
+    const previous=moments.find(m=>m.source!=="Reflection");
+    main.innerHTML=searchBarHTML("reflect",reflectSearch)+`<div class="reflectHero">
+      <div class="eyebrow">REFLECT</div>
+      <h2>Look back. Think forward.</h2>
+      <p>Revisit something you captured and see what it brings up now.</p>
+    </div>
+    ${previous?`<article class="reflect-card">
+      <div class="label">YOU CAPTURED</div>
+      <div class="date" style="margin-top:7px">${esc(previous.date)}</div>
+      <div class="thought">${esc(previous.thought)||"Captured moment"}</div>
+      <div class="go-deeper-panel" style="margin-top:12px">
+        <div class="go-deeper-kicker">${esc(getEchoResponse(previous).type)}</div>
+        <div class="go-deeper-question">${esc(getEchoResponse(previous).text)}</div>
+      </div>
+    </article>`:`<div class="reflect-empty">Capture a few Moments first. Reflection becomes more useful once there is something worth returning to.</div>`}`;
+    wireSearch("reflect");
+    return;
+  }
+
+  if(!reflections.length){
+    main.innerHTML=searchBarHTML("reflect",reflectSearch)+`<div class="search-summary">No Reflections match “${esc(reflectSearch)}”.</div>`;
+    wireSearch("reflect"); return;
+  }
+
+  // V2.5: organize Reflections by when the Reflection itself happened.
+  const now=new Date();
+  const groups=new Map();
+
+  reflections.forEach(r=>{
+    const bucket=timelineBucket(r,now);
+    if(!groups.has(bucket.key)){
+      groups.set(bucket.key,{...bucket,items:[]});
+    }
+    groups.get(bucket.key).items.push(r);
+  });
+
+  const ordered=[...groups.values()].sort((a,b)=>a.rank-b.rank);
+
+  main.innerHTML=searchBarHTML("reflect",reflectSearch)+(q?`<div class="search-summary">${reflections.length} ${reflections.length===1?"Reflection":"Reflections"} found</div>`:"")+`<div class="reflectHero">
+    <div class="eyebrow">REFLECT</div>
+    <h2>Look back. Think forward.</h2>
+    <p>Your reflections are organized by when you had them—not when the original Moment was captured.</p>
+  </div>
+
+  ${ordered.map(group=>`
+    <section class="reflect-time-section">
+      <div class="reflect-time-head">
+        <div class="reflect-time-title">${esc(group.label)}</div>
+        <div class="reflect-time-count">${group.items.length} ${group.items.length===1?"reflection":"reflections"}</div>
+      </div>
+      <div class="timeline-section-spine"></div>
+
+      <div class="reflection-stack">
+        ${group.items.map(r=>{
+          const parent=r.parentId?moments.find(m=>String(m.id)===String(r.parentId)):null;
+          return `<article class="reflect-card" data-reflection-id="${r.id}">
+            <div class="date">${esc(r.date)}</div>
+            <div class="reflection-answer">${esc(r.thought)}</div>
+
+            ${parent?`<div class="reflect-origin">
+              From a Moment captured ${esc(parent.date)}<br>
+              <strong>${esc((parent.thought||"Captured moment").slice(0,110))}${(parent.thought||"").length>110?"…":""}</strong>
+            </div>
+            <button class="parent-jump" type="button" data-reflect-parent="${parent.id}">View original moment →</button>`:
+            r.parentId
+              ? `<div class="reflect-origin">The original Moment is no longer available.</div>`
+              : `<div class="reflect-origin">Standalone reflection</div>`}
+
+            ${r.updatedAt?`<div class="edited-note">Edited ${esc(new Date(r.updatedAt).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"}))}</div>`:""}
+          </article>`;
+        }).join("")}
+      </div>
+    </section>
+  `).join("")}`;
+
+  document.querySelectorAll("[data-reflection-id]").forEach(card=>{
+    card.onclick=(e)=>{
+      if(e.target.closest("button"))return;
+      detail(card.dataset.reflectionId);
+    };
+  });
+
+  document.querySelectorAll("[data-reflect-parent]").forEach(b=>{
+    b.onclick=(e)=>{
+      e.stopPropagation();
+      reflectFocusId=b.dataset.reflectParent;
+      renderReflect();
+    };
+  });
+  wireSearch("reflect");
+}
+
+function addReflection(){
+  const el=document.getElementById("reflection");
+  const v=el?.value.trim(); if(!v)return;
+  const item={id:crypto.randomUUID?crypto.randomUUID():Date.now(),date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),createdAt:new Date().toISOString(),thought:v,source:"Reflection"};
+  moments.unshift(item);
+  try{ saveData(); }
+  catch(e){ moments.shift(); showToast("Couldn't save reflection. Browser storage may be full."); return; }
+  justAdded=item.id; view="timeline"; render(); showToast("Reflection saved.");
+}
+
+function compressImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=1200;
+        let w=img.width,h=img.height;
+        if(Math.max(w,h)>max){
+          const scale=max/Math.max(w,h);w=Math.round(w*scale);h=Math.round(h*scale);
+        }
+        const canvas=document.createElement("canvas");
+        canvas.width=w;canvas.height=h;
+        canvas.getContext("2d").drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL("image/jpeg",0.72));
+      };
+      img.onerror=reject;img.src=reader.result;
+    };
+    reader.onerror=reject;reader.readAsDataURL(file);
+  });
+}
+photoInput.addEventListener("change",async()=>{
+  const file=photoInput.files?.[0]; if(!file)return;
+  try{
+    pendingImageData=await compressImage(file);
+    photoPreview.src=pendingImageData;
+    photoPreview.classList.add("show");
+    photoInline.classList.add("show");
+  }catch(e){showToast("Couldn't load image.");}
+});
+removePhoto.addEventListener("click",()=>{
+  pendingImageData="";
+  photoPreview.src="";
+  photoPreview.classList.remove("show");
+  photoInline.classList.remove("show");
+  photoInput.value="";
+});
+
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null;
+
+function updateVoiceTimer(){
+  const m=Math.floor(voiceSeconds/60);
+  const s=String(voiceSeconds%60).padStart(2,"0");
+  voiceTime.textContent=`${m}:${s}`;
+}
+function startVoiceUI(){
+  if(voiceRunning)return;
+  voiceRunning=true;
+  voiceVisual.classList.add("listening");
+  voiceStatus.textContent="Listening…";
+  voiceTimer=setInterval(()=>{voiceSeconds++;updateVoiceTimer()},1000);
+}
+function stopVoiceUI(){
+  voiceRunning=false;
+  voiceVisual.classList.remove("listening");
+  if(voiceTimer){clearInterval(voiceTimer);voiceTimer=null;}
+  voiceStatus.textContent=thought.value.trim()?"Added to your thought.":"Stopped.";
+}
+function clearVoice(){
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
+  voiceSeconds=0;updateVoiceTimer();
+  
+  voiceStatus.textContent="Tap the microphone and speak naturally.";
+}
+
+if(SpeechRecognition){
+  recognition=new SpeechRecognition();
+  recognition.continuous=true;
+  recognition.interimResults=true;
+  recognition.lang="en-US";
+  let finalTranscript="";
+  let startingText="";
+  recognition.onstart=()=>{startingText=thought.value;finalTranscript="";startVoiceUI()};
+  recognition.onresult=(event)=>{
+    let interim="";
+    for(let i=event.resultIndex;i<event.results.length;i++){
+      const chunk=event.results[i][0].transcript;
+      if(event.results[i].isFinal) finalTranscript+=chunk+" ";
+      else interim+=chunk;
+    }
+    const spoken=(finalTranscript+interim).trim();
+    const spacer=startingText && spoken && !/\s$/.test(startingText) ? " " : "";
+    thought.value=startingText + spacer + spoken;
+  };
+  recognition.onend=()=>{
+    if(voiceRunning){
+      // Some mobile browsers stop automatically; treat as a graceful finish.
+      stopVoiceUI();
+    }
+  };
+  recognition.onerror=()=>{
+    stopVoiceUI();
+    voiceStatus.textContent="Live transcription isn't available here. Use the iPhone keyboard microphone in the thought box.";
+  };
+}
+
+voiceToggle.addEventListener("click",()=>{
+  const showing=voiceInline.classList.toggle("show");
+  voiceToggle.classList.toggle("active",showing);
+  if(showing) voiceStatus.textContent="Ready to listen";
+});
+
+voiceBtn.addEventListener("click",()=>{
+  if(recognition){
+    try{
+      if(voiceRunning){recognition.stop();stopVoiceUI();}
+      else{recognition.start();}
+    }catch(e){
+      thought.focus();
+      voiceStatus.textContent="Use the iPhone keyboard microphone in the thought box.";
+    }
+  }else{
+    thought.focus();
+    voiceStatus.textContent="Use the iPhone keyboard microphone in the thought box.";
+  }
+});
+voiceStop.addEventListener("click",()=>{
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
+});
+
+function openCapture(){
+  editingId=null;
+  setCaptureEditMode(null);
+
+  // New capture starts clean. Switching among text/voice/photo after this
+  // never clears any part of the draft.
+  thought.value="";
+  source.value="";
+  anchor.value="";
+  pendingImageData="";
+  photoInput.value="";
+  photoPreview.src="";
+  photoPreview.classList.remove("show");
+  photoInline.classList.remove("show");
+  voiceInline.classList.remove("show");
+  voiceToggle.classList.remove("active");
+
+  modal.style.display="block";modal.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
+  voiceSeconds=0; updateVoiceTimer();
+  setTimeout(()=>thought.focus(),180);
+}
+function closeCapture(){
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
+  modal.style.display="none";modal.setAttribute("aria-hidden","true");
+  document.body.style.overflow="";
+}
+
+function setKeyboardState(on){
+  document.body.classList.toggle("keyboard-open", !!on);
+  if(view==="reflect"){
+    document.getElementById("captureBtn").style.display="none";
+  }
+}
+["focusin","focusout"].forEach(evt=>{
+  document.addEventListener(evt,e=>{
+    if(e.target && (e.target.tagName==="TEXTAREA" || e.target.tagName==="INPUT")){
+      if(evt==="focusin") setKeyboardState(true);
+      else setTimeout(()=>setKeyboardState(false),120);
+    }
+  });
+});
+
+document.getElementById("timelineTab").onclick=()=>{view="timeline";render()};
+document.getElementById("reflectTab").onclick=()=>{view="reflect";render()};
+document.getElementById("captureBtn").onclick=openCapture;
+document.getElementById("close").onclick=()=>{
+  closeCapture();
+  editingId=null;
+  setCaptureEditMode(null);
+};
+document.getElementById("save").onclick=()=>{
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
+
+  const capturedThought=thought.value.trim();
+  const existing=editingId!==null?moments.find(x=>String(x.id)===String(editingId)):null;
+  const isReflection=existing?.source==="Reflection";
+
+  if(!isReflection && !pendingImageData && !capturedThought && !source.value.trim() && !anchor.value.trim()){
+    showToast("Add something to capture.");
+    return;
+  }
+  if(isReflection && !capturedThought){
+    showToast("Add something to your reflection.");
+    return;
+  }
+
+  if(existing){
+    const idx=moments.findIndex(x=>String(x.id)===String(editingId));
+    const original={...moments[idx]};
+
+    moments[idx]={
+      ...moments[idx],
+      thought:capturedThought,
+      source:isReflection?"Reflection":source.value.trim(),
+      anchor:isReflection?(moments[idx].anchor||""):anchor.value.trim(),
+      imageData:isReflection?(moments[idx].imageData||""):pendingImageData,
+      captureType:isReflection?(moments[idx].captureType||"reflection"):(pendingImageData?"photo+thought":"thought"),
+      updatedAt:new Date().toISOString()
+      // Intentionally preserve id, original display date, parentId and creation history.
+    };
+
+    try{
+      saveData();
+    }catch(e){
+      moments[idx]=original;
+      showToast("Couldn't save the edit.");
+      return;
+    }
+
+    const savedId=editingId;
+    editingId=null;
+    closeCapture();
+    setCaptureEditMode(null);
+    if(isReflection){
+      const edited=moments.find(x=>String(x.id)===String(savedId));
+      reflectFocusId=edited?.parentId||null;
+      view="reflect";
+      render();
+      showToast("Reflection updated.");
+    }else{
+      view="timeline";
+      render();
+      showToast("Moment updated.");
+      setTimeout(()=>detail(savedId),120);
+    }
+    return;
+  }
+
+  const item={
+    id:crypto.randomUUID?crypto.randomUUID():Date.now(),
+    date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+    createdAt:new Date().toISOString(),
+    thought:capturedThought,
+    source:source.value.trim(),
+    anchor:anchor.value.trim(),
+    captureType:pendingImageData?"photo+thought":"thought",
+    imageData:pendingImageData
+  };
+
+  try{
+    moments.unshift(item); saveData();
+  }catch(e){
+    moments.shift();
+    showToast("Storage is full. Try a smaller image.");
+    return;
+  }
+
+  justAdded=item.id;
+  goDeepId=null;
+  echoResponseId=null;
+  thought.value=source.value=anchor.value="";
+  pendingImageData="";
+  photoPreview.src="";
+  photoPreview.classList.remove("show");
+  photoInline.classList.remove("show");
+  photoInput.value="";
+  voiceInline.classList.remove("show");
+  voiceToggle.classList.remove("active");
+  closeCapture();
+  view="timeline";
+  render();
+  showToast("Moment saved · Go deeper when you want.");
+};
+render();
+</script>
+</body>
+</html>
