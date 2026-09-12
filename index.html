@@ -1,4 +1,4 @@
-<!-- v1.8 -->
+<!-- v1.9 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -251,6 +251,72 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 .photo-inline-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 3px 1px;font-size:12px;color:var(--muted)}
 .photo-inline-row button{border:0;background:transparent;color:#ffc0d7;font-weight:750}
 
+
+.go-deeper-wrap{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid var(--line);
+}
+.go-deeper-btn{
+  width:100%;
+  border:1px solid rgba(140,240,199,.20);
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(140,240,199,.08),rgba(154,167,255,.08));
+  color:var(--accent);
+  padding:11px 12px;
+  font-weight:850;
+  letter-spacing:.01em;
+}
+.go-deeper-panel{
+  margin-top:10px;
+  border:1px solid rgba(140,240,199,.20);
+  border-radius:17px;
+  padding:14px;
+  background:linear-gradient(135deg,rgba(140,240,199,.065),rgba(154,167,255,.055));
+}
+.go-deeper-kicker{
+  color:var(--accent);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.13em;
+  margin-bottom:7px;
+}
+.go-deeper-question{
+  font-size:16px;
+  line-height:1.45;
+  font-weight:720;
+}
+.go-deeper-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.go-deeper-actions button{
+  flex:1;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+  background:rgba(255,255,255,.04);
+  color:var(--ink);
+  font-weight:750;
+}
+.go-deeper-actions .primary{
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);
+  color:#0b1020;
+  border:0;
+}
+.instant-reflect{
+  width:100%;
+  margin-top:10px;
+  min-height:92px;
+}
+.saved-meaning{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:8px;
+  line-height:1.4;
+}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -336,6 +402,7 @@ const seed=[
 let moments=JSON.parse(localStorage.getItem(KEY)||"null")||seed;
 let view="timeline";
 let justAdded=null;
+let goDeepId=null;
 
 const main=document.getElementById("main");
 const modal=document.getElementById("modal");
@@ -353,9 +420,7 @@ const voiceStatus=document.getElementById("voiceStatus");
 const voiceVisual=document.getElementById("voiceVisual");
 const voiceTime=document.getElementById("voiceTime");
 const voiceStop=document.getElementById("voiceStop");
-const voiceClear=document.getElementById("voiceClear");
 const toast=document.getElementById("toast");
-let captureMode="type";
 let pendingImageData="";
 let voiceSeconds=0;
 let voiceTimer=null;
@@ -367,6 +432,63 @@ function showToast(msg="Saved."){
   toast.textContent=msg;toast.classList.add("show");
   setTimeout(()=>toast.classList.remove("show"),900)
 }
+
+function getGoDeeperPrompt(m){
+  const t=(m?.thought||"").toLowerCase();
+
+  if(!t.trim() && m?.imageData){
+    return "What in this image made you stop—and why did it feel worth keeping?";
+  }
+  if(/\b(discipline|motivation|willpower|habit|routine)\b/.test(t)){
+    return "What could you change in the environment so this requires less willpower?";
+  }
+  if(/\b(should|supposed to|have to|need to)\b/.test(t)){
+    return "Which part of this is truly yours, and which part might be an expectation you inherited?";
+  }
+  if(/\b(parent|parenting|child|kid|son|daughter|marriage|wife|husband|relationship)\b/.test(t)){
+    return "What might you understand differently if you viewed this from the other person’s experience?";
+  }
+  if(/\b(work|school|teacher|business|project|career)\b/.test(t)){
+    return "What is one small experiment that could test this idea in real life?";
+  }
+  if(/\b(maybe|what if|wonder|could|might)\b/.test(t)){
+    return "If this turned out to be true, what would it change about the way you act or decide?";
+  }
+  if(/\b(always|never|everyone|nobody|impossible|obvious)\b/.test(t)){
+    return "What evidence would make you soften or revise this statement?";
+  }
+  if(/\?/.test(m?.thought||"")){
+    return "What answer are you currently leaning toward—and what would change your mind?";
+  }
+  return "What about this felt important enough to stop you—and what might it be asking you to reconsider?";
+}
+
+function toggleGoDeeper(id){
+  goDeepId = String(goDeepId)===String(id) ? null : id;
+  renderTimeline();
+}
+
+function saveInstantReflection(id){
+  const el=document.getElementById("instantReflection-"+id);
+  const v=el?.value.trim();
+  if(!v)return;
+  const parent=moments.find(m=>String(m.id)===String(id));
+  const item={
+    id:crypto.randomUUID?crypto.randomUUID():Date.now(),
+    date:new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),
+    thought:v,
+    source:"Reflection",
+    parentId:id,
+    anchor:parent?.thought ? "From a captured moment" : ""
+  };
+  moments.unshift(item);
+  saveData();
+  justAdded=item.id;
+  goDeepId=null;
+  render();
+  showToast("Reflection saved.");
+}
+
 function render(){
   document.body.classList.remove("keyboard-open");
   document.getElementById("timelineTab").classList.toggle("active",view==="timeline");
@@ -389,13 +511,43 @@ function renderTimeline(){
     main.innerHTML='<div class="empty">Your timeline is empty.<br><br>Capture the first moment that makes you think.</div>';
     return;
   }
-  main.innerHTML=moments.map(m=>`<article class="card ${m.id===justAdded?"moment-new":""}" data-id="${m.id}">
-    <div class="date">${esc(m.date)}</div>
-    <div class="thought">${esc(m.thought)||"Captured moment"}</div>
-    ${(m.source||m.anchor)?`<div class="source">${esc(m.source||"")}${m.source&&m.anchor?" · ":""}${esc(m.anchor||"")}</div>`:""}
-    ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
-  </article>`).join("");
-  document.querySelectorAll(".card[data-id]").forEach(c=>c.onclick=()=>detail(c.dataset.id));
+
+  main.innerHTML=moments.map(m=>{
+    const isReflection=m.source==="Reflection";
+    const open=String(goDeepId)===String(m.id);
+    return `<article class="card ${m.id===justAdded?"moment-new":""}" data-id="${m.id}">
+      <div class="date">${esc(m.date)}</div>
+      <div class="thought">${esc(m.thought)||"Captured moment"}</div>
+      ${(m.source||m.anchor)?`<div class="source">${esc(m.source||"")}${m.source&&m.anchor?" · ":""}${esc(m.anchor||"")}</div>`:""}
+      ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
+      ${!isReflection?`<div class="go-deeper-wrap">
+        <button class="go-deeper-btn" type="button" data-deep="${m.id}">${open?"Close":"Go deeper →"}</button>
+        ${open?`<div class="go-deeper-panel">
+          <div class="go-deeper-kicker">GO DEEPER</div>
+          <div class="go-deeper-question">${esc(getGoDeeperPrompt(m))}</div>
+          <div class="saved-meaning">A prompt to help you get value from this moment now—not months from now.</div>
+          <textarea class="instant-reflect" id="instantReflection-${m.id}" placeholder="What comes up for you?"></textarea>
+          <div class="go-deeper-actions">
+            <button type="button" onclick="toggleGoDeeper('${m.id}')">Not now</button>
+            <button class="primary" type="button" onclick="saveInstantReflection('${m.id}')">Save reflection</button>
+          </div>
+        </div>`:""}
+      </div>`:""}
+    </article>`;
+  }).join("");
+
+  document.querySelectorAll(".card[data-id]").forEach(c=>{
+    c.onclick=(e)=>{
+      if(e.target.closest("button,textarea,input,label"))return;
+      detail(c.dataset.id);
+    };
+  });
+  document.querySelectorAll("[data-deep]").forEach(b=>{
+    b.onclick=(e)=>{
+      e.stopPropagation();
+      toggleGoDeeper(b.dataset.deep);
+    };
+  });
   justAdded=null;
 }
 function detail(id){
@@ -407,6 +559,10 @@ function detail(id){
     ${m.source?`<div class="source">${esc(m.source)}</div>`:""}
     ${m.anchor?`<div class="source">Anchor: ${esc(m.anchor)}</div>`:""}
     ${m.imageData?`<img class="moment-image" src="${m.imageData}" alt="Captured image">`:""}
+    ${m.source!=="Reflection"?`<div class="go-deeper-panel" style="margin-top:14px">
+      <div class="go-deeper-kicker">GO DEEPER</div>
+      <div class="go-deeper-question">${esc(getGoDeeperPrompt(m))}</div>
+    </div>`:""}
     <button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>
   </article>`;
 }
@@ -520,7 +676,7 @@ if(SpeechRecognition){
   recognition.lang="en-US";
   let finalTranscript="";
   let startingText="";
-  recognition.onstart=()=>{startingText=thought.value.trim();finalTranscript="";startVoiceUI()};
+  recognition.onstart=()=>{startingText=thought.value;finalTranscript="";startVoiceUI()};
   recognition.onresult=(event)=>{
     let interim="";
     for(let i=event.resultIndex;i<event.results.length;i++){
@@ -529,7 +685,8 @@ if(SpeechRecognition){
       else interim+=chunk;
     }
     const spoken=(finalTranscript+interim).trim();
-    thought.value=[startingText,spoken].filter(Boolean).join(startingText&&spoken?" ":"");
+    const spacer=startingText && spoken && !/\s$/.test(startingText) ? " " : "";
+    thought.value=startingText + spacer + spoken;
   };
   recognition.onend=()=>{
     if(voiceRunning){
@@ -539,7 +696,7 @@ if(SpeechRecognition){
   };
   recognition.onerror=()=>{
     stopVoiceUI();
-    voiceStatus.textContent="Live transcription isn't available here. Use the iPhone keyboard microphone in the transcript box.";
+    voiceStatus.textContent="Live transcription isn't available here. Use the iPhone keyboard microphone in the thought box.";
   };
 }
 
@@ -567,7 +724,6 @@ voiceStop.addEventListener("click",()=>{
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
 });
-voiceClear.addEventListener("click",clearVoice);
 
 function openCapture(){
   modal.style.display="block";modal.setAttribute("aria-hidden","false");
@@ -626,10 +782,11 @@ document.getElementById("save").onclick=()=>{
     return;
   }
   justAdded=item.id;
+  goDeepId=item.id;
   thought.value=source.value=anchor.value="";
   pendingImageData=""; photoPreview.src=""; photoPreview.classList.remove("show"); photoInline.classList.remove("show"); photoInput.value="";
   voiceInline.classList.remove("show"); voiceToggle.classList.remove("active");
-  closeCapture(); view="timeline"; render(); showToast("Saved.");
+  closeCapture(); view="timeline"; render(); showToast("Moment saved.");
 };
 render();
 </script>
