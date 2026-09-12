@@ -1,4 +1,4 @@
-<!-- v2.3 -->
+<!-- v2.4 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -492,6 +492,79 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
   color:var(--muted);
 }
 
+
+.echo-response{
+  margin-top:12px;
+  border-top:1px solid var(--line);
+  padding-top:11px;
+}
+.echo-response-trigger{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border:0;
+  background:transparent;
+  color:var(--accent);
+  padding:4px 0;
+  font-size:12px;
+  font-weight:850;
+  text-align:left;
+}
+.echo-response-trigger span:last-child{
+  color:var(--muted);
+  font-weight:700;
+}
+.echo-response-panel{
+  margin-top:10px;
+  border:1px solid rgba(140,240,199,.18);
+  border-radius:16px;
+  padding:14px;
+  background:linear-gradient(135deg,rgba(140,240,199,.055),rgba(154,167,255,.045));
+}
+.echo-response-kicker{
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.13em;
+  color:var(--accent);
+  margin-bottom:7px;
+}
+.echo-response-text{
+  font-size:16px;
+  line-height:1.48;
+  font-weight:720;
+}
+.echo-response-actions{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.echo-response-actions button{
+  flex:1;
+  min-height:42px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:rgba(255,255,255,.04);
+  color:var(--ink);
+  font-weight:760;
+}
+.echo-response-actions .primary{
+  border:0;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);
+  color:#0b1020;
+}
+.echo-new-value{
+  margin:10px 0 0;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(140,240,199,.16);
+  background:rgba(140,240,199,.045);
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+}
+
 @media (min-width:700px){
   .modal{display:none!important}
 }
@@ -580,6 +653,7 @@ let justAdded=null;
 let goDeepId=null;
 let editingId=null;
 let reflectFocusId=null;
+let echoResponseId=null;
 
 const main=document.getElementById("main");
 const modal=document.getElementById("modal");
@@ -616,39 +690,92 @@ function showToast(msg="Saved."){
   setTimeout(()=>toast.classList.remove("show"),900)
 }
 
-function getGoDeeperPrompt(m){
-  const t=(m?.thought||"").toLowerCase();
+function getEchoResponse(m){
+  const raw=(m?.thought||"").trim();
+  const t=raw.toLowerCase();
 
-  if(!t.trim() && m?.imageData){
-    return "What in this image made you stop—and why did it feel worth keeping?";
+  // V2.4 prototype: one useful response, chosen contextually.
+  // This is local rule-based logic, not a claim of live AI intelligence.
+  if(!raw && m?.imageData){
+    return {
+      type:"QUESTION WORTH SITTING WITH",
+      text:"What in this image made you stop—and why did it feel worth keeping?"
+    };
   }
+
+  if(/\b(always|never|everyone|nobody|obvious|impossible|must)\b/.test(t)){
+    return {
+      type:"ANOTHER ANGLE",
+      text:"What evidence or experience would make you soften this conclusion?"
+    };
+  }
+
   if(/\b(discipline|motivation|willpower|habit|routine)\b/.test(t)){
-    return "What could you change in the environment so this requires less willpower?";
+    return {
+      type:"IF THAT'S TRUE…",
+      text:"Where could you redesign the environment so the better choice requires less willpower?"
+    };
   }
+
   if(/\b(should|supposed to|have to|need to)\b/.test(t)){
-    return "Which part of this is truly yours, and which part might be an expectation you inherited?";
+    return {
+      type:"ANOTHER ANGLE",
+      text:"Which part of this expectation is genuinely yours—and which part may have been handed to you?"
+    };
   }
+
   if(/\b(parent|parenting|child|kid|son|daughter|marriage|wife|husband|relationship)\b/.test(t)){
-    return "What might you understand differently if you viewed this from the other person’s experience?";
+    return {
+      type:"QUESTION WORTH SITTING WITH",
+      text:"What might become clearer if you tried to describe this from the other person's experience?"
+    };
   }
+
   if(/\b(work|school|teacher|business|project|career)\b/.test(t)){
-    return "What is one small experiment that could test this idea in real life?";
+    return {
+      type:"IF THAT'S TRUE…",
+      text:"What is the smallest real-world experiment that could test this idea?"
+    };
   }
+
   if(/\b(maybe|what if|wonder|could|might)\b/.test(t)){
-    return "If this turned out to be true, what would it change about the way you act or decide?";
+    return {
+      type:"IF THAT'S TRUE…",
+      text:"If this turned out to be true, what would it change about the way you act or decide?"
+    };
   }
-  if(/\b(always|never|everyone|nobody|impossible|obvious)\b/.test(t)){
-    return "What evidence would make you soften or revise this statement?";
+
+  if(/\?/.test(raw)){
+    return {
+      type:"QUESTION WORTH SITTING WITH",
+      text:"What answer are you currently leaning toward—and what would change your mind?"
+    };
   }
-  if(/\?/.test(m?.thought||"")){
-    return "What answer are you currently leaning toward—and what would change your mind?";
-  }
-  return "What about this felt important enough to stop you—and what might it be asking you to reconsider?";
+
+  return {
+    type:"GO DEEPER",
+    text:"What about this felt important enough to stop you—and what might it be asking you to reconsider?"
+  };
+}
+
+function getGoDeeperPrompt(m){
+  return getEchoResponse(m).text;
+}
+
+function shouldSurfaceEchoResponse(m){
+  // Restraint matters: never force the prompt open.
+  // A newly saved Moment gets a quiet invitation; older Moments keep it available on demand.
+  return !!m;
+}
+
+function toggleEchoResponse(id){
+  echoResponseId=String(echoResponseId)===String(id)?null:id;
+  goDeepId=echoResponseId;
+  renderTimeline();
 }
 
 function toggleGoDeeper(id){
-  goDeepId = String(goDeepId)===String(id) ? null : id;
-  renderTimeline();
+  toggleEchoResponse(id);
 }
 
 function saveInstantReflection(id){
@@ -681,6 +808,7 @@ function saveInstantReflection(id){
 
   justAdded=item.id;
   goDeepId=null;
+  echoResponseId=null;
   reflectFocusId=id;
   view="reflect";
   render();
@@ -751,8 +879,9 @@ function timelineBucket(m,now=new Date()){
 }
 
 function renderMomentCard(m){
-  const open=String(goDeepId)===String(m.id);
+  const open=String(echoResponseId)===String(m.id) || String(goDeepId)===String(m.id);
   const reflectionCount=moments.filter(r=>r.source==="Reflection"&&String(r.parentId)===String(m.id)).length;
+  const response=getEchoResponse(m);
 
   return `<article class="card ${m.id===justAdded?"moment-new":""}" data-id="${m.id}">
     <div class="date">${esc(m.date)}</div>
@@ -765,19 +894,22 @@ function renderMomentCard(m){
         ${reflectionCount} ${reflectionCount===1?"reflection":"reflections"} · View →
       </button>`:""}
 
-    <div class="go-deeper-wrap">
-      <button class="go-deeper-btn" type="button" data-deep="${m.id}">${open?"Close":"Go deeper →"}</button>
-      ${open?`<div class="go-deeper-panel">
-        <div class="go-deeper-kicker">GO DEEPER</div>
-        <div class="go-deeper-question">${esc(getGoDeeperPrompt(m))}</div>
-        <div class="saved-meaning">A prompt to help you get value from this moment now—not months from now.</div>
+    ${shouldSurfaceEchoResponse(m)?`<div class="echo-response">
+      <button class="echo-response-trigger" type="button" data-deep="${m.id}">
+        <span>${open?"Close":"Go deeper →"}</span>
+        <span>${open?"":"optional"}</span>
+      </button>
+
+      ${open?`<div class="echo-response-panel">
+        <div class="echo-response-kicker">${esc(response.type)}</div>
+        <div class="echo-response-text">${esc(response.text)}</div>
         <textarea class="instant-reflect" id="instantReflection-${m.id}" placeholder="What comes up for you?"></textarea>
-        <div class="go-deeper-actions">
-          <button type="button" onclick="toggleGoDeeper('${m.id}')">Not now</button>
+        <div class="echo-response-actions">
+          <button type="button" onclick="toggleEchoResponse('${m.id}')">Not now</button>
           <button class="primary" type="button" onclick="saveInstantReflection('${m.id}')">Save reflection</button>
         </div>
       </div>`:""}
-    </div>
+    </div>`:""}
   </article>`;
 }
 
@@ -896,8 +1028,8 @@ function detail(id){
     </div>`:""}
 
     ${!isReflection?`<div class="go-deeper-panel" style="margin-top:14px">
-      <div class="go-deeper-kicker">GO DEEPER</div>
-      <div class="go-deeper-question">${esc(getGoDeeperPrompt(m))}</div>
+      <div class="go-deeper-kicker">${esc(getEchoResponse(m).type)}</div>
+      <div class="go-deeper-question">${esc(getEchoResponse(m).text)}</div>
     </div>`:""}
     ${!isReflection?`<button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>`:""}
   </article>`;
@@ -978,6 +1110,7 @@ function deleteItem(id){
   moments=moments.map(x=>String(x.parentId)===String(id)?{...x,parentId:null}:x);
   saveData();
   goDeepId=null;
+  echoResponseId=null;
   if(kind==="reflection"){
     reflectFocusId=m.parentId||null;
     view="reflect";
@@ -1046,8 +1179,8 @@ function renderReflect(){
       <div class="date" style="margin-top:7px">${esc(previous.date)}</div>
       <div class="thought">${esc(previous.thought)||"Captured moment"}</div>
       <div class="go-deeper-panel" style="margin-top:12px">
-        <div class="go-deeper-kicker">WHAT DO YOU THINK NOW?</div>
-        <div class="go-deeper-question">${esc(getGoDeeperPrompt(previous))}</div>
+        <div class="go-deeper-kicker">${esc(getEchoResponse(previous).type)}</div>
+        <div class="go-deeper-question">${esc(getEchoResponse(previous).text)}</div>
       </div>
     </article>`:`<div class="reflect-empty">Capture a few Moments first. Reflection becomes more useful once there is something worth returning to.</div>`}`;
     return;
@@ -1386,7 +1519,8 @@ document.getElementById("save").onclick=()=>{
   }
 
   justAdded=item.id;
-  goDeepId=item.id;
+  goDeepId=null;
+  echoResponseId=null;
   thought.value=source.value=anchor.value="";
   pendingImageData="";
   photoPreview.src="";
@@ -1398,7 +1532,7 @@ document.getElementById("save").onclick=()=>{
   closeCapture();
   view="timeline";
   render();
-  showToast("Moment saved.");
+  showToast("Moment saved · Go deeper when you want.");
 };
 render();
 </script>
