@@ -1,4 +1,4 @@
-<!-- v4.2 -->
+<!-- v4.3 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -888,6 +888,64 @@ body.keyboard-open .bottom-nav{display:none}
 
 
 
+
+/* V4.3 Speak capture refinement */
+#voiceInline.show{
+  display:block;
+  margin:14px 0 12px;
+}
+.voice-inline{
+  width:100%;
+}
+.voice-inline button,
+#voiceBtn{
+  width:100%;
+  min-height:54px;
+  margin:0;
+  border-radius:16px;
+}
+.voice-live-wrap{
+  display:none;
+  margin:12px 0 4px;
+  padding:12px 13px;
+  border:1px solid rgba(140,240,199,.16);
+  border-radius:15px;
+  background:rgba(255,255,255,.025);
+}
+.voice-live-wrap.show{display:block}
+.voice-live-label{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:7px;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.10em;
+  text-transform:uppercase;
+}
+.voice-live-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#8cf0c7;
+  box-shadow:0 0 10px rgba(140,240,199,.65);
+  animation:voicePulse 1.25s ease-in-out infinite;
+}
+@keyframes voicePulse{50%{opacity:.35;transform:scale(.8)}}
+.voice-live-text{
+  min-height:42px;
+  color:var(--ink);
+  font-size:14px;
+  line-height:1.5;
+  white-space:pre-wrap;
+}
+.voice-live-text.muted{color:var(--muted)}
+.voice-support-note{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.35;
+}
+
 .capture-sheet{
   position:relative;
 }
@@ -1048,7 +1106,12 @@ body.keyboard-open .bottom-nav{display:none}
       <div class="capture-mode-chip" id="captureModeChip"></div>
       <label class="field-label" id="thoughtLabel" for="thought">What made you stop and think?</label>
       <textarea id="thought" placeholder="Capture the thought"></textarea>
-      <div class="voice-inline" id="voiceInline"><div class="voice-inline-top"><div class="mini-orb" id="voiceVisual"><span>🎙</span></div><div><div class="voice-inline-title" id="voiceStatus">Ready to listen</div><div class="voice-inline-time" id="voiceTime">0:00</div></div></div><div class="voice-actions"><button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button><button class="voice-action" id="voiceStop" type="button">Stop</button></div></div>
+      <div class="voice-inline" id="voiceInline"><div class="voice-inline-top"><div class="mini-orb" id="voiceVisual"><span>🎙</span>
+    <div class="voice-live-wrap" id="voiceLiveWrap" aria-live="polite">
+      <div class="voice-live-label"><span class="voice-live-dot"></span>Live transcription</div>
+      <div class="voice-live-text muted" id="voiceLiveText">Start speaking and your words will appear here.</div>
+      <div class="voice-support-note" id="voiceSupportNote">Your transcript is added to the Moment as you speak.</div>
+    </div></div><div><div class="voice-inline-title" id="voiceStatus">Ready to listen</div><div class="voice-inline-time" id="voiceTime">0:00</div></div></div><div class="voice-actions"><button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button><button class="voice-action" id="voiceStop" type="button">Stop</button></div></div>
       <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><div class="photo-inline-row"><span>Image attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*" style="display:none">
       <div class="listen-minimal" id="listenMinimal"><div class="audio-inline show" id="audioInline"><div class="audio-head"><div><strong>Where were you listening?</strong><span>Save the source and exact point.</span></div><button class="audio-close" id="audioClose" type="button">×</button></div><div class="audio-kind"><button type="button" id="podcastKind" class="active">Podcast</button><button type="button" id="audiobookKind">Audiobook</button></div><input id="audioTitle" placeholder="Podcast or book title"><div class="audio-grid"><input id="audioPart" placeholder="Episode title / number"><input id="audioTime" inputmode="numeric" placeholder="42:18"></div><input id="audioUrl" inputmode="url" placeholder="Source link (optional)"><p class="audio-help">In the native app, supported listening services can pass this context automatically.</p></div></div>
@@ -2253,7 +2316,7 @@ audioTime.addEventListener("blur",()=>{audioTime.value=normalizePlayTime(audioTi
 function resetCaptureArchitecture(){selectedCaptureMode=null;captureChoices.style.display="block";captureFields.classList.remove("show");captureBack.classList.remove("show");captureModeChip.textContent="";contextFields.classList.remove("show");contextToggle.style.display="block";contextToggle.textContent="＋ Add context";listenMinimal.classList.remove("show");voiceInline.classList.remove("show");}
 function chooseCaptureMode(mode){selectedCaptureMode=mode;captureChoices.style.display="none";captureFields.classList.add("show");captureBack.classList.add("show");contextFields.classList.remove("show");contextToggle.textContent="＋ Add context";voiceInline.classList.remove("show");listenMinimal.classList.remove("show");const names={type:"✎  TYPE",speak:"◉  SPEAK",photo:"▣  PHOTO",listen:"▶  LISTENING"};captureModeChip.textContent=names[mode]||"CAPTURE";
   if(mode==="type"){thoughtLabel.textContent="What made you stop and think?";thought.placeholder="Capture the thought";setTimeout(()=>thought.focus(),80)}
-  if(mode==="speak"){thoughtLabel.textContent="Speak the Moment";thought.placeholder="Your spoken thought will appear here";voiceInline.classList.add("show");setTimeout(()=>voiceBtn.focus(),80)}
+  if(mode==="speak"){thoughtLabel.textContent="Speak the Moment";thought.placeholder="Your spoken thought will appear here";voiceInline.classList.add("show");document.getElementById("voiceLiveWrap")?.classList.add("show");setTimeout(()=>voiceBtn.focus(),80)}
   if(mode==="photo"){thoughtLabel.textContent="Add a thought (optional)";thought.placeholder="What about this image mattered?";setTimeout(()=>photoInput.click(),50)}
   if(mode==="listen"){thoughtLabel.textContent="What made you stop? (optional)";thought.placeholder="Capture the thought";listenMinimal.classList.add("show");setTimeout(()=>audioTitle.focus(),80)}}
 document.querySelectorAll("[data-capture-mode]").forEach(b=>b.onclick=()=>chooseCaptureMode(b.dataset.captureMode));captureBack.onclick=()=>{try{recognition?.stop()}catch(e){}stopVoiceUI();resetCaptureArchitecture()};contextToggle.onclick=()=>{const show=!contextFields.classList.contains("show");contextFields.classList.toggle("show",show);contextToggle.textContent=show?"− Hide context":"＋ Add context"};
@@ -2278,6 +2341,92 @@ removePhoto.addEventListener("click",()=>{
 
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 let recognition=null;
+let isListening=false;
+let committedTranscript="";
+
+function setVoiceLive(text, muted=false){
+  const el=document.getElementById("voiceLiveText");
+  if(!el)return;
+  el.textContent=text||"Start speaking and your words will appear here.";
+  el.classList.toggle("muted", muted || !text);
+}
+function stopVoiceRecognition(){
+  if(recognition&&isListening){
+    try{recognition.stop()}catch(e){}
+  }
+}
+function startVoiceRecognition(){
+  if(!SpeechRecognition){
+    const note=document.getElementById("voiceSupportNote");
+    if(note)note.textContent="Live transcription isn't available in this browser. You can still use your keyboard's microphone to dictate.";
+    setVoiceLive("Live transcription isn't supported here.",true);
+    thought.focus();
+    return;
+  }
+
+  recognition=new SpeechRecognition();
+  recognition.continuous=true;
+  recognition.interimResults=true;
+  recognition.lang=navigator.language||"en-US";
+  committedTranscript=thought.value.trim();
+
+  recognition.onstart=()=>{
+    isListening=true;
+    voiceBtn.textContent="■  Stop speaking";
+    voiceBtn.classList.add("active");
+    const note=document.getElementById("voiceSupportNote");
+    if(note)note.textContent="Listening… your words are appearing live.";
+    setVoiceLive(committedTranscript,false);
+  };
+
+  recognition.onresult=(event)=>{
+    let interim="";
+    let finalChunk="";
+    for(let i=event.resultIndex;i<event.results.length;i++){
+      const piece=event.results[i][0].transcript;
+      if(event.results[i].isFinal) finalChunk+=piece;
+      else interim+=piece;
+    }
+    if(finalChunk){
+      committedTranscript=(committedTranscript+" "+finalChunk).replace(/\s+/g," ").trim();
+    }
+    const live=(committedTranscript+" "+interim).replace(/\s+/g," ").trim();
+    thought.value=live;
+    setVoiceLive(live,false);
+    thought.dispatchEvent(new Event("input",{bubbles:true}));
+  };
+
+  recognition.onerror=(event)=>{
+    isListening=false;
+    voiceBtn.textContent="◉  Speak";
+    voiceBtn.classList.remove("active");
+    const note=document.getElementById("voiceSupportNote");
+    if(note){
+      note.textContent=event.error==="not-allowed"
+        ?"Microphone permission is needed for live transcription."
+        :"Live transcription paused. You can try again or use keyboard dictation.";
+    }
+  };
+
+  recognition.onend=()=>{
+    isListening=false;
+    voiceBtn.textContent="◉  Speak";
+    voiceBtn.classList.remove("active");
+    thought.value=(thought.value||committedTranscript).trim();
+    setVoiceLive(thought.value,false);
+    const note=document.getElementById("voiceSupportNote");
+    if(note)note.textContent=thought.value?"Transcript captured. You can edit it before saving.":"Tap Speak to try again.";
+  };
+
+  try{recognition.start()}catch(e){}
+}
+
+if(voiceBtn){
+  voiceBtn.onclick=()=>{
+    if(isListening) stopVoiceRecognition();
+    else startVoiceRecognition();
+  };
+}
 
 function updateVoiceTimer(){
   const m=Math.floor(voiceSeconds/60);
