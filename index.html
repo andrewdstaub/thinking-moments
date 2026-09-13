@@ -1,4 +1,4 @@
-<!-- v3.7 -->
+<!-- v3.8 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -767,6 +767,13 @@ body.keyboard-open .bottom-nav{display:none}
 .quick-mode-banner strong{display:block;font-size:12px}
 .quick-mode-banner span{display:block;color:var(--muted);font-size:10px;margin-top:2px;line-height:1.35}
 
+
+.capture-choice-wrap{padding:6px 0 2px}.capture-choice-intro{text-align:center;margin:4px 0 20px}.capture-choice-intro h3{margin:0;font-size:22px}.capture-choice-intro p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.capture-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.capture-choice{min-height:126px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;font:inherit;font-weight:850}.capture-choice-icon{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(140,240,199,.16),rgba(154,167,255,.18));font-size:24px}.capture-choice span:last-child{font-size:14px}
+.capture-back{display:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:800;padding:2px 0 12px}.capture-back.show{display:inline-block}.capture-fields{display:none}.capture-fields.show{display:block}
+.context-toggle{width:100%;margin-top:12px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025);color:var(--muted);padding:11px 12px;font:inherit;font-size:12px;font-weight:850;text-align:left}.context-fields{display:none;margin-top:10px}.context-fields.show{display:block}
+.capture-mode-chip{display:inline-flex;padding:7px 10px;margin-bottom:11px;border:1px solid rgba(140,240,199,.18);border-radius:999px;background:rgba(140,240,199,.045);color:var(--accent);font-size:11px;font-weight:900}.listen-minimal{display:none}.listen-minimal.show{display:block}.listen-minimal .audio-inline{display:block;margin-top:0}.listen-minimal .audio-close{display:none}
+
 .audio-inline{
   display:none;
   margin-top:12px;
@@ -867,78 +874,27 @@ body.keyboard-open .bottom-nav{display:none}
       <button class="dismiss" id="close">Cancel</button>
     </div>
 
-    <div class="quick-mode-banner" id="quickModeBanner">
-      <div class="quick-mode-dot">▶</div>
-      <div>
-        <strong>Current audio captured</strong>
-        <span>Prototype simulation: source + play point are already attached. Add a thought only if you want to.</span>
+    <button class="capture-back" id="captureBack" type="button">← Capture another way</button>
+    <div class="capture-choice-wrap" id="captureChoices">
+      <div class="capture-choice-intro"><h3>How do you want to capture it?</h3><p>Choose the quickest way to preserve this Moment.</p></div>
+      <div class="capture-choice-grid">
+        <button class="capture-choice" type="button" data-capture-mode="type"><span class="capture-choice-icon">✎</span><span>Type</span></button>
+        <button class="capture-choice" type="button" data-capture-mode="speak"><span class="capture-choice-icon">◉</span><span>Speak</span></button>
+        <button class="capture-choice" type="button" data-capture-mode="photo"><span class="capture-choice-icon">▣</span><span>Photo</span></button>
+        <button class="capture-choice" type="button" data-capture-mode="listen"><span class="capture-choice-icon">▶</span><span>Listening</span></button>
       </div>
     </div>
-
-    <p class="helper">Add whatever helps you remember the moment. Nothing here is required.</p>
-
-    <label class="field-label" id="thoughtLabel" for="thought">What made you stop and think?</label>
-    <textarea id="thought" placeholder="Type here, or use Voice to add to your thought"></textarea>
-
-    <div class="composer-tools" id="composerTools">
-      <button class="composer-tool" id="voiceToggle" type="button">🎙 <span>Voice</span></button>
-      <label class="composer-tool" for="photoInput">▧ <span>Photo</span></label>
-      <button class="composer-tool" id="audioToggle" type="button">▶ <span>Play from</span></button>
+    <div class="capture-fields" id="captureFields">
+      <div class="capture-mode-chip" id="captureModeChip"></div>
+      <label class="field-label" id="thoughtLabel" for="thought">What made you stop and think?</label>
+      <textarea id="thought" placeholder="Capture the thought"></textarea>
+      <div class="voice-inline" id="voiceInline"><div class="voice-inline-top"><div class="mini-orb" id="voiceVisual"><span>🎙</span></div><div><div class="voice-inline-title" id="voiceStatus">Ready to listen</div><div class="voice-inline-time" id="voiceTime">0:00</div></div></div><div class="voice-actions"><button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button><button class="voice-action" id="voiceStop" type="button">Stop</button></div></div>
+      <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><div class="photo-inline-row"><span>Image attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*" style="display:none">
+      <div class="listen-minimal" id="listenMinimal"><div class="audio-inline show" id="audioInline"><div class="audio-head"><div><strong>Where were you listening?</strong><span>Save the source and exact point so you can return later.</span></div><button class="audio-close" id="audioClose" type="button">×</button></div><div class="audio-kind"><button type="button" id="podcastKind" class="active">Podcast</button><button type="button" id="audiobookKind">Audiobook</button></div><input id="audioTitle" placeholder="Podcast or book title"><div class="audio-grid"><input id="audioPart" placeholder="Episode title / number"><input id="audioTime" inputmode="numeric" placeholder="42:18"></div><input id="audioUrl" inputmode="url" placeholder="Source link (optional)"><p class="audio-help">In the native app, supported listening services can pass this context automatically.</p></div></div>
+      <button class="context-toggle" id="contextToggle" type="button">＋ Add context</button>
+      <div class="context-fields" id="contextFields"><label class="field-label" id="sourceLabel" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="source" placeholder="Book, conversation, article, website..."><label class="field-label" id="anchorLabel" for="anchor">Anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="anchor" placeholder="Page, timestamp, link, or cue"></div>
     </div>
-
-    <div class="voice-inline" id="voiceInline">
-      <div class="voice-inline-top">
-        <div class="mini-orb" id="voiceVisual"><span>🎙</span></div>
-        <div>
-          <div class="voice-inline-title" id="voiceStatus">Ready to listen</div>
-          <div class="voice-inline-time" id="voiceTime">0:00</div>
-        </div>
-      </div>
-      <p class="capture-note">Your words are added to the same thought above. You can keep typing before or after you speak.</p>
-      <div class="voice-actions">
-        <button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button>
-        <button class="voice-action" id="voiceStop" type="button">Stop</button>
-      </div>
-    </div>
-
-    <div class="photo-inline" id="photoInline">
-      <img id="photoPreview" class="photo-preview" alt="Selected image preview">
-      <div class="photo-inline-row">
-        <span>Photo attached to this moment</span>
-        <button type="button" id="removePhoto">Remove</button>
-      </div>
-    </div>
-
-    <div class="audio-inline" id="audioInline">
-      <div class="audio-head">
-        <div>
-          <strong>Add a play-from point</strong>
-          <span>Save where the idea happened so you can return to it later.</span>
-        </div>
-        <button class="audio-close" id="audioClose" type="button" aria-label="Close audio source">×</button>
-      </div>
-
-      <div class="audio-kind">
-        <button type="button" id="podcastKind" class="active">Podcast</button>
-        <button type="button" id="audiobookKind">Audiobook</button>
-      </div>
-
-      <input id="audioTitle" placeholder="Podcast or book title">
-      <div class="audio-grid">
-        <input id="audioPart" placeholder="Episode / chapter">
-        <input id="audioTime" inputmode="numeric" placeholder="42:18">
-      </div>
-      <input id="audioUrl" inputmode="url" placeholder="Share or paste source link (optional)">
-      <p class="audio-help">Prototype: ECHO preserves the title + exact play point. “ECHO this audio” simulates the future native quick-capture flow.</p>
-    </div>
-
-    <label class="field-label" id="sourceLabel" for="source">Other source <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-    <input id="source" placeholder="Book, conversation, article, website...">
-
-    <label class="field-label" id="anchorLabel" for="anchor">Other anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
-    <input id="anchor" placeholder="Timestamp, page, link, or cue">
-
     <button class="save" id="save">Save moment</button>
   </div>
 </div>
@@ -970,11 +926,11 @@ let reflectSearch="";
 
 const main=document.getElementById("main");
 const modal=document.getElementById("modal");
+const captureChoices=document.getElementById("captureChoices"),captureFields=document.getElementById("captureFields"),captureBack=document.getElementById("captureBack"),captureModeChip=document.getElementById("captureModeChip"),contextToggle=document.getElementById("contextToggle"),contextFields=document.getElementById("contextFields"),listenMinimal=document.getElementById("listenMinimal");
 const thought=document.getElementById("thought");
 const thoughtLabel=document.getElementById("thoughtLabel");
 const captureTitle=document.getElementById("captureTitle");
 const saveBtn=document.getElementById("save");
-const composerTools=document.getElementById("composerTools");
 const sourceLabel=document.getElementById("sourceLabel");
 const anchorLabel=document.getElementById("anchorLabel");
 const source=document.getElementById("source");
@@ -982,11 +938,9 @@ const anchor=document.getElementById("anchor");
 const photoInput=document.getElementById("photoInput");
 const photoPreview=document.getElementById("photoPreview");
 const voiceBtn=document.getElementById("voiceBtn");
-const voiceToggle=document.getElementById("voiceToggle");
 const voiceInline=document.getElementById("voiceInline");
 const photoInline=document.getElementById("photoInline");
 const removePhoto=document.getElementById("removePhoto");
-const audioToggle=document.getElementById("audioToggle");
 const audioInline=document.getElementById("audioInline");
 const audioClose=document.getElementById("audioClose");
 const podcastKind=document.getElementById("podcastKind");
@@ -995,7 +949,6 @@ const audioTitle=document.getElementById("audioTitle");
 const audioPart=document.getElementById("audioPart");
 const audioTime=document.getElementById("audioTime");
 const audioUrl=document.getElementById("audioUrl");
-const quickModeBanner=document.getElementById("quickModeBanner");
 const voiceStatus=document.getElementById("voiceStatus");
 const voiceVisual=document.getElementById("voiceVisual");
 const voiceTime=document.getElementById("voiceTime");
@@ -1003,7 +956,7 @@ const voiceStop=document.getElementById("voiceStop");
 const toast=document.getElementById("toast");
 let pendingImageData="";
 let pendingAudioKind="podcast";
-let quickAudioMode=false;
+let selectedCaptureMode=null;
 let voiceSeconds=0;
 let voiceTimer=null;
 let voiceRunning=false;
@@ -1029,39 +982,12 @@ function setAudioKind(kind){
 }
 
 
-function simulatedCurrentAudio(){
-  // V3.7 prototype only. Native ECHO will receive real source metadata
-  // from supported share-sheet / shortcut / playback integrations.
-  return {
-    kind:"podcast",
-    title:"The Knowledge Project",
-    part:"Designing Your Environment",
-    time:"42:18",
-    url:""
-  };
-}
-
-function applyAudioDraft(a){
-  if(!a)return;
-  setAudioKind(a.kind||"podcast");
-  audioTitle.value=a.title||"";
-  audioPart.value=a.part||"";
-  audioTime.value=a.time||"";
-  audioUrl.value=a.url||"";
-  audioInline.classList.add("show");
-  audioToggle.classList.add("active");
-}
-
 function clearAudioDraft(){
   pendingAudioKind="podcast";
   audioTitle.value="";
   audioPart.value="";
   audioTime.value="";
   audioUrl.value="";
-  audioInline.classList.remove("show");
-  audioToggle.classList.remove("active");
-  quickAudioMode=false;
-  quickModeBanner?.classList.remove("show");
   setAudioKind("podcast");
 }
 
@@ -1297,34 +1223,9 @@ function saveInstantReflection(id){
   showToast("Reflection saved to Reflect.");
 }
 function renderCaptureHome(){
-  const captured=moments.filter(m=>m.source!=="Reflection");
-  const count=captured.length;
-  main.innerHTML=`<section class="capture-home">
-    <div class="capture-home-kicker">ECHO</div>
-    <h2 class="capture-home-title">What made you stop and think?</h2>
-    <button class="capture-orb" id="homeCaptureBtn" type="button" aria-label="Capture a moment">
-      <span class="capture-orb-plus">＋</span>
-      <span class="capture-orb-label">Capture a moment</span>
-    </button>
-    <p class="capture-home-note">Tap the moment it matters. Add as much—or as little—as you need.</p>
-
-    <div class="quick-audio-home">
-      <button id="quickAudioBtn" type="button" aria-label="Capture the current audio">
-        <span class="quick-audio-icon">▶</span>
-        <span class="quick-audio-copy">
-          <span class="quick-audio-title">ECHO this audio</span>
-          <span class="quick-audio-sub">Prototype current podcast · capture the play point fast</span>
-        </span>
-        <span class="quick-audio-arrow">→</span>
-      </button>
-    </div>
-
-    ${count?`<button class="capture-home-recent" id="recentTimelineBtn" type="button">${count} ${count===1?"Moment":"Moments"} captured · View timeline →</button>`:""}
-  </section>`;
-  document.getElementById("homeCaptureBtn").onclick=openCapture;
-  document.getElementById("quickAudioBtn").onclick=openQuickAudioCapture;
-  const recent=document.getElementById("recentTimelineBtn");
-  if(recent) recent.onclick=()=>{view="timeline";render()};
+ const captured=moments.filter(m=>m.source!=="Reflection"),count=captured.length;
+ main.innerHTML=`<section class="capture-home"><div class="capture-home-kicker">ECHO</div><h2 class="capture-home-title">What made you stop and think?</h2><button class="capture-orb" id="homeCaptureBtn" type="button"><span class="capture-orb-plus">＋</span><span class="capture-orb-label">Capture a moment</span></button><p class="capture-home-note">Tap the moment it matters.</p>${count?`<button class="capture-home-recent" id="recentTimelineBtn" type="button">${count} ${count===1?"Moment":"Moments"} captured · View timeline →</button>`:""}</section>`;
+ document.getElementById("homeCaptureBtn").onclick=openCapture; const recent=document.getElementById("recentTimelineBtn");if(recent)recent.onclick=()=>{view="timeline";render()};
 }
 
 function render(){
@@ -1599,41 +1500,15 @@ function detail(id){
 }
 
 function setCaptureEditMode(m=null){
-  const isEditing=!!m;
-  const isReflection=m?.source==="Reflection";
-
-  captureTitle.textContent=isEditing?(isReflection?"Edit reflection":"Edit moment"):"Capture a moment";
-  saveBtn.textContent=isEditing?"Save changes":"Save moment";
-  thoughtLabel.textContent=isReflection?"What do you think now?":"What made you stop and think?";
-
-  // Reflections are deliberately simple: edit the reflection itself.
-  composerTools.style.display=isReflection?"none":"flex";
-  sourceLabel.style.display=isReflection?"none":"block";
-  source.style.display=isReflection?"none":"block";
-  anchorLabel.style.display=isReflection?"none":"block";
-  anchor.style.display=isReflection?"none":"block";
-
-  if(isEditing){
-    const oldBadge=document.getElementById("editingBadge");
-    if(!oldBadge){
-      const badge=document.createElement("div");
-      badge.id="editingBadge";
-      badge.className="editing-badge";
-      badge.textContent=isReflection?"Editing reflection":"Editing original moment";
-      thoughtLabel.parentNode.insertBefore(badge,thoughtLabel);
-    }else{
-      oldBadge.textContent=isReflection?"Editing reflection":"Editing original moment";
-      oldBadge.style.display="inline-flex";
-    }
-  }else{
-    const badge=document.getElementById("editingBadge");
-    if(badge)badge.style.display="none";
-  }
+ const isEditing=!!m,isReflection=m?.source==="Reflection";
+ captureTitle.textContent=isEditing?(isReflection?"Edit reflection":"Edit moment"):"Capture a moment";saveBtn.textContent=isEditing?"Save changes":"Save moment";thoughtLabel.textContent=isReflection?"What do you think now?":"What made you stop and think?";
+ if(isEditing){captureChoices.style.display="none";captureFields.classList.add("show");captureBack.classList.remove("show");captureModeChip.textContent=isReflection?"REFLECTION":"EDIT MOMENT";listenMinimal.classList.toggle("show",!!m?.audio);contextToggle.style.display=isReflection?"none":"block";contextFields.classList.toggle("show",!isReflection&&!!(m?.source||m?.anchor));}
 }
 
 function openEdit(id){
   const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
   editingId=m.id;
+  selectedCaptureMode=m.audio?"listen":(m.imageData?"photo":"type");
   setCaptureEditMode(m);
 
   thought.value=m.thought||"";
@@ -1647,8 +1522,7 @@ function openEdit(id){
   audioTime.value=existingAudio?.time||"";
   audioUrl.value=existingAudio?.url||"";
   setAudioKind(pendingAudioKind);
-  audioInline.classList.toggle("show",!!existingAudio);
-  audioToggle.classList.toggle("active",!!existingAudio);
+  listenMinimal.classList.toggle("show",!!existingAudio);
 
   if(pendingImageData){
     photoPreview.src=pendingImageData;
@@ -1661,7 +1535,6 @@ function openEdit(id){
   }
 
   voiceInline.classList.remove("show");
-  voiceToggle.classList.remove("active");
   modal.style.display="block";
   modal.setAttribute("aria-hidden","false");
   document.body.style.overflow="hidden";
@@ -1859,20 +1732,13 @@ function compressImage(file){
   });
 }
 
-audioToggle.onclick=()=>{
-  const show=!audioInline.classList.contains("show");
-  audioInline.classList.toggle("show",show);
-  audioToggle.classList.toggle("active",show);
-  if(show)setTimeout(()=>audioTitle.focus(),80);
-};
-audioClose.onclick=()=>{
-  audioInline.classList.remove("show");
-  audioToggle.classList.remove("active");
-};
 podcastKind.onclick=()=>setAudioKind("podcast");
 audiobookKind.onclick=()=>setAudioKind("audiobook");
 audioTime.addEventListener("blur",()=>{audioTime.value=normalizePlayTime(audioTime.value)});
 
+function resetCaptureArchitecture(){selectedCaptureMode=null;captureChoices.style.display="block";captureFields.classList.remove("show");captureBack.classList.remove("show");captureModeChip.textContent="";contextFields.classList.remove("show");contextToggle.style.display="block";contextToggle.textContent="＋ Add context";listenMinimal.classList.remove("show");voiceInline.classList.remove("show");}
+function chooseCaptureMode(mode){selectedCaptureMode=mode;captureChoices.style.display="none";captureFields.classList.add("show");captureBack.classList.add("show");contextFields.classList.remove("show");contextToggle.textContent="＋ Add context";voiceInline.classList.remove("show");listenMinimal.classList.remove("show");const names={type:"✎  TYPE",speak:"◉  SPEAK",photo:"▣  PHOTO",listen:"▶  LISTENING"};captureModeChip.textContent=names[mode]||"CAPTURE";thought.placeholder=mode==="type"?"What made you stop and think?":mode==="speak"?"Your spoken thought will appear here":mode==="photo"?"Optional thought about this image":"Optional: what made you stop?";if(mode==="speak")voiceInline.classList.add("show");if(mode==="photo")setTimeout(()=>photoInput.click(),50);if(mode==="listen"){listenMinimal.classList.add("show");setTimeout(()=>audioTitle.focus(),80)}else if(mode==="type")setTimeout(()=>thought.focus(),80)}
+document.querySelectorAll("[data-capture-mode]").forEach(b=>b.onclick=()=>chooseCaptureMode(b.dataset.captureMode));captureBack.onclick=()=>{try{recognition?.stop()}catch(e){}stopVoiceUI();resetCaptureArchitecture()};contextToggle.onclick=()=>{const show=!contextFields.classList.contains("show");contextFields.classList.toggle("show",show);contextToggle.textContent=show?"− Hide context":"＋ Add context"};
 photoInput.addEventListener("change",async()=>{
   const file=photoInput.files?.[0]; if(!file)return;
   try{
@@ -1952,12 +1818,6 @@ if(SpeechRecognition){
   };
 }
 
-voiceToggle.addEventListener("click",()=>{
-  const showing=voiceInline.classList.toggle("show");
-  voiceToggle.classList.toggle("active",showing);
-  if(showing) voiceStatus.textContent="Ready to listen";
-});
-
 voiceBtn.addEventListener("click",()=>{
   if(recognition){
     try{
@@ -1978,55 +1838,14 @@ voiceStop.addEventListener("click",()=>{
 });
 
 
-function openQuickAudioCapture(){
-  openCapture();
-  quickAudioMode=true;
-  const a=simulatedCurrentAudio();
-  applyAudioDraft(a);
-  quickModeBanner.classList.add("show");
-  captureTitle.textContent="ECHO this audio";
-  saveBtn.textContent="Save this moment";
-
-  // Make annotation available without making it mandatory.
-  voiceInline.classList.add("show");
-  voiceToggle.classList.add("active");
-  thought.placeholder="Optional: say or type what made you stop";
-  setTimeout(()=>thought.blur(),30);
-}
-
 function openCapture(){
-  editingId=null;
-  setCaptureEditMode(null);
-  quickAudioMode=false;
-  quickModeBanner.classList.remove("show");
-  thought.placeholder="Type here, or use Voice to add to your thought";
-
-  // New capture starts clean. Switching among text/voice/photo after this
-  // never clears any part of the draft.
-  thought.value="";
-  source.value="";
-  anchor.value="";
-  pendingImageData="";
-  photoInput.value="";
-  photoPreview.src="";
-  photoPreview.classList.remove("show");
-  photoInline.classList.remove("show");
-  voiceInline.classList.remove("show");
-  voiceToggle.classList.remove("active");
-  clearAudioDraft();
-
-  modal.style.display="block";modal.setAttribute("aria-hidden","false");
-  document.body.style.overflow="hidden";
-  try{recognition?.stop()}catch(e){}
-  stopVoiceUI();
-  voiceSeconds=0; updateVoiceTimer();
-  setTimeout(()=>thought.focus(),180);
+ editingId=null;setCaptureEditMode(null);thought.value="";thought.placeholder="Capture the thought";source.value="";anchor.value="";pendingImageData="";photoInput.value="";photoPreview.src="";photoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
+ modal.style.display="block";modal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";try{recognition?.stop()}catch(e){}stopVoiceUI();voiceSeconds=0;updateVoiceTimer();
 }
+
 function closeCapture(){
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
-  quickAudioMode=false;
-  quickModeBanner.classList.remove("show");
   modal.style.display="none";modal.setAttribute("aria-hidden","true");
   document.body.style.overflow="";
 }
@@ -2084,7 +1903,7 @@ document.getElementById("save").onclick=()=>{
       anchor:isReflection?(moments[idx].anchor||""):(anchor.value.trim()||(audioDraft?.time||"")),
       audio:isReflection?(moments[idx].audio||null):audioDraft,
       imageData:isReflection?(moments[idx].imageData||""):pendingImageData,
-      captureType:isReflection?(moments[idx].captureType||"reflection"):(audioDraft?"audio":(pendingImageData?"photo+thought":"thought")),
+      captureType:isReflection?(moments[idx].captureType||"reflection"):(selectedCaptureMode||(audioDraft?"listen":(pendingImageData?"photo":"type"))),
       updatedAt:new Date().toISOString()
       // Intentionally preserve id, original display date, parentId and creation history.
     };
@@ -2124,7 +1943,7 @@ document.getElementById("save").onclick=()=>{
     source:source.value.trim()||audioSourceLabel(audioDraft),
     anchor:anchor.value.trim()||(audioDraft?.time||""),
     audio:audioDraft,
-    captureType:audioDraft?"audio":(pendingImageData?"photo+thought":"thought"),
+    captureType:selectedCaptureMode||(audioDraft?"listen":(pendingImageData?"photo":"type")),
     imageData:pendingImageData,
   };
 
@@ -2146,7 +1965,6 @@ document.getElementById("save").onclick=()=>{
   photoInline.classList.remove("show");
   photoInput.value="";
   voiceInline.classList.remove("show");
-  voiceToggle.classList.remove("active");
   clearAudioDraft();
   closeCapture();
   view="timeline";
