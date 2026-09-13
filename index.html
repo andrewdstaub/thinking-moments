@@ -1,8 +1,8 @@
-<!-- v4.5.9 -->
+<!-- v4.6 -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="echo-build" content="4.5.9">
+<meta name="echo-build" content="4.6">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
@@ -1470,6 +1470,18 @@ body.keyboard-open .bottom-nav{display:none}
 @media (min-width:700px){
   .modal{display:none!important}
 }
+
+/* V4.6 — one clear media upload action */
+.photo-picker-choice-grid{display:none !important}
+.photo-picker-actions .photo-picker-btn{
+  width:100% !important;
+  max-width:none !important;
+  min-height:58px;
+  border-radius:16px;
+  font-size:14px;
+  font-weight:900;
+}
+
 </style>
 </head>
 <body>
@@ -1565,17 +1577,12 @@ body.keyboard-open .bottom-nav{display:none}
         </div>
       </div>
       <div class="photo-picker-actions" id="photoPickerActions">
-        <div class="photo-picker-choice-grid">
-          <button class="photo-picker-btn" id="takePhotoVideoBtn" type="button">◉ Take Photo or Video</button>
-          <button class="photo-picker-btn secondary" id="chooseMediaBtn" type="button">▣ Choose Existing Media</button>
-        </div>
-        <div class="photo-picker-hint">Your iPhone controls the existing-media provider menu.</div>
+        <button class="photo-picker-btn" id="uploadMediaBtn" type="button">＋ Upload Media</button>
+        <div class="photo-picker-hint">Choose camera, photo library, files, or another provider.</div>
       </div>
       <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><video id="videoPreview" class="video-preview" controls playsinline></video><div class="photo-inline-row"><span id="mediaAttachedLabel">Media attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*,video/mp4,video/quicktime,video/*" style="display:none">
-      <input id="libraryInput" type="file" accept="image/*,video/*" style="display:none">
-      <input id="cameraInput" type="file" accept="image/*,video/*" capture="environment" style="display:none">
-      <input id="fileInput" type="file" accept="image/*,video/mp4,video/quicktime,video/*" style="display:none">
+      <input id="uploadMediaInput" type="file" accept="image/*,video/*" style="display:none">
       <div class="listen-minimal" id="listenMinimal"><div class="audio-inline show" id="audioInline"><div class="audio-head"><div><strong>Where were you listening?</strong><span>Paste the link first, then add any details that help.</span></div><button class="audio-close" id="audioClose" type="button">×</button></div><input id="audioUrl" inputmode="url" autocomplete="url" placeholder="Paste Spotify, Podcasts, Audible, YouTube…"><div class="audio-kind"><button type="button" id="podcastKind" class="active">Podcast</button><button type="button" id="audiobookKind">Audiobook</button></div><input id="audioTitle" placeholder="Podcast or book title"><div class="audio-grid"><input id="audioPart" placeholder="Episode title / number"><input id="audioTime" inputmode="numeric" placeholder="42:18"></div><p class="audio-help">In the native app, supported listening services can pass this context automatically.</p></div></div>
       <button class="context-toggle" id="contextToggle" type="button">＋ Add context</button>
       <div class="context-fields" id="contextFields"><label class="field-label" id="sourceLabel" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="source" placeholder="Book, conversation, article, website..."><label class="field-label" id="anchorLabel" for="anchor">Anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="anchor" placeholder="Page, timestamp, link, or cue"></div>
@@ -1670,13 +1677,10 @@ const photoPreview=document.getElementById("photoPreview");
 const videoPreview=document.getElementById("videoPreview");
 const mediaAttachedLabel=document.getElementById("mediaAttachedLabel");
 const photoPickerActions=document.getElementById("photoPickerActions");
-const chooseMediaBtn=document.getElementById("chooseMediaBtn");
-const takePhotoVideoBtn=document.getElementById("takePhotoVideoBtn");
+const uploadMediaBtn=document.getElementById("uploadMediaBtn");
+const uploadMediaInput=document.getElementById("uploadMediaInput");
 const mediaQuickUrl=document.getElementById("mediaQuickUrl");
 const mediaQuickUrlGo=document.getElementById("mediaQuickUrlGo");
-const libraryInput=document.getElementById("libraryInput");
-const cameraInput=document.getElementById("cameraInput");
-const fileInput=document.getElementById("fileInput");
 const mediaDoor=document.getElementById("mediaDoor");
 const mediaPhotoVideo=document.getElementById("mediaPhotoVideo");
 const mediaListening=document.getElementById("mediaListening");
@@ -2876,6 +2880,7 @@ function chooseCaptureMode(mode){
 document.querySelectorAll("[data-capture-mode]").forEach(b=>b.onclick=()=>chooseCaptureMode(b.dataset.captureMode));
 mediaPhotoVideo.onclick=()=>chooseCaptureMode("photo");
 mediaListening.onclick=()=>chooseCaptureMode("listen");
+uploadMediaBtn.onclick=()=>uploadMediaInput.click();
 
 function useQuickMediaUrl(){
   const url=(mediaQuickUrl?.value||"").trim();
@@ -2887,8 +2892,6 @@ function useQuickMediaUrl(){
   audioUrl.value=url;
   setTimeout(()=>audioTitle.focus(),80);
 }
-chooseMediaBtn.onclick=()=>libraryInput.click();
-takePhotoVideoBtn.onclick=()=>cameraInput.click();
 mediaQuickUrlGo.onclick=useQuickMediaUrl;
 mediaQuickUrl.addEventListener("keydown",(e)=>{
   if(e.key==="Enter"){
@@ -2937,7 +2940,7 @@ async function handleMediaFile(file,inputEl){
     videoPreview.src=pendingVideoURL;
     videoPreview.classList.add("show");
     mediaAttachedLabel.textContent="Video attached";
-    chooseMediaBtn.textContent="↻ Choose a Different Photo or Video";
+    uploadMediaBtn.textContent="↻ Replace Media";
     photoInline.classList.add("show");
     thought.placeholder="What about this video mattered?";
     return;
@@ -2948,7 +2951,7 @@ async function handleMediaFile(file,inputEl){
     photoPreview.src=pendingImageData;
     photoPreview.classList.add("show");
     mediaAttachedLabel.textContent="Image attached";
-    chooseMediaBtn.textContent="↻ Choose a Different Photo or Video";
+    uploadMediaBtn.textContent="↻ Replace Media";
     photoInline.classList.add("show");
     thought.placeholder="What about this image mattered?";
   }catch(e){
@@ -2956,10 +2959,7 @@ async function handleMediaFile(file,inputEl){
   }
 }
 
-photoInput.addEventListener("change",async()=>handleMediaFile(photoInput.files?.[0],photoInput));
-libraryInput.addEventListener("change",async()=>handleMediaFile(libraryInput.files?.[0],libraryInput));
-cameraInput.addEventListener("change",async()=>handleMediaFile(cameraInput.files?.[0],cameraInput));
-fileInput.addEventListener("change",async()=>handleMediaFile(fileInput.files?.[0],fileInput));
+uploadMediaInput.addEventListener("change",async()=>handleMediaFile(uploadMediaInput.files?.[0],uploadMediaInput));
 removePhoto.addEventListener("click",()=>{
   pendingImageData="";
   pendingVideoFile=null;
@@ -2973,8 +2973,8 @@ removePhoto.addEventListener("click",()=>{
   videoPreview.removeAttribute("src");
   videoPreview.classList.remove("show");
   photoInline.classList.remove("show");
-  photoInput.value="";libraryInput.value="";cameraInput.value="";fileInput.value="";
-  chooseMediaBtn.textContent="＋ Choose Photo or Video";
+  photoInput.value="";uploadMediaInput.value="";
+  uploadMediaBtn.textContent="＋ Upload Media";
   photoPickerActions.classList.add("show");
 });
 
@@ -3124,7 +3124,7 @@ if(voiceStop){
 function openCapture(){
  editingId=null;setCaptureEditMode(null);thought.value="";thought.placeholder="Capture the thought";source.value="";anchor.value="";pendingImageData="";pendingVideoFile=null;if(mediaQuickUrl)mediaQuickUrl.value="";
  if(pendingVideoURL){try{URL.revokeObjectURL(pendingVideoURL)}catch(e){}pendingVideoURL="";}
- photoInput.value="";libraryInput.value="";cameraInput.value="";fileInput.value="";chooseMediaBtn.textContent="＋ Choose Photo or Video";photoPreview.src="";photoPreview.classList.remove("show");videoPreview.pause();videoPreview.removeAttribute("src");videoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
+ photoInput.value="";uploadMediaInput.value="";uploadMediaBtn.textContent="＋ Upload Media";photoPreview.src="";photoPreview.classList.remove("show");videoPreview.pause();videoPreview.removeAttribute("src");videoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
  modal.style.display="block";modal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";try{recognition?.stop()}catch(e){}stopVoiceUI();voiceSeconds=0;updateVoiceTimer();
 }
 
