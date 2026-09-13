@@ -1,8 +1,8 @@
-<!-- v4.6.1 -->
+<!-- v4.6.2 -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="echo-build" content="4.6.1">
+<meta name="echo-build" content="4.6.2">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
@@ -1482,6 +1482,16 @@ body.keyboard-open .bottom-nav{display:none}
   font-weight:900;
 }
 
+
+.share-reflection-gate{display:none;margin:14px 0 4px;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:rgba(255,255,255,.045)}
+.share-reflection-gate.show{display:block}
+.share-reflection-gate strong{display:block;font-size:16px;margin-bottom:7px}
+.share-reflection-gate p{margin:0 0 14px;color:var(--muted);font-size:14px;line-height:1.45}
+.share-reflection-gate button,.share-add-question{width:100%;border:0;border-radius:14px;padding:12px 14px;font:inherit;font-weight:700;cursor:pointer}
+.share-reflection-gate button{background:rgba(255,255,255,.11);color:var(--text)}
+.share-add-question{display:none;margin-top:12px;background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.10)}
+.share-add-question.show{display:block}
+
 </style>
 </head>
 <body>
@@ -1597,17 +1607,25 @@ body.keyboard-open .bottom-nav{display:none}
 
 <div class="share-preview-backdrop" id="sharePreviewBackdrop" aria-hidden="true">
   <div class="share-preview">
-    <div class="share-preview-head"><strong>Share this Moment</strong><button class="share-preview-close" id="sharePreviewClose" type="button">×</button></div>
-    <div class="share-preview-moment" id="sharePreviewMoment"></div>
-    <div class="share-prompt-card" id="sharePromptCard">
-      <div class="share-prompt-label" id="sharePromptLabel">TALK ABOUT IT</div>
-      <div class="share-prompt-text" id="sharePromptText"></div>
-      <div class="share-prompt-actions">
-        <button type="button" id="sharePromptAnother">↻ Another question</button>
-        <button type="button" id="sharePromptRemove">× Remove</button>
-      </div>
+    <div class="share-preview-head"><strong id="sharePreviewTitle">Share this Moment</strong><button class="share-preview-close" id="sharePreviewClose" type="button">×</button></div>
+    <div class="share-reflection-gate" id="shareReflectionGate">
+      <strong>Share this reflection?</strong>
+      <p>Reflections can be more personal than Moments. You’ll review exactly what you’re sharing before anything is sent.</p>
+      <button type="button" id="shareReflectionReview">Review Reflection →</button>
     </div>
-    <button class="share-final" id="shareFinalBtn" type="button">Share →</button>
+    <div id="sharePreviewContent">
+      <div class="share-preview-moment" id="sharePreviewMoment"></div>
+      <div class="share-prompt-card" id="sharePromptCard">
+        <div class="share-prompt-label" id="sharePromptLabel">TALK ABOUT IT</div>
+        <div class="share-prompt-text" id="sharePromptText"></div>
+        <div class="share-prompt-actions">
+          <button type="button" id="sharePromptAnother">↻ Another question</button>
+          <button type="button" id="sharePromptRemove">× Remove</button>
+        </div>
+      </div>
+      <button class="share-add-question" id="shareAddQuestion" type="button">＋ Add a question</button>
+      <button class="share-final" id="shareFinalBtn" type="button">Share →</button>
+    </div>
   </div>
 </div>
 
@@ -2378,23 +2396,27 @@ function sharePromptForMoment(m, alternate=0){
   return unique[Math.abs(alternate)%unique.length];
 }
 
-function momentShareText(m,promptOverride=null){
+function momentShareText(m,promptOverride=undefined){
+  const isReflection=m.source==="Reflection";
   const lines=[];
-  lines.push("This made me stop and think:");
-  if(cleanShareLine(m.thought)) lines.push(`“${cleanShareLine(m.thought)}”`);
+  lines.push(isReflection?"MY REFLECTION":"This made me stop and think:");
+  if(cleanShareLine(m.thought)){
+    lines.push(isReflection?cleanShareLine(m.thought):`“${cleanShareLine(m.thought)}”`);
+  }
 
   const sourceParts=[];
-  if(m.audio){
+  if(!isReflection && m.audio){
     if(m.audio.title) sourceParts.push(m.audio.title);
     if(m.audio.part) sourceParts.push(m.audio.part);
     if(m.audio.time) sourceParts.push(`Play from ${m.audio.time}`);
-  }else{
+  }else if(!isReflection){
     if(cleanShareLine(m.source)) sourceParts.push(cleanShareLine(m.source));
     if(cleanShareLine(m.anchor)) sourceParts.push(cleanShareLine(m.anchor));
   }
   if(sourceParts.length) lines.push(sourceParts.join(" · "));
 
-  const p=promptOverride||sharePromptForMoment(m);
+  // undefined = normal Moment default; null = deliberately no shared question.
+  const p=(promptOverride===undefined)?sharePromptForMoment(m):promptOverride;
   if(p?.text){
     lines.push("");
     lines.push(p.label||"TALK ABOUT IT");
@@ -2404,7 +2426,6 @@ function momentShareText(m,promptOverride=null){
   lines.push("Captured with ECHO");
   return lines.join("\n");
 }
-
 
 async function dataUrlToShareFile(dataUrl, name="echo-moment.jpg"){
   try{
@@ -2427,16 +2448,61 @@ function closeSharePreview(){
 }
 function renderSharePreview(){
   if(!sharePreviewState)return;
-  const {m,prompt}=sharePreviewState;
-  const source=m.audio?[m.audio.title,m.audio.part,m.audio.time?`Play from ${m.audio.time}`:""].filter(Boolean).join(" · "):[m.source,m.anchor].filter(Boolean).join(" · ");
-  document.getElementById("sharePreviewMoment").innerHTML=`${cleanShareLine(m.thought)?`<strong>${esc(cleanShareLine(m.thought))}</strong>`:"<strong>Captured Moment</strong>"}${source?`<div class="source" style="margin-top:8px">${esc(source)}</div>`:""}`;
+  const {m,prompt,isReflection,reviewed}=sharePreviewState;
+  const title=document.getElementById("sharePreviewTitle");
+  const gate=document.getElementById("shareReflectionGate");
+  const content=document.getElementById("sharePreviewContent");
+  const addQuestion=document.getElementById("shareAddQuestion");
+
+  if(title)title.textContent=isReflection?"Share this Reflection":"Share this Moment";
+
+  // Reflections get one extra intentional step before their contents are exposed
+  // in the outgoing-share preview.
+  if(isReflection && !reviewed){
+    gate?.classList.add("show");
+    if(content)content.style.display="none";
+    return;
+  }
+  gate?.classList.remove("show");
+  if(content)content.style.display="block";
+
+  const source=(!isReflection && m.audio)
+    ?[m.audio.title,m.audio.part,m.audio.time?`Play from ${m.audio.time}`:""].filter(Boolean).join(" · ")
+    :(!isReflection?[m.source,m.anchor].filter(Boolean).join(" · "):"");
+
+  document.getElementById("sharePreviewMoment").innerHTML=
+    `${isReflection?'<div class="label" style="margin-bottom:8px">MY REFLECTION</div>':""}`+
+    `${cleanShareLine(m.thought)?`<strong>${esc(cleanShareLine(m.thought))}</strong>`:`<strong>${isReflection?"Reflection":"Captured Moment"}</strong>`}`+
+    `${source?`<div class="source" style="margin-top:8px">${esc(source)}</div>`:""}`;
+
   const card=document.getElementById("sharePromptCard");
   card.style.display=prompt?"block":"none";
-  if(prompt){document.getElementById("sharePromptLabel").textContent=prompt.label||"TALK ABOUT IT";document.getElementById("sharePromptText").textContent=prompt.text;}
+  if(prompt){
+    document.getElementById("sharePromptLabel").textContent=prompt.label||"TALK ABOUT IT";
+    document.getElementById("sharePromptText").textContent=prompt.text;
+  }
+
+  // A Reflection never gets an automatic question. The sender can deliberately
+  // invite conversation, using the same low-presumption conversational engine
+  // used for Timeline Moment shares.
+  if(addQuestion){
+    addQuestion.classList.toggle("show",!!isReflection && !prompt);
+  }
 }
 function shareMoment(id){
   const m=moments.find(x=>String(x.id)===String(id));if(!m)return;
-  sharePreviewState={m,prompt:sharePromptForMoment(m,0),alternate:0};
+  sharePreviewState={m,prompt:sharePromptForMoment(m,0),alternate:0,isReflection:false,reviewed:true};
+  renderSharePreview();
+  const el=document.getElementById("sharePreviewBackdrop");
+  if(!el)return;
+  el.classList.add("show");el.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  const menu=document.getElementById("detailMenu");
+  if(menu)menu.classList.remove("show");
+}
+function shareReflection(id){
+  const m=moments.find(x=>String(x.id)===String(id));if(!m || m.source!=="Reflection")return;
+  sharePreviewState={m,prompt:null,alternate:0,isReflection:true,reviewed:false};
   renderSharePreview();
   const el=document.getElementById("sharePreviewBackdrop");
   if(!el)return;
@@ -2450,7 +2516,8 @@ async function performShareMoment(id,promptOverride){
   if(!m)return;
 
   const text=momentShareText(m,promptOverride);
-  const shareData={title:"An ECHO Moment",text};
+  const isReflection=m.source==="Reflection";
+  const shareData={title:isReflection?"An ECHO Reflection":"An ECHO Moment",text};
 
   // If this Moment contains an image and the browser supports sharing files,
   // include the image. Otherwise share the complete Moment as text.
@@ -2481,7 +2548,7 @@ async function performShareMoment(id,promptOverride){
   // Fallback for browsers without Web Share support.
   try{
     await navigator.clipboard.writeText(text);
-    showToast("Moment copied.");
+    showToast(isReflection?"Reflection copied.":"Moment copied.");
   }catch(e){
     const temp=document.createElement("textarea");
     temp.value=text;
@@ -2489,8 +2556,8 @@ async function performShareMoment(id,promptOverride){
     temp.style.opacity="0";
     document.body.appendChild(temp);
     temp.select();
-    try{document.execCommand("copy");showToast("Moment copied.");}
-    catch(err){showToast("Couldn't share this Moment.");}
+    try{document.execCommand("copy");showToast(isReflection?"Reflection copied.":"Moment copied.");}
+    catch(err){showToast(isReflection?"Couldn\'t share this Reflection.":"Couldn\'t share this Moment.");}
     temp.remove();
   }
 }
@@ -2507,7 +2574,7 @@ function detail(id){
     <div class="detail-menu-wrap">
       <button class="detail-menu-btn" id="detailMenuBtn" aria-label="More options">•••</button>
       <div class="detail-menu" id="detailMenu">
-        ${!isReflection?`<button type="button" onclick="shareMoment('${m.id}')">Share</button>`:""}
+        ${isReflection?`<button type="button" onclick="shareReflection(\'${m.id}\')">Share</button>`:`<button type="button" onclick="shareMoment(\'${m.id}\')">Share</button>`}
         <button type="button" onclick="openEdit('${m.id}')">Edit</button>
         <button type="button" class="danger" onclick="deleteItem('${m.id}')">Delete</button>
       </div>
@@ -2561,8 +2628,8 @@ function detail(id){
       <div class="go-deeper-question">${esc(getEchoResponse(m).text)}</div>
     </div>`:""}
     ${!isReflection&&!m.audio?`<button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>`:""}
-    ${!isReflection?`<button class="share-moment-btn" type="button" id="shareMomentBtn"><span>↗</span><span>Share this Moment</span></button>
-      <div class="share-note">Shares through your device. The recipient does not need ECHO.</div>`:""}
+    <button class="share-moment-btn" type="button" id="shareMomentBtn"><span>↗</span><span>${isReflection?"Share this Reflection":"Share this Moment"}</span></button>
+      <div class="share-note">${isReflection?"You’ll review it before anything is sent.":"Shares through your device. The recipient does not need ECHO."}</div>
   </article>`;
 
   const menuBtn=document.getElementById("detailMenuBtn");
@@ -2571,7 +2638,7 @@ function detail(id){
   const detailPlay=document.getElementById("detailPlayFrom");
   if(detailPlay)detailPlay.onclick=()=>openAudioSource(m.audio);
   const shareBtn=document.getElementById("shareMomentBtn");
-  if(shareBtn)shareBtn.onclick=()=>shareMoment(m.id);
+  if(shareBtn)shareBtn.onclick=()=>isReflection?shareReflection(m.id):shareMoment(m.id);
 }
 
 function setCaptureEditMode(m=null){
@@ -3269,11 +3336,24 @@ document.getElementById("save").onclick=()=>{
 
 const sharePreviewClose=document.getElementById("sharePreviewClose");
 const sharePreviewBackdrop=document.getElementById("sharePreviewBackdrop");
+const shareReflectionReview=document.getElementById("shareReflectionReview");
+const shareAddQuestion=document.getElementById("shareAddQuestion");
 const sharePromptAnother=document.getElementById("sharePromptAnother");
 const sharePromptRemove=document.getElementById("sharePromptRemove");
 const shareFinalBtn=document.getElementById("shareFinalBtn");
 
 if(sharePreviewClose)sharePreviewClose.onclick=closeSharePreview;
+if(shareReflectionReview)shareReflectionReview.onclick=()=>{
+  if(!sharePreviewState)return;
+  sharePreviewState.reviewed=true;
+  renderSharePreview();
+};
+if(shareAddQuestion)shareAddQuestion.onclick=()=>{
+  if(!sharePreviewState)return;
+  sharePreviewState.alternate=0;
+  sharePreviewState.prompt=sharePromptForMoment(sharePreviewState.m,0);
+  renderSharePreview();
+};
 if(sharePreviewBackdrop)sharePreviewBackdrop.onclick=e=>{if(e.target===sharePreviewBackdrop)closeSharePreview()};
 if(sharePromptAnother)sharePromptAnother.onclick=()=>{
   if(!sharePreviewState)return;
@@ -3288,7 +3368,8 @@ if(sharePromptRemove)sharePromptRemove.onclick=()=>{
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sharePreviewState)closeSharePreview()});
 if(shareFinalBtn)shareFinalBtn.onclick=async()=>{
   if(!sharePreviewState)return;
-  const {m,prompt}=sharePreviewState;
+  const {m,prompt,isReflection,reviewed}=sharePreviewState;
+  if(isReflection&&!reviewed)return;
   closeSharePreview();
   await performShareMoment(m.id,prompt);
 };
