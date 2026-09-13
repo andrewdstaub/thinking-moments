@@ -1,4 +1,4 @@
-<!-- v4.5.2 -->
+<!-- v4.5.3 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -489,6 +489,34 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 
 
 
+
+
+/* V4.5.3 — Photo/Video picker UX fix
+   Do not auto-open the native iOS chooser. Keep a persistent in-app button instead. */
+.photo-picker-actions{
+  display:none;
+  margin:14px 0 14px;
+}
+.photo-picker-actions.show{display:block}
+.photo-picker-btn{
+  width:100%;
+  min-height:58px;
+  border:1px solid rgba(140,240,199,.28);
+  border-radius:18px;
+  background:linear-gradient(135deg,rgba(140,240,199,.12),rgba(154,167,255,.12));
+  color:var(--ink);
+  font:inherit;
+  font-size:14px;
+  font-weight:900;
+  box-shadow:0 10px 30px rgba(0,0,0,.12);
+}
+.photo-picker-hint{
+  margin-top:8px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.35;
+  text-align:center;
+}
 
 /* V4.5.2 — cleaner Timeline quick-action row */
 .timeline-card-actions .echo-response-trigger{
@@ -1312,8 +1340,8 @@ body.keyboard-open .bottom-nav{display:none}
         </div>
       </div>
       <div class="photo-picker-actions" id="photoPickerActions">
-        <button class="photo-picker-btn" id="chooseMediaBtn" type="button">＋ Choose photo or video</button>
-        <div class="photo-picker-hint">You can reopen your library anytime before saving.</div>
+        <button class="photo-picker-btn" id="chooseMediaBtn" type="button">＋ Choose Photo or Video</button>
+        <div class="photo-picker-hint">Tap anytime to open the photo/video picker.</div>
       </div>
       <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><video id="videoPreview" class="video-preview" controls playsinline></video><div class="photo-inline-row"><span id="mediaAttachedLabel">Media attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*,video/mp4,video/quicktime,video/*" style="display:none">
@@ -2597,7 +2625,6 @@ function chooseCaptureMode(mode){
     thoughtLabel.textContent="Add a thought (optional)";
     thought.placeholder="What about this mattered?";
     photoPickerActions.classList.add("show");
-    setTimeout(()=>photoInput.click(),50);
   }
 
   if(mode==="listen"){
@@ -2652,7 +2679,7 @@ photoInput.addEventListener("change",async()=>{
     videoPreview.src=pendingVideoURL;
     videoPreview.classList.add("show");
     mediaAttachedLabel.textContent="Video attached";
-    chooseMediaBtn.textContent="↻ Choose a different photo or video";
+    chooseMediaBtn.textContent="↻ Choose a Different Photo or Video";
     photoInline.classList.add("show");
     thought.placeholder="What about this video mattered?";
     return;
@@ -2663,7 +2690,7 @@ photoInput.addEventListener("change",async()=>{
     photoPreview.src=pendingImageData;
     photoPreview.classList.add("show");
     mediaAttachedLabel.textContent="Image attached";
-    chooseMediaBtn.textContent="↻ Choose a different photo or video";
+    chooseMediaBtn.textContent="↻ Choose a Different Photo or Video";
     photoInline.classList.add("show");
     thought.placeholder="What about this image mattered?";
   }catch(e){
@@ -2684,7 +2711,7 @@ removePhoto.addEventListener("click",()=>{
   videoPreview.classList.remove("show");
   photoInline.classList.remove("show");
   photoInput.value="";
-  chooseMediaBtn.textContent="＋ Choose photo or video";
+  chooseMediaBtn.textContent="＋ Choose Photo or Video";
   photoPickerActions.classList.add("show");
 });
 
@@ -2834,7 +2861,7 @@ if(voiceStop){
 function openCapture(){
  editingId=null;setCaptureEditMode(null);thought.value="";thought.placeholder="Capture the thought";source.value="";anchor.value="";pendingImageData="";pendingVideoFile=null;
  if(pendingVideoURL){try{URL.revokeObjectURL(pendingVideoURL)}catch(e){}pendingVideoURL="";}
- photoInput.value="";chooseMediaBtn.textContent="＋ Choose photo or video";photoPreview.src="";photoPreview.classList.remove("show");videoPreview.pause();videoPreview.removeAttribute("src");videoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
+ photoInput.value="";chooseMediaBtn.textContent="＋ Choose Photo or Video";photoPreview.src="";photoPreview.classList.remove("show");videoPreview.pause();videoPreview.removeAttribute("src");videoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
  modal.style.display="block";modal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";try{recognition?.stop()}catch(e){}stopVoiceUI();voiceSeconds=0;updateVoiceTimer();
 }
 
