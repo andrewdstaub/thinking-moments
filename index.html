@@ -1,8 +1,8 @@
-<!-- v4.5.5 -->
+<!-- v4.5.6 -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="echo-build" content="4.5.5">
+<meta name="echo-build" content="4.5.6">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
@@ -493,6 +493,100 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 
 
 
+
+
+/* V4.5.6 — ECHO-controlled media chooser */
+.media-choice-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:110;
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  padding:14px;
+  background:rgba(3,7,18,.72);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.media-choice-backdrop.show{display:flex}
+.media-choice-sheet{
+  width:min(560px,100%);
+  border:1px solid var(--line);
+  border-radius:26px;
+  background:#10172a;
+  padding:18px;
+  box-shadow:0 24px 80px rgba(0,0,0,.42);
+}
+.media-choice-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+.media-choice-kicker{
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.13em;
+  color:var(--accent);
+  margin-bottom:4px;
+}
+.media-choice-head strong{
+  font-size:19px;
+  line-height:1.25;
+}
+.media-choice-close{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  color:var(--ink);
+  font-size:20px;
+  line-height:1;
+}
+.media-choice-list{
+  display:grid;
+  gap:10px;
+}
+.media-choice-option{
+  width:100%;
+  min-height:72px;
+  border:1px solid var(--line);
+  border-radius:17px;
+  background:rgba(255,255,255,.03);
+  color:var(--ink);
+  display:grid;
+  grid-template-columns:42px 1fr;
+  gap:10px;
+  align-items:center;
+  text-align:left;
+  padding:12px 14px;
+  font:inherit;
+}
+.media-choice-option:active{transform:scale(.992)}
+.media-choice-icon{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(140,240,199,.20);
+  background:rgba(140,240,199,.05);
+  color:var(--accent);
+  font-weight:900;
+}
+.media-choice-option strong{
+  display:block;
+  font-size:14px;
+}
+.media-choice-option small{
+  display:block;
+  margin-top:3px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.3;
+}
 
 /* V4.5.5 — stabilize native iOS media-picker anchor */
 .photo-picker-actions{
@@ -1388,10 +1482,13 @@ body.keyboard-open .bottom-nav{display:none}
       </div>
       <div class="photo-picker-actions" id="photoPickerActions">
         <button class="photo-picker-btn" id="chooseMediaBtn" type="button">＋ Choose Photo or Video</button>
-        <div class="photo-picker-hint">Tap the button to choose or replace media.</div>
+        <div class="photo-picker-hint">Choose how you want to add media.</div>
       </div>
       <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><video id="videoPreview" class="video-preview" controls playsinline></video><div class="photo-inline-row"><span id="mediaAttachedLabel">Media attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*,video/mp4,video/quicktime,video/*" style="display:none">
+      <input id="libraryInput" type="file" accept="image/*,video/*" style="display:none">
+      <input id="cameraInput" type="file" accept="image/*,video/*" capture="environment" style="display:none">
+      <input id="fileInput" type="file" accept="image/*,video/mp4,video/quicktime,video/*" style="display:none">
       <div class="listen-minimal" id="listenMinimal"><div class="audio-inline show" id="audioInline"><div class="audio-head"><div><strong>Where were you listening?</strong><span>Save the source and exact point.</span></div><button class="audio-close" id="audioClose" type="button">×</button></div><div class="audio-kind"><button type="button" id="podcastKind" class="active">Podcast</button><button type="button" id="audiobookKind">Audiobook</button></div><input id="audioTitle" placeholder="Podcast or book title"><div class="audio-grid"><input id="audioPart" placeholder="Episode title / number"><input id="audioTime" inputmode="numeric" placeholder="42:18"></div><input id="audioUrl" inputmode="url" placeholder="Source link (optional)"><p class="audio-help">In the native app, supported listening services can pass this context automatically.</p></div></div>
       <button class="context-toggle" id="contextToggle" type="button">＋ Add context</button>
       <div class="context-fields" id="contextFields"><label class="field-label" id="sourceLabel" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="source" placeholder="Book, conversation, article, website..."><label class="field-label" id="anchorLabel" for="anchor">Anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="anchor" placeholder="Page, timestamp, link, or cue"></div>
@@ -1399,6 +1496,36 @@ body.keyboard-open .bottom-nav{display:none}
     <div class="capture-save-bar" id="captureSaveBar">
       <button class="save" id="save">Save Moment</button>
       <div class="capture-save-hint">Save now. Add context only if it helps.</div>
+    </div>
+  </div>
+</div>
+
+
+<div class="media-choice-backdrop" id="mediaChoiceBackdrop" aria-hidden="true">
+  <div class="media-choice-sheet" role="dialog" aria-modal="true" aria-labelledby="mediaChoiceTitle">
+    <div class="media-choice-head">
+      <div>
+        <div class="media-choice-kicker">PHOTO OR VIDEO</div>
+        <strong id="mediaChoiceTitle">Choose where to capture from</strong>
+      </div>
+      <button class="media-choice-close" id="mediaChoiceClose" type="button" aria-label="Close media choices">×</button>
+    </div>
+
+    <div class="media-choice-list">
+      <button class="media-choice-option" id="chooseLibraryBtn" type="button">
+        <span class="media-choice-icon">▣</span>
+        <span><strong>Photo Library</strong><small>Choose an existing photo or video</small></span>
+      </button>
+
+      <button class="media-choice-option" id="takeCameraBtn" type="button">
+        <span class="media-choice-icon">◉</span>
+        <span><strong>Take Photo or Video</strong><small>Open your camera</small></span>
+      </button>
+
+      <button class="media-choice-option" id="chooseFileBtn" type="button">
+        <span class="media-choice-icon">⌁</span>
+        <span><strong>Choose File</strong><small>Select from Files or another provider</small></span>
+      </button>
     </div>
   </div>
 </div>
@@ -1486,6 +1613,14 @@ const videoPreview=document.getElementById("videoPreview");
 const mediaAttachedLabel=document.getElementById("mediaAttachedLabel");
 const photoPickerActions=document.getElementById("photoPickerActions");
 const chooseMediaBtn=document.getElementById("chooseMediaBtn");
+const mediaChoiceBackdrop=document.getElementById("mediaChoiceBackdrop");
+const mediaChoiceClose=document.getElementById("mediaChoiceClose");
+const chooseLibraryBtn=document.getElementById("chooseLibraryBtn");
+const takeCameraBtn=document.getElementById("takeCameraBtn");
+const chooseFileBtn=document.getElementById("chooseFileBtn");
+const libraryInput=document.getElementById("libraryInput");
+const cameraInput=document.getElementById("cameraInput");
+const fileInput=document.getElementById("fileInput");
 const mediaDoor=document.getElementById("mediaDoor");
 const mediaPhotoVideo=document.getElementById("mediaPhotoVideo");
 const mediaListening=document.getElementById("mediaListening");
@@ -2685,7 +2820,24 @@ function chooseCaptureMode(mode){
 document.querySelectorAll("[data-capture-mode]").forEach(b=>b.onclick=()=>chooseCaptureMode(b.dataset.captureMode));
 mediaPhotoVideo.onclick=()=>chooseCaptureMode("photo");
 mediaListening.onclick=()=>chooseCaptureMode("listen");
-chooseMediaBtn.onclick=()=>photoInput.click();
+
+function openMediaChoices(){
+  mediaChoiceBackdrop.classList.add("show");
+  mediaChoiceBackdrop.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+}
+function closeMediaChoices(){
+  mediaChoiceBackdrop.classList.remove("show");
+  mediaChoiceBackdrop.setAttribute("aria-hidden","true");
+  document.body.style.overflow="";
+}
+chooseMediaBtn.onclick=openMediaChoices;
+mediaChoiceClose.onclick=closeMediaChoices;
+mediaChoiceBackdrop.onclick=(e)=>{if(e.target===mediaChoiceBackdrop)closeMediaChoices();};
+chooseLibraryBtn.onclick=()=>{closeMediaChoices(); setTimeout(()=>libraryInput.click(),0);};
+takeCameraBtn.onclick=()=>{closeMediaChoices(); setTimeout(()=>cameraInput.click(),0);};
+chooseFileBtn.onclick=()=>{closeMediaChoices(); setTimeout(()=>fileInput.click(),0);};
+
 captureBack.onclick=()=>{
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
@@ -2702,8 +2854,7 @@ captureBack.onclick=()=>{
   resetCaptureArchitecture();
 };
 contextToggle.onclick=()=>{const show=!contextFields.classList.contains("show");contextFields.classList.toggle("show",show);contextToggle.textContent=show?"− Hide context":"＋ Add context"};
-photoInput.addEventListener("change",async()=>{
-  const file=photoInput.files?.[0];
+async function handleMediaFile(file,inputEl){
   if(!file)return;
 
   pendingImageData="";
@@ -2743,7 +2894,12 @@ photoInput.addEventListener("change",async()=>{
   }catch(e){
     showToast("Couldn't load image.");
   }
-});
+}
+
+photoInput.addEventListener("change",async()=>handleMediaFile(photoInput.files?.[0],photoInput));
+libraryInput.addEventListener("change",async()=>handleMediaFile(libraryInput.files?.[0],libraryInput));
+cameraInput.addEventListener("change",async()=>handleMediaFile(cameraInput.files?.[0],cameraInput));
+fileInput.addEventListener("change",async()=>handleMediaFile(fileInput.files?.[0],fileInput));
 removePhoto.addEventListener("click",()=>{
   pendingImageData="";
   pendingVideoFile=null;
@@ -2757,7 +2913,7 @@ removePhoto.addEventListener("click",()=>{
   videoPreview.removeAttribute("src");
   videoPreview.classList.remove("show");
   photoInline.classList.remove("show");
-  photoInput.value="";
+  photoInput.value="";libraryInput.value="";cameraInput.value="";fileInput.value="";
   chooseMediaBtn.textContent="＋ Choose Photo or Video";
   photoPickerActions.classList.add("show");
 });
@@ -2908,7 +3064,7 @@ if(voiceStop){
 function openCapture(){
  editingId=null;setCaptureEditMode(null);thought.value="";thought.placeholder="Capture the thought";source.value="";anchor.value="";pendingImageData="";pendingVideoFile=null;
  if(pendingVideoURL){try{URL.revokeObjectURL(pendingVideoURL)}catch(e){}pendingVideoURL="";}
- photoInput.value="";chooseMediaBtn.textContent="＋ Choose Photo or Video";photoPreview.src="";photoPreview.classList.remove("show");videoPreview.pause();videoPreview.removeAttribute("src");videoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
+ photoInput.value="";libraryInput.value="";cameraInput.value="";fileInput.value="";chooseMediaBtn.textContent="＋ Choose Photo or Video";photoPreview.src="";photoPreview.classList.remove("show");videoPreview.pause();videoPreview.removeAttribute("src");videoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
  modal.style.display="block";modal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";try{recognition?.stop()}catch(e){}stopVoiceUI();voiceSeconds=0;updateVoiceTimer();
 }
 
