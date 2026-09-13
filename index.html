@@ -1,4 +1,4 @@
-<!-- v3.8 -->
+<!-- v3.9.1 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -713,6 +713,44 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 body.keyboard-open .bottom-nav{display:none}
 
 
+
+
+.share-preview-backdrop{position:fixed;inset:0;z-index:80;background:rgba(3,7,18,.72);display:none;align-items:flex-end;justify-content:center;padding:14px}
+.share-preview-backdrop.show{display:flex}
+.share-preview{width:min(520px,100%);max-height:86vh;overflow:auto;border:1px solid var(--line);border-radius:24px;background:#10172a;padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.45)}
+.share-preview-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.share-preview-head strong{font-size:17px}.share-preview-close{border:0;background:transparent;color:var(--muted);font-size:22px}
+.share-preview-moment{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03);font-size:14px;line-height:1.5}
+.share-prompt-card{margin-top:12px;padding:14px;border:1px solid rgba(140,240,199,.18);border-radius:16px;background:rgba(140,240,199,.045)}
+.share-prompt-label{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--accent);margin-bottom:7px}.share-prompt-text{font-size:14px;line-height:1.48}
+.share-prompt-actions{display:flex;gap:8px;margin-top:11px}.share-prompt-actions button{flex:1;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.035);color:var(--muted);padding:9px;font:inherit;font-size:11px;font-weight:850}
+.share-final{width:100%;margin-top:14px;border:0;border-radius:14px;padding:13px;background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;font:inherit;font-weight:900}
+
+.share-moment-btn{
+  width:100%;
+  margin-top:10px;
+  min-height:44px;
+  border:1px solid rgba(154,167,255,.20);
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(154,167,255,.07),rgba(140,240,199,.055));
+  color:var(--ink);
+  font:inherit;
+  font-size:13px;
+  font-weight:850;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.share-moment-btn:active{transform:scale(.99)}
+.share-note{
+  margin-top:8px;
+  text-align:center;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.35;
+}
+
 .press-note{
   margin-top:10px;
   color:var(--muted);
@@ -1425,6 +1463,149 @@ function renderTimeline(){
   wireSearch("timeline");
   justAdded=null;
 }
+
+function cleanShareLine(s){
+  return String(s||"").replace(/\s+/g," ").trim();
+}
+
+function sharePromptForMoment(m, alternate=0){
+  // V3.9.1: reuse ECHO's Moment-specific reasoning rather than a generic recipient prompt.
+  // The static prototype remains local/rule-based; production will use the same
+  // "press on the actual Moment" contract through the AI service boundary.
+  const primary=getEchoResponse(m);
+  if(alternate===0 && primary?.text) return {label:primary.type||"PRESS ON THIS",text:primary.text};
+
+  const t=cleanShareLine(m.thought).toLowerCase();
+  const raw=cleanShareLine(m.thought);
+  const short=raw.length>105?raw.slice(0,102).trim()+"…":raw;
+
+  if(/\b(always|never|everyone|nobody|everything|nothing|must|only)\b/.test(t))
+    return {label:"WHERE DOES IT BREAK?",text:`What would have to be true for “${short}” not to hold?`};
+  if(/\b(because|cause|causes|caused|leads to|results in|makes|creates|drives)\b/.test(t))
+    return {label:"PRESS ON THE CAUSE",text:`What else could explain the connection in “${short}”?`};
+  if(/\b(should|ought|need to|supposed to|better|worse|right|wrong)\b/.test(t))
+    return {label:"WHAT'S THE TRADEOFF?",text:`What does “${short}” prioritize—and what might it cost?`};
+  if(/\b(confidence|competence|discipline|motivation|system|systems|environment)\b/.test(t))
+    return {label:"TEST THE IDEA",text:`Where would the logic in “${short}” be most likely to fail?`};
+  if(raw)
+    return {label:"PRESS ON THIS",text:`What assumption inside “${short}” is doing the most work?`};
+
+  if(m.audio?.title)
+    return {label:"LISTEN FOR THIS",text:`What claim in this moment from ${m.audio.title} would be most worth testing rather than simply accepting?`};
+  return {label:"PRESS ON THIS",text:"What is the most contestable idea in this Moment?"};
+}
+
+function momentShareText(m,promptOverride=null){
+  const lines=[];
+  lines.push("This made me stop and think:");
+  if(cleanShareLine(m.thought)) lines.push(`“${cleanShareLine(m.thought)}”`);
+
+  const sourceParts=[];
+  if(m.audio){
+    if(m.audio.title) sourceParts.push(m.audio.title);
+    if(m.audio.part) sourceParts.push(m.audio.part);
+    if(m.audio.time) sourceParts.push(`Play from ${m.audio.time}`);
+  }else{
+    if(cleanShareLine(m.source)) sourceParts.push(cleanShareLine(m.source));
+    if(cleanShareLine(m.anchor)) sourceParts.push(cleanShareLine(m.anchor));
+  }
+  if(sourceParts.length) lines.push(sourceParts.join(" · "));
+
+  const p=promptOverride||sharePromptForMoment(m);
+  if(p?.text){
+    lines.push("");
+    lines.push(p.label||"PRESS ON THIS");
+    lines.push(p.text);
+  }
+  lines.push("");
+  lines.push("Captured with ECHO");
+  return lines.join("\n");
+}
+
+
+async function dataUrlToShareFile(dataUrl, name="echo-moment.jpg"){
+  try{
+    const res=await fetch(dataUrl);
+    const blob=await res.blob();
+    return new File([blob],name,{type:blob.type||"image/jpeg"});
+  }catch(e){
+    return null;
+  }
+}
+
+
+let sharePreviewState=null;
+
+function closeSharePreview(){
+  const el=document.getElementById("sharePreviewBackdrop");
+  el.classList.remove("show");el.setAttribute("aria-hidden","true");
+  sharePreviewState=null;
+}
+function renderSharePreview(){
+  if(!sharePreviewState)return;
+  const {m,prompt}=sharePreviewState;
+  const source=m.audio?[m.audio.title,m.audio.part,m.audio.time?`Play from ${m.audio.time}`:""].filter(Boolean).join(" · "):[m.source,m.anchor].filter(Boolean).join(" · ");
+  document.getElementById("sharePreviewMoment").innerHTML=`${cleanShareLine(m.thought)?`<strong>${esc(cleanShareLine(m.thought))}</strong>`:"<strong>Captured Moment</strong>"}${source?`<div class="source" style="margin-top:8px">${esc(source)}</div>`:""}`;
+  const card=document.getElementById("sharePromptCard");
+  card.style.display=prompt?"block":"none";
+  if(prompt){document.getElementById("sharePromptLabel").textContent=prompt.label||"PRESS ON THIS";document.getElementById("sharePromptText").textContent=prompt.text;}
+}
+function shareMoment(id){
+  const m=moments.find(x=>String(x.id)===String(id));if(!m)return;
+  sharePreviewState={m,prompt:sharePromptForMoment(m,0),alternate:0};
+  renderSharePreview();
+  const el=document.getElementById("sharePreviewBackdrop");el.classList.add("show");el.setAttribute("aria-hidden","false");
+}
+async function performShareMoment(id,promptOverride){
+  const m=moments.find(x=>String(x.id)===String(id));
+  if(!m)return;
+
+  const text=momentShareText(m,promptOverride);
+  const shareData={title:"An ECHO Moment",text};
+
+  // If this Moment contains an image and the browser supports sharing files,
+  // include the image. Otherwise share the complete Moment as text.
+  if(m.imageData && navigator.share && navigator.canShare){
+    const file=await dataUrlToShareFile(m.imageData);
+    if(file){
+      const withFile={...shareData,files:[file]};
+      try{
+        if(navigator.canShare(withFile)){
+          await navigator.share(withFile);
+          return;
+        }
+      }catch(e){
+        if(e?.name==="AbortError")return;
+      }
+    }
+  }
+
+  if(navigator.share){
+    try{
+      await navigator.share(shareData);
+      return;
+    }catch(e){
+      if(e?.name==="AbortError")return;
+    }
+  }
+
+  // Fallback for browsers without Web Share support.
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast("Moment copied.");
+  }catch(e){
+    const temp=document.createElement("textarea");
+    temp.value=text;
+    temp.style.position="fixed";
+    temp.style.opacity="0";
+    document.body.appendChild(temp);
+    temp.select();
+    try{document.execCommand("copy");showToast("Moment copied.");}
+    catch(err){showToast("Couldn't share this Moment.");}
+    temp.remove();
+  }
+}
+
 function detail(id){
   const m=moments.find(x=>String(x.id)===String(id)); if(!m)return;
     const isReflection=m.source==="Reflection";
@@ -1437,6 +1618,7 @@ function detail(id){
     <div class="detail-menu-wrap">
       <button class="detail-menu-btn" id="detailMenuBtn" aria-label="More options">•••</button>
       <div class="detail-menu" id="detailMenu">
+        ${!isReflection?`<button type="button" onclick="shareMoment('${m.id}')">Share</button>`:""}
         <button type="button" onclick="openEdit('${m.id}')">Edit</button>
         <button type="button" class="danger" onclick="deleteItem('${m.id}')">Delete</button>
       </div>
@@ -1490,6 +1672,8 @@ function detail(id){
       <div class="go-deeper-question">${esc(getEchoResponse(m).text)}</div>
     </div>`:""}
     ${!isReflection&&!m.audio?`<button class="smallbtn" onclick="alert('The native version will return you to the original source and position.')">↩ Return to the moment</button>`:""}
+    ${!isReflection?`<button class="share-moment-btn" type="button" id="shareMomentBtn"><span>↗</span><span>Share this Moment</span></button>
+      <div class="share-note">Shares through your device. The recipient does not need ECHO.</div>`:""}
   </article>`;
 
   const menuBtn=document.getElementById("detailMenuBtn");
@@ -1497,6 +1681,8 @@ function detail(id){
   menuBtn.onclick=(e)=>{e.stopPropagation();menu.classList.toggle("show")};
   const detailPlay=document.getElementById("detailPlayFrom");
   if(detailPlay)detailPlay.onclick=()=>openAudioSource(m.audio);
+  const shareBtn=document.getElementById("shareMomentBtn");
+  if(shareBtn)shareBtn.onclick=()=>shareMoment(m.id);
 }
 
 function setCaptureEditMode(m=null){
@@ -1971,7 +2157,44 @@ document.getElementById("save").onclick=()=>{
   render();
   showToast("Moment saved.");
 };
+
+document.getElementById("sharePreviewClose").onclick=closeSharePreview;
+document.getElementById("sharePreviewBackdrop").onclick=e=>{if(e.target.id==="sharePreviewBackdrop")closeSharePreview()};
+document.getElementById("sharePromptAnother").onclick=()=>{
+  if(!sharePreviewState)return;
+  sharePreviewState.alternate=(sharePreviewState.alternate||0)+1;
+  sharePreviewState.prompt=sharePromptForMoment(sharePreviewState.m,sharePreviewState.alternate);
+  renderSharePreview();
+};
+document.getElementById("sharePromptRemove").onclick=()=>{
+  if(!sharePreviewState)return;
+  sharePreviewState.prompt=null;renderSharePreview();
+};
+document.getElementById("shareFinalBtn").onclick=async()=>{
+  if(!sharePreviewState)return;
+  const {m,prompt}=sharePreviewState;
+  closeSharePreview();
+  await performShareMoment(m.id,prompt);
+};
+
 render();
 </script>
+
+<div class="share-preview-backdrop" id="sharePreviewBackdrop" aria-hidden="true">
+  <div class="share-preview">
+    <div class="share-preview-head"><strong>Share this Moment</strong><button class="share-preview-close" id="sharePreviewClose" type="button">×</button></div>
+    <div class="share-preview-moment" id="sharePreviewMoment"></div>
+    <div class="share-prompt-card" id="sharePromptCard">
+      <div class="share-prompt-label" id="sharePromptLabel">PRESS ON THIS</div>
+      <div class="share-prompt-text" id="sharePromptText"></div>
+      <div class="share-prompt-actions">
+        <button type="button" id="sharePromptAnother">↻ Another angle</button>
+        <button type="button" id="sharePromptRemove">× Remove</button>
+      </div>
+    </div>
+    <button class="share-final" id="shareFinalBtn" type="button">Share →</button>
+  </div>
+</div>
+
 </body>
 </html>
