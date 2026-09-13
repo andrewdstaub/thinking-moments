@@ -1,8 +1,8 @@
-<!-- v4.5.6 -->
+<!-- v4.5.7 -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="echo-build" content="4.5.6">
+<meta name="echo-build" content="4.5.7">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
@@ -494,6 +494,15 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 
 
 
+
+
+/* V4.5.7 — clarify the web/iOS handoff */
+.media-choice-note{
+  margin:-2px 0 12px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.4;
+}
 
 /* V4.5.6 — ECHO-controlled media chooser */
 .media-choice-backdrop{
@@ -1506,25 +1515,21 @@ body.keyboard-open .bottom-nav{display:none}
     <div class="media-choice-head">
       <div>
         <div class="media-choice-kicker">PHOTO OR VIDEO</div>
-        <strong id="mediaChoiceTitle">Choose where to capture from</strong>
+        <strong id="mediaChoiceTitle">How do you want to add it?</strong>
       </div>
       <button class="media-choice-close" id="mediaChoiceClose" type="button" aria-label="Close media choices">×</button>
     </div>
 
+    <div class="media-choice-note">Existing media may open your iPhone’s provider menu next.</div>
     <div class="media-choice-list">
-      <button class="media-choice-option" id="chooseLibraryBtn" type="button">
-        <span class="media-choice-icon">▣</span>
-        <span><strong>Photo Library</strong><small>Choose an existing photo or video</small></span>
-      </button>
-
       <button class="media-choice-option" id="takeCameraBtn" type="button">
         <span class="media-choice-icon">◉</span>
         <span><strong>Take Photo or Video</strong><small>Open your camera</small></span>
       </button>
 
-      <button class="media-choice-option" id="chooseFileBtn" type="button">
-        <span class="media-choice-icon">⌁</span>
-        <span><strong>Choose File</strong><small>Select from Files or another provider</small></span>
+      <button class="media-choice-option" id="chooseExistingBtn" type="button">
+        <span class="media-choice-icon">▣</span>
+        <span><strong>Choose Existing Media</strong><small>Photos, Files, Drive, or another provider</small></span>
       </button>
     </div>
   </div>
@@ -1615,9 +1620,8 @@ const photoPickerActions=document.getElementById("photoPickerActions");
 const chooseMediaBtn=document.getElementById("chooseMediaBtn");
 const mediaChoiceBackdrop=document.getElementById("mediaChoiceBackdrop");
 const mediaChoiceClose=document.getElementById("mediaChoiceClose");
-const chooseLibraryBtn=document.getElementById("chooseLibraryBtn");
 const takeCameraBtn=document.getElementById("takeCameraBtn");
-const chooseFileBtn=document.getElementById("chooseFileBtn");
+const chooseExistingBtn=document.getElementById("chooseExistingBtn");
 const libraryInput=document.getElementById("libraryInput");
 const cameraInput=document.getElementById("cameraInput");
 const fileInput=document.getElementById("fileInput");
@@ -2834,9 +2838,8 @@ function closeMediaChoices(){
 chooseMediaBtn.onclick=openMediaChoices;
 mediaChoiceClose.onclick=closeMediaChoices;
 mediaChoiceBackdrop.onclick=(e)=>{if(e.target===mediaChoiceBackdrop)closeMediaChoices();};
-chooseLibraryBtn.onclick=()=>{closeMediaChoices(); setTimeout(()=>libraryInput.click(),0);};
 takeCameraBtn.onclick=()=>{closeMediaChoices(); setTimeout(()=>cameraInput.click(),0);};
-chooseFileBtn.onclick=()=>{closeMediaChoices(); setTimeout(()=>fileInput.click(),0);};
+chooseExistingBtn.onclick=()=>{closeMediaChoices(); setTimeout(()=>libraryInput.click(),0);};
 
 captureBack.onclick=()=>{
   try{recognition?.stop()}catch(e){}
