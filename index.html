@@ -1,8 +1,8 @@
-<!-- v4.5.4 -->
+<!-- v4.5.5 -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="echo-build" content="4.5.4">
+<meta name="echo-build" content="4.5.5">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
@@ -492,6 +492,42 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 
 
 
+
+
+/* V4.5.5 — stabilize native iOS media-picker anchor */
+.photo-picker-actions{
+  display:none;
+  margin:14px 0 14px;
+  text-align:center;
+}
+.photo-picker-actions.show{display:block}
+.photo-picker-btn{
+  width:auto !important;
+  min-width:220px;
+  max-width:82%;
+  min-height:54px;
+  padding:0 22px;
+  margin:0 auto;
+  border:1px solid rgba(140,240,199,.28);
+  border-radius:999px;
+  background:linear-gradient(135deg,rgba(140,240,199,.12),rgba(154,167,255,.12));
+  color:var(--ink);
+  font:inherit;
+  font-size:14px;
+  font-weight:900;
+  box-shadow:0 10px 30px rgba(0,0,0,.12);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.photo-picker-hint{
+  margin:8px auto 0;
+  max-width:280px;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.35;
+  text-align:center;
+}
 
 /* V4.5.4 — timeline actions: exactly two labels, no optional text */
 .timeline-go-deeper{
@@ -1352,7 +1388,7 @@ body.keyboard-open .bottom-nav{display:none}
       </div>
       <div class="photo-picker-actions" id="photoPickerActions">
         <button class="photo-picker-btn" id="chooseMediaBtn" type="button">＋ Choose Photo or Video</button>
-        <div class="photo-picker-hint">Tap anytime to open the photo/video picker.</div>
+        <div class="photo-picker-hint">Tap the button to choose or replace media.</div>
       </div>
       <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><video id="videoPreview" class="video-preview" controls playsinline></video><div class="photo-inline-row"><span id="mediaAttachedLabel">Media attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*,video/mp4,video/quicktime,video/*" style="display:none">
