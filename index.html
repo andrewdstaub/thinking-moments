@@ -1,4 +1,4 @@
-<!-- v4.4.3 -->
+<!-- v4.5 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -486,6 +486,50 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
   color:var(--muted);
 }
 
+
+
+/* V4.5 — quick actions directly on Timeline Moments */
+.timeline-card-actions{
+  margin-top:12px;
+  padding-top:11px;
+  border-top:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.timeline-card-actions .echo-response-trigger{
+  flex:1;
+  width:auto;
+  padding:4px 0;
+}
+.timeline-share-btn{
+  flex:0 0 auto;
+  min-height:34px;
+  padding:6px 11px;
+  border:1px solid rgba(154,167,255,.22);
+  border-radius:999px;
+  background:rgba(154,167,255,.055);
+  color:var(--ink);
+  font:inherit;
+  font-size:11px;
+  font-weight:850;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+.timeline-share-btn:active{transform:scale(.98)}
+.timeline-share-btn .share-icon{
+  font-size:13px;
+  line-height:1;
+}
+.echo-response.timeline-inline{
+  margin-top:0;
+  border-top:0;
+  padding-top:0;
+}
+.echo-response.timeline-inline .echo-response-panel{
+  margin-top:10px;
+}
 
 .echo-response{
   margin-top:12px;
@@ -1708,13 +1752,20 @@ function renderMomentCard(m){
         ${reflectionCount} ${reflectionCount===1?"reflection":"reflections"} · View →
       </button>`:""}
 
-    ${shouldSurfaceEchoResponse(m)?`<div class="echo-response">
-      <button class="echo-response-trigger" type="button" data-deep="${m.id}">
-        <span>${open?"Close":"Go deeper →"}</span>
-        <span>${open?"":"optional"}</span>
+    <div class="timeline-card-actions">
+      ${shouldSurfaceEchoResponse(m)?`
+        <button class="echo-response-trigger" type="button" data-deep="${m.id}">
+          <span>${open?"Close":"Go deeper →"}</span>
+          <span>${open?"":"optional"}</span>
+        </button>
+      `:`<span style="flex:1"></span>`}
+      <button class="timeline-share-btn" type="button" data-share-timeline="${m.id}" aria-label="Share this Moment">
+        <span class="share-icon">↗</span><span>Share</span>
       </button>
+    </div>
 
-      ${open?`<div class="echo-response-panel">
+    ${shouldSurfaceEchoResponse(m)&&open?`<div class="echo-response timeline-inline">
+      <div class="echo-response-panel">
         <div class="echo-response-kicker">${esc(response.type)}</div>
         <div class="echo-response-text">${esc(response.text)}</div>
         <div class="press-note">ECHO is pressing on what you captured—not asking you to explain it again.</div>
@@ -1723,7 +1774,7 @@ function renderMomentCard(m){
           <button type="button" onclick="toggleEchoResponse('${m.id}')">Not now</button>
           <button class="primary" type="button" onclick="saveInstantReflection('${m.id}')">Save reflection</button>
         </div>
-      </div>`:""}
+      </div>
     </div>`:""}
   </article>`;
 }
@@ -1942,6 +1993,13 @@ function renderTimeline(){
     b.onclick=(e)=>{
       e.stopPropagation();
       toggleGoDeeper(b.dataset.deep);
+    };
+  });
+
+  document.querySelectorAll("[data-share-timeline]").forEach(b=>{
+    b.onclick=(e)=>{
+      e.stopPropagation();
+      shareMoment(b.dataset.shareTimeline);
     };
   });
 
