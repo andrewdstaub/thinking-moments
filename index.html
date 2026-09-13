@@ -1,4 +1,4 @@
-<!-- v4.5 -->
+<!-- v4.5.2 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -487,6 +487,38 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 }
 
 
+
+
+
+/* V4.5.2 — cleaner Timeline quick-action row */
+.timeline-card-actions .echo-response-trigger{
+  justify-content:flex-start;
+}
+
+/* V4.5.1 — persistent Photo/Video picker access */
+.photo-picker-actions{
+  display:none;
+  margin:10px 0 4px;
+}
+.photo-picker-actions.show{display:block}
+.photo-picker-btn{
+  width:100%;
+  min-height:50px;
+  border:1px solid rgba(140,240,199,.22);
+  border-radius:15px;
+  background:linear-gradient(135deg,rgba(140,240,199,.08),rgba(154,167,255,.08));
+  color:var(--ink);
+  font:inherit;
+  font-size:13px;
+  font-weight:850;
+}
+.photo-picker-btn:active{transform:scale(.992)}
+.photo-picker-hint{
+  margin-top:7px;
+  color:var(--muted);
+  font-size:10px;
+  text-align:center;
+}
 
 /* V4.5 — quick actions directly on Timeline Moments */
 .timeline-card-actions{
@@ -1279,6 +1311,10 @@ body.keyboard-open .bottom-nav{display:none}
           <button class="voice-action" id="voiceStop" type="button">Stop</button>
         </div>
       </div>
+      <div class="photo-picker-actions" id="photoPickerActions">
+        <button class="photo-picker-btn" id="chooseMediaBtn" type="button">＋ Choose photo or video</button>
+        <div class="photo-picker-hint">You can reopen your library anytime before saving.</div>
+      </div>
       <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><video id="videoPreview" class="video-preview" controls playsinline></video><div class="photo-inline-row"><span id="mediaAttachedLabel">Media attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*,video/mp4,video/quicktime,video/*" style="display:none">
       <div class="listen-minimal" id="listenMinimal"><div class="audio-inline show" id="audioInline"><div class="audio-head"><div><strong>Where were you listening?</strong><span>Save the source and exact point.</span></div><button class="audio-close" id="audioClose" type="button">×</button></div><div class="audio-kind"><button type="button" id="podcastKind" class="active">Podcast</button><button type="button" id="audiobookKind">Audiobook</button></div><input id="audioTitle" placeholder="Podcast or book title"><div class="audio-grid"><input id="audioPart" placeholder="Episode title / number"><input id="audioTime" inputmode="numeric" placeholder="42:18"></div><input id="audioUrl" inputmode="url" placeholder="Source link (optional)"><p class="audio-help">In the native app, supported listening services can pass this context automatically.</p></div></div>
@@ -1373,6 +1409,8 @@ const photoInput=document.getElementById("photoInput");
 const photoPreview=document.getElementById("photoPreview");
 const videoPreview=document.getElementById("videoPreview");
 const mediaAttachedLabel=document.getElementById("mediaAttachedLabel");
+const photoPickerActions=document.getElementById("photoPickerActions");
+const chooseMediaBtn=document.getElementById("chooseMediaBtn");
 const mediaDoor=document.getElementById("mediaDoor");
 const mediaPhotoVideo=document.getElementById("mediaPhotoVideo");
 const mediaListening=document.getElementById("mediaListening");
@@ -1756,7 +1794,6 @@ function renderMomentCard(m){
       ${shouldSurfaceEchoResponse(m)?`
         <button class="echo-response-trigger" type="button" data-deep="${m.id}">
           <span>${open?"Close":"Go deeper →"}</span>
-          <span>${open?"":"optional"}</span>
         </button>
       `:`<span style="flex:1"></span>`}
       <button class="timeline-share-btn" type="button" data-share-timeline="${m.id}" aria-label="Share this Moment">
@@ -2512,6 +2549,7 @@ function resetCaptureArchitecture(){
   contextToggle.style.display="block";
   contextToggle.textContent="＋ Add context";
   listenMinimal.classList.remove("show");
+  photoPickerActions.classList.remove("show");
   voiceInline.classList.remove("show");
   document.getElementById("voiceLiveWrap")?.classList.remove("show");
 }
@@ -2522,6 +2560,7 @@ function chooseCaptureMode(mode){
   voiceInline.classList.remove("show");
   document.getElementById("voiceLiveWrap")?.classList.remove("show");
   listenMinimal.classList.remove("show");
+  photoPickerActions.classList.remove("show");
 
   if(mode==="media"){
     captureChoices.style.display="none";
@@ -2557,6 +2596,7 @@ function chooseCaptureMode(mode){
   if(mode==="photo"){
     thoughtLabel.textContent="Add a thought (optional)";
     thought.placeholder="What about this mattered?";
+    photoPickerActions.classList.add("show");
     setTimeout(()=>photoInput.click(),50);
   }
 
@@ -2571,6 +2611,7 @@ function chooseCaptureMode(mode){
 document.querySelectorAll("[data-capture-mode]").forEach(b=>b.onclick=()=>chooseCaptureMode(b.dataset.captureMode));
 mediaPhotoVideo.onclick=()=>chooseCaptureMode("photo");
 mediaListening.onclick=()=>chooseCaptureMode("listen");
+chooseMediaBtn.onclick=()=>photoInput.click();
 captureBack.onclick=()=>{
   try{recognition?.stop()}catch(e){}
   stopVoiceUI();
@@ -2611,6 +2652,7 @@ photoInput.addEventListener("change",async()=>{
     videoPreview.src=pendingVideoURL;
     videoPreview.classList.add("show");
     mediaAttachedLabel.textContent="Video attached";
+    chooseMediaBtn.textContent="↻ Choose a different photo or video";
     photoInline.classList.add("show");
     thought.placeholder="What about this video mattered?";
     return;
@@ -2621,6 +2663,7 @@ photoInput.addEventListener("change",async()=>{
     photoPreview.src=pendingImageData;
     photoPreview.classList.add("show");
     mediaAttachedLabel.textContent="Image attached";
+    chooseMediaBtn.textContent="↻ Choose a different photo or video";
     photoInline.classList.add("show");
     thought.placeholder="What about this image mattered?";
   }catch(e){
@@ -2641,6 +2684,8 @@ removePhoto.addEventListener("click",()=>{
   videoPreview.classList.remove("show");
   photoInline.classList.remove("show");
   photoInput.value="";
+  chooseMediaBtn.textContent="＋ Choose photo or video";
+  photoPickerActions.classList.add("show");
 });
 
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -2789,7 +2834,7 @@ if(voiceStop){
 function openCapture(){
  editingId=null;setCaptureEditMode(null);thought.value="";thought.placeholder="Capture the thought";source.value="";anchor.value="";pendingImageData="";pendingVideoFile=null;
  if(pendingVideoURL){try{URL.revokeObjectURL(pendingVideoURL)}catch(e){}pendingVideoURL="";}
- photoInput.value="";photoPreview.src="";photoPreview.classList.remove("show");videoPreview.pause();videoPreview.removeAttribute("src");videoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
+ photoInput.value="";chooseMediaBtn.textContent="＋ Choose photo or video";photoPreview.src="";photoPreview.classList.remove("show");videoPreview.pause();videoPreview.removeAttribute("src");videoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
  modal.style.display="block";modal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";try{recognition?.stop()}catch(e){}stopVoiceUI();voiceSeconds=0;updateVoiceTimer();
 }
 
