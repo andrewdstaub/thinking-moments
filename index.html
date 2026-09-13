@@ -1,8 +1,8 @@
-<!-- v4.6 -->
+<!-- v4.6.1 -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="echo-build" content="4.6">
+<meta name="echo-build" content="4.6.1">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
@@ -1600,10 +1600,10 @@ body.keyboard-open .bottom-nav{display:none}
     <div class="share-preview-head"><strong>Share this Moment</strong><button class="share-preview-close" id="sharePreviewClose" type="button">×</button></div>
     <div class="share-preview-moment" id="sharePreviewMoment"></div>
     <div class="share-prompt-card" id="sharePromptCard">
-      <div class="share-prompt-label" id="sharePromptLabel">PRESS ON THIS</div>
+      <div class="share-prompt-label" id="sharePromptLabel">TALK ABOUT IT</div>
       <div class="share-prompt-text" id="sharePromptText"></div>
       <div class="share-prompt-actions">
-        <button type="button" id="sharePromptAnother">↻ Another angle</button>
+        <button type="button" id="sharePromptAnother">↻ Another question</button>
         <button type="button" id="sharePromptRemove">× Remove</button>
       </div>
     </div>
@@ -2335,42 +2335,45 @@ function cleanShareLine(s){
 }
 
 function sharePromptForMoment(m, alternate=0){
-  // Local prototype approximation of ECHO's future AI share intelligence.
-  // Each option must depend on the actual Moment, not a generic reflection prompt.
+  // Shared ECHO is intentionally gentler than private Press On It.
+  // We know the sender's Moment, but not the recipient. Never imply that
+  // either person endorses, rejects, feels, or believes more than was captured.
   const raw=cleanShareLine(m.thought);
   const t=raw.toLowerCase();
-  const short=raw.length>105?raw.slice(0,102).trim()+"…":raw;
-
   const candidates=[];
-  const primary=getEchoResponse(m);
-  if(primary?.text) candidates.push({label:primary.type||"PRESS ON THIS",text:primary.text});
 
-  if(/\b(always|never|everyone|nobody|everything|nothing|must|only)\b/.test(t))
-    candidates.push({label:"WHERE DOES IT BREAK?",text:`What exception would most seriously challenge “${short}”?`});
-
-  if(/\b(because|cause|causes|caused|leads to|results in|makes|creates|drives)\b/.test(t))
-    candidates.push({label:"PRESS ON THE CAUSE",text:`If “${short}” is true, what competing explanation still needs to be ruled out?`});
-
-  if(/\b(should|ought|need to|supposed to|better|worse|right|wrong)\b/.test(t))
-    candidates.push({label:"WHAT'S THE TRADEOFF?",text:`What does “${short}” protect or prioritize—and what might it sacrifice?`});
-
-  if(/\b(confidence|competence|discipline|motivation|system|systems|environment)\b/.test(t))
-    candidates.push({label:"TEST THE IDEA",text:`Where would the logic in “${short}” be most likely to fail in real life?`});
-
-  if(/\?/.test(raw))
-    candidates.push({label:"PRESS ON THE QUESTION",text:`What answer to “${short}” would actually change how someone sees the issue?`});
-
-  if(raw){
-    candidates.push({label:"UNDERNEATH THIS…",text:`What assumption inside “${short}” is carrying the most weight?`});
-    candidates.push({label:"ANOTHER ANGLE",text:`What would someone intelligent who disagrees with “${short}” point to first?`});
-    candidates.push({label:"IF THAT'S TRUE…",text:`If “${short}” is right, what follows that is easy to overlook?`});
-  }else if(m.audio?.title){
-    candidates.push({label:"LISTEN FOR THIS",text:`What claim in this moment from ${m.audio.title} is most worth testing rather than simply accepting?`});
-  }else{
-    candidates.push({label:"PRESS ON THIS",text:"What is the most contestable idea in this Moment?"});
+  if(/\?/.test(raw)){
+    candidates.push({label:"TALK ABOUT IT",text:"What's your take on this question?"});
+    candidates.push({label:"TALK ABOUT IT",text:"What stands out to you here?"});
   }
 
-  // Deduplicate and cycle so repeated taps genuinely change the angle.
+  if(/\b(always|never|everyone|nobody|everything|nothing|must|only|should|ought)\b/.test(t)){
+    candidates.push({label:"TALK ABOUT IT",text:"Do you think this holds up in most situations?"});
+    candidates.push({label:"TALK ABOUT IT",text:"Where do you agree or disagree with this?"});
+  }
+
+  if(/\b(because|cause|causes|caused|leads to|results in|makes|creates|drives)\b/.test(t)){
+    candidates.push({label:"TALK ABOUT IT",text:"Does this explanation ring true to you?"});
+    candidates.push({label:"TALK ABOUT IT",text:"Have you experienced this differently?"});
+  }
+
+  if(/\b(confidence|competence|discipline|motivation|system|systems|environment|success|happiness|money|parenting|relationship|work)\b/.test(t)){
+    candidates.push({label:"TALK ABOUT IT",text:"Does this match your experience?"});
+    candidates.push({label:"TALK ABOUT IT",text:"What's your read on this?"});
+  }
+
+  if(raw){
+    candidates.push({label:"TALK ABOUT IT",text:"What do you think about this?"});
+    candidates.push({label:"TALK ABOUT IT",text:"What stands out to you?"});
+    candidates.push({label:"TALK ABOUT IT",text:"Would you interpret this the same way?"});
+    candidates.push({label:"TALK ABOUT IT",text:"What do you think might be missing here?"});
+  }else if(m.audio?.title){
+    candidates.push({label:"TALK ABOUT IT",text:"What stands out to you about this?"});
+    candidates.push({label:"TALK ABOUT IT",text:"What's your take on it?"});
+  }else{
+    candidates.push({label:"TALK ABOUT IT",text:"What stands out to you?"});
+  }
+
   const unique=candidates.filter((p,i,a)=>a.findIndex(x=>x.text===p.text)===i);
   return unique[Math.abs(alternate)%unique.length];
 }
@@ -2394,7 +2397,7 @@ function momentShareText(m,promptOverride=null){
   const p=promptOverride||sharePromptForMoment(m);
   if(p?.text){
     lines.push("");
-    lines.push(p.label||"PRESS ON THIS");
+    lines.push(p.label||"TALK ABOUT IT");
     lines.push(p.text);
   }
   lines.push("");
@@ -2429,7 +2432,7 @@ function renderSharePreview(){
   document.getElementById("sharePreviewMoment").innerHTML=`${cleanShareLine(m.thought)?`<strong>${esc(cleanShareLine(m.thought))}</strong>`:"<strong>Captured Moment</strong>"}${source?`<div class="source" style="margin-top:8px">${esc(source)}</div>`:""}`;
   const card=document.getElementById("sharePromptCard");
   card.style.display=prompt?"block":"none";
-  if(prompt){document.getElementById("sharePromptLabel").textContent=prompt.label||"PRESS ON THIS";document.getElementById("sharePromptText").textContent=prompt.text;}
+  if(prompt){document.getElementById("sharePromptLabel").textContent=prompt.label||"TALK ABOUT IT";document.getElementById("sharePromptText").textContent=prompt.text;}
 }
 function shareMoment(id){
   const m=moments.find(x=>String(x.id)===String(id));if(!m)return;
