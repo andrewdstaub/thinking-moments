@@ -1,4 +1,4 @@
-<!-- v3.9.1 -->
+<!-- v3.9.2 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -937,6 +937,22 @@ body.keyboard-open .bottom-nav{display:none}
   </div>
 </div>
 
+<div class="share-preview-backdrop" id="sharePreviewBackdrop" aria-hidden="true">
+  <div class="share-preview">
+    <div class="share-preview-head"><strong>Share this Moment</strong><button class="share-preview-close" id="sharePreviewClose" type="button">×</button></div>
+    <div class="share-preview-moment" id="sharePreviewMoment"></div>
+    <div class="share-prompt-card" id="sharePromptCard">
+      <div class="share-prompt-label" id="sharePromptLabel">PRESS ON THIS</div>
+      <div class="share-prompt-text" id="sharePromptText"></div>
+      <div class="share-prompt-actions">
+        <button type="button" id="sharePromptAnother">↻ Another angle</button>
+        <button type="button" id="sharePromptRemove">× Remove</button>
+      </div>
+    </div>
+    <button class="share-final" id="shareFinalBtn" type="button">Share →</button>
+  </div>
+</div>
+
 <script>
 const KEY="echo_v1";
 /*
@@ -1469,30 +1485,44 @@ function cleanShareLine(s){
 }
 
 function sharePromptForMoment(m, alternate=0){
-  // V3.9.1: reuse ECHO's Moment-specific reasoning rather than a generic recipient prompt.
-  // The static prototype remains local/rule-based; production will use the same
-  // "press on the actual Moment" contract through the AI service boundary.
-  const primary=getEchoResponse(m);
-  if(alternate===0 && primary?.text) return {label:primary.type||"PRESS ON THIS",text:primary.text};
-
-  const t=cleanShareLine(m.thought).toLowerCase();
+  // Local prototype approximation of ECHO's future AI share intelligence.
+  // Each option must depend on the actual Moment, not a generic reflection prompt.
   const raw=cleanShareLine(m.thought);
+  const t=raw.toLowerCase();
   const short=raw.length>105?raw.slice(0,102).trim()+"…":raw;
 
-  if(/\b(always|never|everyone|nobody|everything|nothing|must|only)\b/.test(t))
-    return {label:"WHERE DOES IT BREAK?",text:`What would have to be true for “${short}” not to hold?`};
-  if(/\b(because|cause|causes|caused|leads to|results in|makes|creates|drives)\b/.test(t))
-    return {label:"PRESS ON THE CAUSE",text:`What else could explain the connection in “${short}”?`};
-  if(/\b(should|ought|need to|supposed to|better|worse|right|wrong)\b/.test(t))
-    return {label:"WHAT'S THE TRADEOFF?",text:`What does “${short}” prioritize—and what might it cost?`};
-  if(/\b(confidence|competence|discipline|motivation|system|systems|environment)\b/.test(t))
-    return {label:"TEST THE IDEA",text:`Where would the logic in “${short}” be most likely to fail?`};
-  if(raw)
-    return {label:"PRESS ON THIS",text:`What assumption inside “${short}” is doing the most work?`};
+  const candidates=[];
+  const primary=getEchoResponse(m);
+  if(primary?.text) candidates.push({label:primary.type||"PRESS ON THIS",text:primary.text});
 
-  if(m.audio?.title)
-    return {label:"LISTEN FOR THIS",text:`What claim in this moment from ${m.audio.title} would be most worth testing rather than simply accepting?`};
-  return {label:"PRESS ON THIS",text:"What is the most contestable idea in this Moment?"};
+  if(/\b(always|never|everyone|nobody|everything|nothing|must|only)\b/.test(t))
+    candidates.push({label:"WHERE DOES IT BREAK?",text:`What exception would most seriously challenge “${short}”?`});
+
+  if(/\b(because|cause|causes|caused|leads to|results in|makes|creates|drives)\b/.test(t))
+    candidates.push({label:"PRESS ON THE CAUSE",text:`If “${short}” is true, what competing explanation still needs to be ruled out?`});
+
+  if(/\b(should|ought|need to|supposed to|better|worse|right|wrong)\b/.test(t))
+    candidates.push({label:"WHAT'S THE TRADEOFF?",text:`What does “${short}” protect or prioritize—and what might it sacrifice?`});
+
+  if(/\b(confidence|competence|discipline|motivation|system|systems|environment)\b/.test(t))
+    candidates.push({label:"TEST THE IDEA",text:`Where would the logic in “${short}” be most likely to fail in real life?`});
+
+  if(/\?/.test(raw))
+    candidates.push({label:"PRESS ON THE QUESTION",text:`What answer to “${short}” would actually change how someone sees the issue?`});
+
+  if(raw){
+    candidates.push({label:"UNDERNEATH THIS…",text:`What assumption inside “${short}” is carrying the most weight?`});
+    candidates.push({label:"ANOTHER ANGLE",text:`What would someone intelligent who disagrees with “${short}” point to first?`});
+    candidates.push({label:"IF THAT'S TRUE…",text:`If “${short}” is right, what follows that is easy to overlook?`});
+  }else if(m.audio?.title){
+    candidates.push({label:"LISTEN FOR THIS",text:`What claim in this moment from ${m.audio.title} is most worth testing rather than simply accepting?`});
+  }else{
+    candidates.push({label:"PRESS ON THIS",text:"What is the most contestable idea in this Moment?"});
+  }
+
+  // Deduplicate and cycle so repeated taps genuinely change the angle.
+  const unique=candidates.filter((p,i,a)=>a.findIndex(x=>x.text===p.text)===i);
+  return unique[Math.abs(alternate)%unique.length];
 }
 
 function momentShareText(m,promptOverride=null){
@@ -1538,7 +1568,8 @@ let sharePreviewState=null;
 
 function closeSharePreview(){
   const el=document.getElementById("sharePreviewBackdrop");
-  el.classList.remove("show");el.setAttribute("aria-hidden","true");
+  if(el){el.classList.remove("show");el.setAttribute("aria-hidden","true");}
+  document.body.style.overflow="";
   sharePreviewState=null;
 }
 function renderSharePreview(){
@@ -1554,7 +1585,12 @@ function shareMoment(id){
   const m=moments.find(x=>String(x.id)===String(id));if(!m)return;
   sharePreviewState={m,prompt:sharePromptForMoment(m,0),alternate:0};
   renderSharePreview();
-  const el=document.getElementById("sharePreviewBackdrop");el.classList.add("show");el.setAttribute("aria-hidden","false");
+  const el=document.getElementById("sharePreviewBackdrop");
+  if(!el)return;
+  el.classList.add("show");el.setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+  const menu=document.getElementById("detailMenu");
+  if(menu)menu.classList.remove("show");
 }
 async function performShareMoment(id,promptOverride){
   const m=moments.find(x=>String(x.id)===String(id));
@@ -2158,43 +2194,35 @@ document.getElementById("save").onclick=()=>{
   showToast("Moment saved.");
 };
 
-document.getElementById("sharePreviewClose").onclick=closeSharePreview;
-document.getElementById("sharePreviewBackdrop").onclick=e=>{if(e.target.id==="sharePreviewBackdrop")closeSharePreview()};
-document.getElementById("sharePromptAnother").onclick=()=>{
+const sharePreviewClose=document.getElementById("sharePreviewClose");
+const sharePreviewBackdrop=document.getElementById("sharePreviewBackdrop");
+const sharePromptAnother=document.getElementById("sharePromptAnother");
+const sharePromptRemove=document.getElementById("sharePromptRemove");
+const shareFinalBtn=document.getElementById("shareFinalBtn");
+
+if(sharePreviewClose)sharePreviewClose.onclick=closeSharePreview;
+if(sharePreviewBackdrop)sharePreviewBackdrop.onclick=e=>{if(e.target===sharePreviewBackdrop)closeSharePreview()};
+if(sharePromptAnother)sharePromptAnother.onclick=()=>{
   if(!sharePreviewState)return;
   sharePreviewState.alternate=(sharePreviewState.alternate||0)+1;
   sharePreviewState.prompt=sharePromptForMoment(sharePreviewState.m,sharePreviewState.alternate);
   renderSharePreview();
 };
-document.getElementById("sharePromptRemove").onclick=()=>{
+if(sharePromptRemove)sharePromptRemove.onclick=()=>{
   if(!sharePreviewState)return;
   sharePreviewState.prompt=null;renderSharePreview();
 };
-document.getElementById("shareFinalBtn").onclick=async()=>{
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sharePreviewState)closeSharePreview()});
+if(shareFinalBtn)shareFinalBtn.onclick=async()=>{
   if(!sharePreviewState)return;
   const {m,prompt}=sharePreviewState;
   closeSharePreview();
   await performShareMoment(m.id,prompt);
 };
-
 render();
 </script>
 
-<div class="share-preview-backdrop" id="sharePreviewBackdrop" aria-hidden="true">
-  <div class="share-preview">
-    <div class="share-preview-head"><strong>Share this Moment</strong><button class="share-preview-close" id="sharePreviewClose" type="button">×</button></div>
-    <div class="share-preview-moment" id="sharePreviewMoment"></div>
-    <div class="share-prompt-card" id="sharePromptCard">
-      <div class="share-prompt-label" id="sharePromptLabel">PRESS ON THIS</div>
-      <div class="share-prompt-text" id="sharePromptText"></div>
-      <div class="share-prompt-actions">
-        <button type="button" id="sharePromptAnother">↻ Another angle</button>
-        <button type="button" id="sharePromptRemove">× Remove</button>
-      </div>
-    </div>
-    <button class="share-final" id="shareFinalBtn" type="button">Share →</button>
-  </div>
-</div>
+
 
 </body>
 </html>
