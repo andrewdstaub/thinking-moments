@@ -1,4 +1,4 @@
-<!-- v4.1 -->
+<!-- v4.2 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -887,6 +887,47 @@ body.keyboard-open .bottom-nav{display:none}
 .quick-mode-banner span{display:block;color:var(--muted);font-size:10px;margin-top:2px;line-height:1.35}
 
 
+
+.capture-sheet{
+  position:relative;
+}
+.capture-fields.show{
+  padding-bottom:88px;
+}
+.capture-save-bar{
+  position:sticky;
+  bottom:0;
+  z-index:12;
+  margin:16px -2px -2px;
+  padding:12px 2px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(16,23,42,0),rgba(16,23,42,.94) 22%,rgba(16,23,42,.985));
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.capture-save-bar .save{
+  width:100%;
+  min-height:52px;
+  border:1px solid rgba(140,240,199,.28);
+  border-radius:16px;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);
+  color:#0b1020;
+  font:inherit;
+  font-size:15px;
+  font-weight:950;
+  letter-spacing:.01em;
+  box-shadow:0 10px 28px rgba(111,182,207,.18),0 0 0 1px rgba(255,255,255,.04) inset;
+}
+.capture-save-bar .save:active{transform:scale(.992)}
+.capture-save-hint{
+  margin-top:7px;
+  text-align:center;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.3;
+}
+.capture-fields textarea{min-height:118px}
+.capture-fields .context-toggle{margin-top:10px}
+
 .capture-choice-wrap{padding:6px 0 2px}.capture-choice-intro{text-align:center;margin:4px 0 20px}.capture-choice-intro h3{margin:0;font-size:22px}.capture-choice-intro p{margin:6px 0 0;color:var(--muted);font-size:13px}
 .capture-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.capture-choice{min-height:126px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;font:inherit;font-weight:850}.capture-choice-icon{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(140,240,199,.16),rgba(154,167,255,.18));font-size:24px}.capture-choice span:last-child{font-size:14px}
 .capture-back{display:none;border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:800;padding:2px 0 12px}.capture-back.show{display:inline-block}.capture-fields{display:none}.capture-fields.show{display:block}
@@ -995,7 +1036,7 @@ body.keyboard-open .bottom-nav{display:none}
 
     <button class="capture-back" id="captureBack" type="button">← Capture another way</button>
     <div class="capture-choice-wrap" id="captureChoices">
-      <div class="capture-choice-intro"><h3>How do you want to capture it?</h3><p>Choose the quickest way to preserve this Moment.</p></div>
+      <div class="capture-choice-intro"><h3>How do you want to capture it?</h3><p>Choose the quickest way to capture it.</p></div>
       <div class="capture-choice-grid">
         <button class="capture-choice" type="button" data-capture-mode="type"><span class="capture-choice-icon">✎</span><span>Type</span></button>
         <button class="capture-choice" type="button" data-capture-mode="speak"><span class="capture-choice-icon">◉</span><span>Speak</span></button>
@@ -1010,11 +1051,14 @@ body.keyboard-open .bottom-nav{display:none}
       <div class="voice-inline" id="voiceInline"><div class="voice-inline-top"><div class="mini-orb" id="voiceVisual"><span>🎙</span></div><div><div class="voice-inline-title" id="voiceStatus">Ready to listen</div><div class="voice-inline-time" id="voiceTime">0:00</div></div></div><div class="voice-actions"><button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button><button class="voice-action" id="voiceStop" type="button">Stop</button></div></div>
       <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><div class="photo-inline-row"><span>Image attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*" style="display:none">
-      <div class="listen-minimal" id="listenMinimal"><div class="audio-inline show" id="audioInline"><div class="audio-head"><div><strong>Where were you listening?</strong><span>Save the source and exact point so you can return later.</span></div><button class="audio-close" id="audioClose" type="button">×</button></div><div class="audio-kind"><button type="button" id="podcastKind" class="active">Podcast</button><button type="button" id="audiobookKind">Audiobook</button></div><input id="audioTitle" placeholder="Podcast or book title"><div class="audio-grid"><input id="audioPart" placeholder="Episode title / number"><input id="audioTime" inputmode="numeric" placeholder="42:18"></div><input id="audioUrl" inputmode="url" placeholder="Source link (optional)"><p class="audio-help">In the native app, supported listening services can pass this context automatically.</p></div></div>
+      <div class="listen-minimal" id="listenMinimal"><div class="audio-inline show" id="audioInline"><div class="audio-head"><div><strong>Where were you listening?</strong><span>Save the source and exact point.</span></div><button class="audio-close" id="audioClose" type="button">×</button></div><div class="audio-kind"><button type="button" id="podcastKind" class="active">Podcast</button><button type="button" id="audiobookKind">Audiobook</button></div><input id="audioTitle" placeholder="Podcast or book title"><div class="audio-grid"><input id="audioPart" placeholder="Episode title / number"><input id="audioTime" inputmode="numeric" placeholder="42:18"></div><input id="audioUrl" inputmode="url" placeholder="Source link (optional)"><p class="audio-help">In the native app, supported listening services can pass this context automatically.</p></div></div>
       <button class="context-toggle" id="contextToggle" type="button">＋ Add context</button>
       <div class="context-fields" id="contextFields"><label class="field-label" id="sourceLabel" for="source">Source <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="source" placeholder="Book, conversation, article, website..."><label class="field-label" id="anchorLabel" for="anchor">Anchor <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input id="anchor" placeholder="Page, timestamp, link, or cue"></div>
     </div>
-    <button class="save" id="save">Save moment</button>
+    <div class="capture-save-bar" id="captureSaveBar">
+      <button class="save" id="save">Save Moment</button>
+      <div class="capture-save-hint">Save now. Add context only if it helps.</div>
+    </div>
   </div>
 </div>
 
@@ -1971,7 +2015,7 @@ function detail(id){
 
 function setCaptureEditMode(m=null){
  const isEditing=!!m,isReflection=m?.source==="Reflection";
- captureTitle.textContent=isEditing?(isReflection?"Edit reflection":"Edit moment"):"Capture a moment";saveBtn.textContent=isEditing?"Save changes":"Save moment";thoughtLabel.textContent=isReflection?"What do you think now?":"What made you stop and think?";
+ captureTitle.textContent=isEditing?(isReflection?"Edit reflection":"Edit moment"):"Capture a moment";saveBtn.textContent=isEditing?"Save changes":"Save Moment";thoughtLabel.textContent=isReflection?"What do you think now?":"What made you stop and think?";
  if(isEditing){captureChoices.style.display="none";captureFields.classList.add("show");captureBack.classList.remove("show");captureModeChip.textContent=isReflection?"REFLECTION":"EDIT MOMENT";listenMinimal.classList.toggle("show",!!m?.audio);contextToggle.style.display=isReflection?"none":"block";contextFields.classList.toggle("show",!isReflection&&!!(m?.source||m?.anchor));}
 }
 
@@ -2207,7 +2251,11 @@ audiobookKind.onclick=()=>setAudioKind("audiobook");
 audioTime.addEventListener("blur",()=>{audioTime.value=normalizePlayTime(audioTime.value)});
 
 function resetCaptureArchitecture(){selectedCaptureMode=null;captureChoices.style.display="block";captureFields.classList.remove("show");captureBack.classList.remove("show");captureModeChip.textContent="";contextFields.classList.remove("show");contextToggle.style.display="block";contextToggle.textContent="＋ Add context";listenMinimal.classList.remove("show");voiceInline.classList.remove("show");}
-function chooseCaptureMode(mode){selectedCaptureMode=mode;captureChoices.style.display="none";captureFields.classList.add("show");captureBack.classList.add("show");contextFields.classList.remove("show");contextToggle.textContent="＋ Add context";voiceInline.classList.remove("show");listenMinimal.classList.remove("show");const names={type:"✎  TYPE",speak:"◉  SPEAK",photo:"▣  PHOTO",listen:"▶  LISTENING"};captureModeChip.textContent=names[mode]||"CAPTURE";thought.placeholder=mode==="type"?"What made you stop and think?":mode==="speak"?"Your spoken thought will appear here":mode==="photo"?"Optional thought about this image":"Optional: what made you stop?";if(mode==="speak")voiceInline.classList.add("show");if(mode==="photo")setTimeout(()=>photoInput.click(),50);if(mode==="listen"){listenMinimal.classList.add("show");setTimeout(()=>audioTitle.focus(),80)}else if(mode==="type")setTimeout(()=>thought.focus(),80)}
+function chooseCaptureMode(mode){selectedCaptureMode=mode;captureChoices.style.display="none";captureFields.classList.add("show");captureBack.classList.add("show");contextFields.classList.remove("show");contextToggle.textContent="＋ Add context";voiceInline.classList.remove("show");listenMinimal.classList.remove("show");const names={type:"✎  TYPE",speak:"◉  SPEAK",photo:"▣  PHOTO",listen:"▶  LISTENING"};captureModeChip.textContent=names[mode]||"CAPTURE";
+  if(mode==="type"){thoughtLabel.textContent="What made you stop and think?";thought.placeholder="Capture the thought";setTimeout(()=>thought.focus(),80)}
+  if(mode==="speak"){thoughtLabel.textContent="Speak the Moment";thought.placeholder="Your spoken thought will appear here";voiceInline.classList.add("show");setTimeout(()=>voiceBtn.focus(),80)}
+  if(mode==="photo"){thoughtLabel.textContent="Add a thought (optional)";thought.placeholder="What about this image mattered?";setTimeout(()=>photoInput.click(),50)}
+  if(mode==="listen"){thoughtLabel.textContent="What made you stop? (optional)";thought.placeholder="Capture the thought";listenMinimal.classList.add("show");setTimeout(()=>audioTitle.focus(),80)}}
 document.querySelectorAll("[data-capture-mode]").forEach(b=>b.onclick=()=>chooseCaptureMode(b.dataset.captureMode));captureBack.onclick=()=>{try{recognition?.stop()}catch(e){}stopVoiceUI();resetCaptureArchitecture()};contextToggle.onclick=()=>{const show=!contextFields.classList.contains("show");contextFields.classList.toggle("show",show);contextToggle.textContent=show?"− Hide context":"＋ Add context"};
 photoInput.addEventListener("change",async()=>{
   const file=photoInput.files?.[0]; if(!file)return;
