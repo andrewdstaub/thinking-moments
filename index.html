@@ -1,4 +1,4 @@
-<!-- v4.4.2 -->
+<!-- v4.4.3 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -889,6 +889,47 @@ body.keyboard-open .bottom-nav{display:none}
 
 
 
+
+/* V4.4.3 — Speak layout hotfix */
+#voiceInline.show{
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+  margin:14px 0 12px;
+  padding:16px;
+}
+#voiceInline .voice-inline-top{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+}
+#voiceInline .mini-orb{
+  flex:0 0 48px;
+}
+#voiceInline .voice-live-wrap{
+  width:100%;
+  box-sizing:border-box;
+  margin:14px 0 12px;
+}
+#voiceInline .voice-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  width:100%;
+}
+#voiceInline .voice-action{
+  width:100%;
+  min-width:0;
+  min-height:54px;
+  margin:0;
+}
+@media (max-width:430px){
+  #voiceInline .voice-actions{
+    grid-template-columns:1fr;
+  }
+}
+
 /* V4.3 Speak capture refinement */
 #voiceInline.show{
   display:block;
@@ -1174,12 +1215,26 @@ body.keyboard-open .bottom-nav{display:none}
       <div class="capture-mode-chip" id="captureModeChip"></div>
       <label class="field-label" id="thoughtLabel" for="thought">What made you stop and think?</label>
       <textarea id="thought" placeholder="Capture the thought"></textarea>
-      <div class="voice-inline" id="voiceInline"><div class="voice-inline-top"><div class="mini-orb" id="voiceVisual"><span>🎙</span>
-    <div class="voice-live-wrap" id="voiceLiveWrap" aria-live="polite">
-      <div class="voice-live-label"><span class="voice-live-dot"></span>Live transcription</div>
-      <div class="voice-live-text muted" id="voiceLiveText">Start speaking and your words will appear here.</div>
-      <div class="voice-support-note" id="voiceSupportNote">Your transcript is added to the Moment as you speak.</div>
-    </div></div><div><div class="voice-inline-title" id="voiceStatus">Ready to listen</div><div class="voice-inline-time" id="voiceTime">0:00</div></div></div><div class="voice-actions"><button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button><button class="voice-action" id="voiceStop" type="button">Stop</button></div></div>
+      <div class="voice-inline" id="voiceInline">
+        <div class="voice-inline-top">
+          <div class="mini-orb" id="voiceVisual"><span>🎙</span></div>
+          <div>
+            <div class="voice-inline-title" id="voiceStatus">Ready to listen</div>
+            <div class="voice-inline-time" id="voiceTime">0:00</div>
+          </div>
+        </div>
+
+        <div class="voice-live-wrap" id="voiceLiveWrap" aria-live="polite">
+          <div class="voice-live-label"><span class="voice-live-dot"></span>Live transcription</div>
+          <div class="voice-live-text muted" id="voiceLiveText">Start speaking and your words will appear here.</div>
+          <div class="voice-support-note" id="voiceSupportNote">Your transcript is added to the Moment as you speak.</div>
+        </div>
+
+        <div class="voice-actions">
+          <button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button>
+          <button class="voice-action" id="voiceStop" type="button">Stop</button>
+        </div>
+      </div>
       <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><video id="videoPreview" class="video-preview" controls playsinline></video><div class="photo-inline-row"><span id="mediaAttachedLabel">Media attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*,video/mp4,video/quicktime,video/*" style="display:none">
       <div class="listen-minimal" id="listenMinimal"><div class="audio-inline show" id="audioInline"><div class="audio-head"><div><strong>Where were you listening?</strong><span>Save the source and exact point.</span></div><button class="audio-close" id="audioClose" type="button">×</button></div><div class="audio-kind"><button type="button" id="podcastKind" class="active">Podcast</button><button type="button" id="audiobookKind">Audiobook</button></div><input id="audioTitle" placeholder="Podcast or book title"><div class="audio-grid"><input id="audioPart" placeholder="Episode title / number"><input id="audioTime" inputmode="numeric" placeholder="42:18"></div><input id="audioUrl" inputmode="url" placeholder="Source link (optional)"><p class="audio-help">In the native app, supported listening services can pass this context automatically.</p></div></div>
@@ -2541,16 +2596,41 @@ function setVoiceLive(text, muted=false){
   el.textContent=text||"Start speaking and your words will appear here.";
   el.classList.toggle("muted", muted || !text);
 }
+
+function updateVoiceTimer(){
+  const m=Math.floor(voiceSeconds/60);
+  const s=String(voiceSeconds%60).padStart(2,"0");
+  voiceTime.textContent=`${m}:${s}`;
+}
+
+function startVoiceUI(){
+  if(voiceRunning)return;
+  voiceRunning=true;
+  voiceVisual.classList.add("listening");
+  voiceStatus.textContent="Listening…";
+  if(voiceTimer)clearInterval(voiceTimer);
+  voiceTimer=setInterval(()=>{voiceSeconds++;updateVoiceTimer()},1000);
+}
+
+function stopVoiceUI(statusText){
+  voiceRunning=false;
+  voiceVisual.classList.remove("listening");
+  if(voiceTimer){clearInterval(voiceTimer);voiceTimer=null;}
+  voiceStatus.textContent=statusText || (thought.value.trim()?"Transcript captured.":"Ready to listen");
+}
+
 function stopVoiceRecognition(){
   if(recognition&&isListening){
     try{recognition.stop()}catch(e){}
   }
 }
+
 function startVoiceRecognition(){
   if(!SpeechRecognition){
     const note=document.getElementById("voiceSupportNote");
     if(note)note.textContent="Live transcription isn't available in this browser. You can still use your keyboard's microphone to dictate.";
     setVoiceLive("Live transcription isn't supported here.",true);
+    voiceStatus.textContent="Use keyboard dictation";
     thought.focus();
     return;
   }
@@ -2563,7 +2643,10 @@ function startVoiceRecognition(){
 
   recognition.onstart=()=>{
     isListening=true;
-    voiceBtn.textContent="■  Stop speaking";
+    voiceSeconds=0;
+    updateVoiceTimer();
+    startVoiceUI();
+    voiceBtn.textContent="Stop speaking";
     voiceBtn.classList.add("active");
     const note=document.getElementById("voiceSupportNote");
     if(note)note.textContent="Listening… your words are appearing live.";
@@ -2575,7 +2658,7 @@ function startVoiceRecognition(){
     let finalChunk="";
     for(let i=event.resultIndex;i<event.results.length;i++){
       const piece=event.results[i][0].transcript;
-      if(event.results[i].isFinal) finalChunk+=piece;
+      if(event.results[i].isFinal) finalChunk+=piece+" ";
       else interim+=piece;
     }
     if(finalChunk){
@@ -2589,27 +2672,45 @@ function startVoiceRecognition(){
 
   recognition.onerror=(event)=>{
     isListening=false;
-    voiceBtn.textContent="◉  Speak";
+    stopVoiceUI("Transcription paused");
+    voiceBtn.textContent="Start speaking";
     voiceBtn.classList.remove("active");
     const note=document.getElementById("voiceSupportNote");
     if(note){
       note.textContent=event.error==="not-allowed"
         ?"Microphone permission is needed for live transcription."
-        :"Live transcription paused. You can try again or use keyboard dictation.";
+        :"Live transcription paused. Try again or use keyboard dictation.";
     }
   };
 
   recognition.onend=()=>{
     isListening=false;
-    voiceBtn.textContent="◉  Speak";
+    stopVoiceUI(thought.value.trim()?"Transcript captured.":"Ready to listen");
+    voiceBtn.textContent="Start speaking";
     voiceBtn.classList.remove("active");
     thought.value=(thought.value||committedTranscript).trim();
     setVoiceLive(thought.value,false);
     const note=document.getElementById("voiceSupportNote");
-    if(note)note.textContent=thought.value?"Transcript captured. You can edit it before saving.":"Tap Speak to try again.";
+    if(note)note.textContent=thought.value
+      ?"Transcript captured. You can edit it before saving."
+      :"Tap Start speaking to try again.";
   };
 
-  try{recognition.start()}catch(e){}
+  try{recognition.start()}catch(e){
+    stopVoiceUI("Use keyboard dictation");
+    thought.focus();
+  }
+}
+
+function clearVoice(){
+  try{recognition?.stop()}catch(e){}
+  isListening=false;
+  stopVoiceUI("Ready to listen");
+  voiceSeconds=0;
+  updateVoiceTimer();
+  voiceBtn.textContent="Start speaking";
+  voiceBtn.classList.remove("active");
+  setVoiceLive("",true);
 }
 
 if(voiceBtn){
@@ -2619,81 +2720,12 @@ if(voiceBtn){
   };
 }
 
-function updateVoiceTimer(){
-  const m=Math.floor(voiceSeconds/60);
-  const s=String(voiceSeconds%60).padStart(2,"0");
-  voiceTime.textContent=`${m}:${s}`;
-}
-function startVoiceUI(){
-  if(voiceRunning)return;
-  voiceRunning=true;
-  voiceVisual.classList.add("listening");
-  voiceStatus.textContent="Listening…";
-  voiceTimer=setInterval(()=>{voiceSeconds++;updateVoiceTimer()},1000);
-}
-function stopVoiceUI(){
-  voiceRunning=false;
-  voiceVisual.classList.remove("listening");
-  if(voiceTimer){clearInterval(voiceTimer);voiceTimer=null;}
-  voiceStatus.textContent=thought.value.trim()?"Added to your thought.":"Stopped.";
-}
-function clearVoice(){
-  try{recognition?.stop()}catch(e){}
-  stopVoiceUI();
-  voiceSeconds=0;updateVoiceTimer();
-  
-  voiceStatus.textContent="Tap the microphone and speak naturally.";
-}
-
-if(SpeechRecognition){
-  recognition=new SpeechRecognition();
-  recognition.continuous=true;
-  recognition.interimResults=true;
-  recognition.lang="en-US";
-  let finalTranscript="";
-  let startingText="";
-  recognition.onstart=()=>{startingText=thought.value;finalTranscript="";startVoiceUI()};
-  recognition.onresult=(event)=>{
-    let interim="";
-    for(let i=event.resultIndex;i<event.results.length;i++){
-      const chunk=event.results[i][0].transcript;
-      if(event.results[i].isFinal) finalTranscript+=chunk+" ";
-      else interim+=chunk;
-    }
-    const spoken=(finalTranscript+interim).trim();
-    const spacer=startingText && spoken && !/\s$/.test(startingText) ? " " : "";
-    thought.value=startingText + spacer + spoken;
-  };
-  recognition.onend=()=>{
-    if(voiceRunning){
-      // Some mobile browsers stop automatically; treat as a graceful finish.
-      stopVoiceUI();
-    }
-  };
-  recognition.onerror=()=>{
-    stopVoiceUI();
-    voiceStatus.textContent="Live transcription isn't available here. Use the iPhone keyboard microphone in the thought box.";
+if(voiceStop){
+  voiceStop.onclick=()=>{
+    stopVoiceRecognition();
+    stopVoiceUI(thought.value.trim()?"Transcript captured.":"Ready to listen");
   };
 }
-
-voiceBtn.addEventListener("click",()=>{
-  if(recognition){
-    try{
-      if(voiceRunning){recognition.stop();stopVoiceUI();}
-      else{recognition.start();}
-    }catch(e){
-      thought.focus();
-      voiceStatus.textContent="Use the iPhone keyboard microphone in the thought box.";
-    }
-  }else{
-    thought.focus();
-    voiceStatus.textContent="Use the iPhone keyboard microphone in the thought box.";
-  }
-});
-voiceStop.addEventListener("click",()=>{
-  try{recognition?.stop()}catch(e){}
-  stopVoiceUI();
-});
 
 
 function openCapture(){
