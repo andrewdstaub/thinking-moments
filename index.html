@@ -1,4 +1,4 @@
-<!-- v4.0 -->
+<!-- v4.1 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -1055,7 +1055,7 @@ body.keyboard-open .bottom-nav{display:none}
       <button type="button">What did I used to believe about discipline?</button>
     </div>
     <div class="ask-result" id="askEchoResult"></div>
-    <div class="ask-foot">ECHO only makes claims it can support with your captured Moments.</div>
+    <div class="ask-foot">ECHO only makes claims it can support with your captured history.</div>
   </div>
 </div>
 
@@ -1522,63 +1522,109 @@ function askEchoKeywordTokens(q){
   const stop=new Set(["how","has","have","my","thinking","about","changed","change","what","did","do","i","used","to","believe","where","ideas","idea","keep","returning","return","the","a","an","of","in","on","and","is","are","was","were"]);
   return q.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(w=>w.length>2&&!stop.has(w));
 }
-function askEchoRelatedMoments(question){
+function askEchoRelatedHistory(question){
   const tokens=askEchoKeywordTokens(question);
-  const all=moments.filter(m=>m.source!=="Reflection").slice().sort((a,b)=>momentDate(a)-momentDate(b));
-  if(!tokens.length) return all.slice(-6);
-  const scored=all.map(m=>{
-    const text=searchableMomentText(m);
-    let score=0;tokens.forEach(t=>{if(text.includes(t))score+=2});
-    const refs=moments.filter(r=>r.source==="Reflection"&&String(r.parentId)===String(m.id));
-    refs.forEach(r=>{const rt=searchableReflectionText(r);tokens.forEach(t=>{if(rt.includes(t))score+=1})});
-    return {m,score};
-  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||momentDate(a.m)-momentDate(b.m));
-  return scored.map(x=>x.m).slice(0,6);
+  const all=moments.slice().sort((a,b)=>momentDate(a)-momentDate(b));
+  if(!tokens.length) return all.slice(-8);
+
+  const scored=all.map(item=>{
+    const isReflection=item.source==="Reflection";
+    let text=isReflection?searchableReflectionText(item):searchableMomentText(item);
+    let score=0;
+    tokens.forEach(t=>{if(text.includes(t))score+=isReflection?3:2});
+
+    // A reflection inherits some relevance from its parent Moment, and a Moment
+    // inherits some relevance from its attached reflections.
+    if(isReflection&&item.parentId){
+      const parent=moments.find(x=>String(x.id)===String(item.parentId));
+      if(parent){
+        const pt=searchableMomentText(parent);
+        tokens.forEach(t=>{if(pt.includes(t))score+=1});
+      }
+    }else{
+      moments.filter(r=>r.source==="Reflection"&&String(r.parentId)===String(item.id)).forEach(r=>{
+        const rt=searchableReflectionText(r);
+        tokens.forEach(t=>{if(rt.includes(t))score+=1});
+      });
+    }
+    return {item,score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||momentDate(a.item)-momentDate(b.item));
+
+  return scored.map(x=>x.item).slice(0,8);
 }
+
 function askEchoThemeCounts(){
-  const words={discipline:["discipline","motivation","system","systems","environment"],success:["success","successful","work","career","business"],parenting:["parent","parenting","child","kids","son"],relationships:["relationship","marriage","wife","partner","boundary","boundaries"],confidence:["confidence","competence","capable"],growth:["growth","change","becoming","learn","learning"]};
-  const all=moments.filter(m=>m.source!=="Reflection");
-  return Object.entries(words).map(([name,terms])=>({name,count:all.filter(m=>terms.some(t=>searchableMomentText(m).includes(t))).length})).sort((a,b)=>b.count-a.count);
+  const words={
+    discipline:["discipline","motivation","system","systems","environment"],
+    success:["success","successful","work","career","business"],
+    parenting:["parent","parenting","child","kids","son"],
+    relationships:["relationship","marriage","wife","partner","boundary","boundaries"],
+    confidence:["confidence","competence","capable"],
+    growth:["growth","change","becoming","learn","learning"]
+  };
+  return Object.entries(words).map(([name,terms])=>{
+    const relevant=moments.filter(item=>{
+      const text=item.source==="Reflection"?searchableReflectionText(item):searchableMomentText(item);
+      return terms.some(t=>text.includes(t));
+    });
+    return {
+      name,
+      count:relevant.length,
+      reflections:relevant.filter(x=>x.source==="Reflection").length
+    };
+  }).sort((a,b)=>b.count-a.count);
 }
+
 function askEchoDateLabel(m){try{return momentDate(m).toLocaleDateString(undefined,{month:"short",year:"numeric"})}catch(e){return ""}}
 function askEchoAnswer(question){
   const q=question.trim();
-  const all=moments.filter(m=>m.source!=="Reflection");
+  const captured=moments.filter(m=>m.source!=="Reflection");
+  const reflections=moments.filter(m=>m.source==="Reflection");
+  const historyCount=moments.length;
   if(!q)return null;
-  if(all.length<3){
-    return {kind:"empty",html:`<div class="ask-empty"><strong>I don't have enough history yet.</strong><br><br>You have ${all.length} captured ${all.length===1?"Moment":"Moments"}. I can show what you've captured, but I don't yet have enough evidence to describe how your thinking has changed.</div>`};
+
+  if(historyCount<3){
+    return {kind:"empty",html:`<div class="ask-empty"><strong>I don't have enough history yet.</strong><br><br>You have ${captured.length} ${captured.length===1?"Moment":"Moments"} and ${reflections.length} ${reflections.length===1?"Reflection":"Reflections"}. I can show what you've captured, but I don't yet have enough evidence to describe how your thinking has changed.</div>`};
   }
 
   const lower=q.toLowerCase();
   if(/keep returning|return to|recurring|themes|patterns/.test(lower)){
     const themes=askEchoThemeCounts().filter(x=>x.count>0).slice(0,3);
-    if(!themes.length)return {kind:"empty",html:`<div class="ask-empty">I can see your Moments, but I don't yet have enough repeated language to identify a recurring idea with confidence.</div>`};
+    if(!themes.length)return {kind:"empty",html:`<div class="ask-empty">I can see your captured history, but I don't yet have enough repeated language to identify a recurring idea with confidence.</div>`};
     const top=themes[0];
-    const rel=askEchoRelatedMoments(top.name);
-    return {kind:"answer",title:"ECHO NOTICED",text:`The clearest recurring thread I can support right now is <strong>${esc(top.name)}</strong>, appearing across ${top.count} Moments. Rather than calling that a trait or conclusion, I'd treat it as a theme worth revisiting.`,evidence:rel};
+    const rel=askEchoRelatedHistory(top.name);
+    const reflectionNote=top.reflections?` ${top.reflections} of those are Reflections, giving stronger evidence that you returned to the idea deliberately.`:"";
+    return {kind:"answer",title:"ECHO NOTICED",text:`The clearest recurring thread I can support right now is <strong>${esc(top.name)}</strong>, appearing across ${top.count} pieces of your captured history.${reflectionNote} Rather than calling that a trait or conclusion, I'd treat it as a theme worth revisiting.`,evidence:rel};
   }
 
-  const rel=askEchoRelatedMoments(q);
+  const rel=askEchoRelatedHistory(q);
   if(rel.length<2){
-    return {kind:"empty",html:`<div class="ask-empty"><strong>I don't have enough evidence to describe a change here yet.</strong><br><br>I found ${rel.length} relevant ${rel.length===1?"Moment":"Moments"}. I can show ${rel.length===1?"it":"them"}, but I shouldn't claim an evolution without more history.</div>`};
+    return {kind:"empty",html:`<div class="ask-empty"><strong>I don't have enough evidence to describe a change here yet.</strong><br><br>I found ${rel.length} relevant ${rel.length===1?"entry":"entries"} across your Moments and Reflections. I shouldn't claim an evolution without more history.</div>`};
   }
 
-  const first=rel.slice().sort((a,b)=>momentDate(a)-momentDate(b))[0];
-  const last=rel.slice().sort((a,b)=>momentDate(a)-momentDate(b)).at(-1);
+  const chronological=rel.slice().sort((a,b)=>momentDate(a)-momentDate(b));
+  const first=chronological[0], last=chronological.at(-1);
+  const relReflections=rel.filter(x=>x.source==="Reflection");
   const keyword=askEchoKeywordTokens(q)[0]||"this";
   const firstText=cleanShareLine(first.thought);
   const lastText=cleanShareLine(last.thought);
 
   let title="YOUR HISTORY";
-  let text=`Across ${rel.length} relevant Moments, your language around <strong>${esc(keyword)}</strong> has developed over time. Your earlier capture emphasized “${esc(firstText.slice(0,120))}${firstText.length>120?"…":""},” while your more recent capture emphasized “${esc(lastText.slice(0,120))}${lastText.length>120?"…":""}.”`;
+  let text=`Across ${rel.length} relevant entries, your language around <strong>${esc(keyword)}</strong> has developed over time. Your earlier ${first.source==="Reflection"?"Reflection":"Moment"} emphasized “${esc(firstText.slice(0,120))}${firstText.length>120?"…":""},” while your more recent ${last.source==="Reflection"?"Reflection":"Moment"} emphasized “${esc(lastText.slice(0,120))}${lastText.length>120?"…":""}.”`;
+
+  if(relReflections.length){
+    text+=` <br><br>Your ${relReflections.length} relevant ${relReflections.length===1?"Reflection provides":"Reflections provide"} especially useful evidence because ${relReflections.length===1?"it records":"they record"} what you thought after the original encounter.`;
+  }
+
   if(/changed my mind|where have i changed|used to believe|how has.*changed/.test(lower)){
     title="A POSSIBLE SHIFT";
-    text+=` <br><br>That is evidence of a shift in emphasis, but not enough for ECHO to claim a complete change of mind.`;
+    text+=` I’d call this evidence of a shift in emphasis${relReflections.length?" supported by your later reflection":""}, but not automatically a complete change of mind.`;
   }else{
-    text+=` <br><br>I’d read this as a change in emphasis, not a psychological verdict.`;
+    text+=` I’d read this as evidence from your history, not a psychological verdict.`;
   }
   return {kind:"answer",title,text,evidence:rel};
 }
+
 function renderAskEchoResult(question){
   const box=document.getElementById("askEchoResult");
   const answer=askEchoAnswer(question);
@@ -1588,7 +1634,7 @@ function renderAskEchoResult(question){
   }
   box.innerHTML=`<div class="ask-answer"><div class="ask-answer-title">${answer.title}</div>${answer.text}</div>
     <div class="ask-evidence"><div class="ask-evidence-label">MOMENTS BEHIND THIS ANSWER</div>
-      ${answer.evidence.map(m=>`<button type="button" data-ask-moment="${m.id}"><strong>${esc(cleanShareLine(m.thought).slice(0,110)||"Captured Moment")}${cleanShareLine(m.thought).length>110?"…":""}</strong><small>${esc(askEchoDateLabel(m))}${m.source&&m.source!=="Reflection"?" · "+esc(m.source):""}</small></button>`).join("")}
+      ${answer.evidence.map(m=>`<button type="button" data-ask-moment="${m.id}"><strong>${m.source==="Reflection"?"REFLECTION · ":"MOMENT · "}${esc(cleanShareLine(m.thought).slice(0,110)||"Captured entry")}${cleanShareLine(m.thought).length>110?"…":""}</strong><small>${esc(askEchoDateLabel(m))}${m.source&&m.source!=="Reflection"?" · "+esc(m.source):""}</small></button>`).join("")}
     </div>`;
   box.classList.add("show");
   box.querySelectorAll("[data-ask-moment]").forEach(b=>b.onclick=()=>{closeAskEcho();detail(b.dataset.askMoment)});
@@ -1606,15 +1652,20 @@ function wireAskEchoLaunch(){
   const b=document.getElementById("askEchoLaunch");if(b)b.onclick=openAskEcho;
 }
 
+
+function askEchoTopline(label="Your thinking history"){
+  return `<div class="timeline-topline"><div class="timeline-topline-title">${label}</div><button class="ask-echo-launch" id="askEchoLaunch" type="button" aria-label="Ask ECHO"><span class="orbit-icon" aria-hidden="true"><span class="ring1"></span><span class="ring2"></span><span class="core"></span><span class="moon1"></span><span class="moon2"></span></span><span>Ask ECHO</span></button></div>`;
+}
+
 function renderTimeline(){
   const q=timelineSearch.trim().toLowerCase();
   const allTimelineMoments=moments.filter(m=>m.source!=="Reflection").slice().sort((a,b)=>momentDate(b)-momentDate(a));
   const timelineMoments=q?allTimelineMoments.filter(m=>searchableMomentText(m).includes(q)):allTimelineMoments;
   if(!allTimelineMoments.length){
-    main.innerHTML=`<div class="timeline-topline"><div class="timeline-topline-title">Your thinking history</div><button class="ask-echo-launch" id="askEchoLaunch" type="button"><span class="orbit-icon"><span class="ring1"></span><span class="ring2"></span><span class="core"></span><span class="moon1"></span><span class="moon2"></span></span><span>Ask ECHO</span></button></div>`+searchBarHTML("timeline",timelineSearch)+'<div class="empty">Your timeline is empty.<br><br>Capture the first moment that makes you think.</div>';wireSearch("timeline");wireAskEchoLaunch();return;
+    main.innerHTML=askEchoTopline("Your thinking history")+searchBarHTML("timeline",timelineSearch)+'<div class="empty">Your timeline is empty.<br><br>Capture the first moment that makes you think.</div>';wireSearch("timeline");wireAskEchoLaunch();return;
   }
   if(!timelineMoments.length){
-    main.innerHTML=`<div class="timeline-topline"><div class="timeline-topline-title">Your thinking history</div><button class="ask-echo-launch" id="askEchoLaunch" type="button"><span class="orbit-icon"><span class="ring1"></span><span class="ring2"></span><span class="core"></span><span class="moon1"></span><span class="moon2"></span></span><span>Ask ECHO</span></button></div>`+searchBarHTML("timeline",timelineSearch)+`<div class="search-summary">No Moments match “${esc(timelineSearch)}”.</div>`;wireSearch("timeline");wireAskEchoLaunch();return;
+    main.innerHTML=askEchoTopline("Your thinking history")+searchBarHTML("timeline",timelineSearch)+`<div class="search-summary">No Moments match “${esc(timelineSearch)}”.</div>`;wireSearch("timeline");wireAskEchoLaunch();return;
   }
 
   const now=new Date();
@@ -1630,7 +1681,7 @@ function renderTimeline(){
 
   const ordered=[...groups.values()].sort((a,b)=>a.rank-b.rank);
 
-  main.innerHTML=`<div class="timeline-topline"><div class="timeline-topline-title">Your thinking history</div><button class="ask-echo-launch" id="askEchoLaunch" type="button" aria-label="Ask ECHO"><span class="orbit-icon" aria-hidden="true"><span class="ring1"></span><span class="ring2"></span><span class="core"></span><span class="moon1"></span><span class="moon2"></span></span><span>Ask ECHO</span></button></div>`+searchBarHTML("timeline",timelineSearch)+(q?`<div class="search-summary">${timelineMoments.length} ${timelineMoments.length===1?"Moment":"Moments"} found</div>`:"")+ordered.map(group=>`
+  main.innerHTML=askEchoTopline("Your thinking history")+searchBarHTML("timeline",timelineSearch)+(q?`<div class="search-summary">${timelineMoments.length} ${timelineMoments.length===1?"Moment":"Moments"} found</div>`:"")+ordered.map(group=>`
     <section class="timeline-section ${group.type==="month"?"month-section":""}">
       <div class="timeline-section-head">
         <div class="timeline-section-title">${esc(group.label)}</div>
@@ -2028,7 +2079,7 @@ function renderReflect(){
   // No saved reflections yet: retain the useful revisit prompt.
   if(!allReflections.length){
     const previous=moments.find(m=>m.source!=="Reflection");
-    main.innerHTML=searchBarHTML("reflect",reflectSearch)+`<div class="reflectHero">
+    main.innerHTML=askEchoTopline("Your reflection history")+searchBarHTML("reflect",reflectSearch)+`<div class="reflectHero">
       <div class="eyebrow">REFLECT</div>
       <h2>Look back. Think forward.</h2>
       <p>Revisit something you captured and see what it brings up now.</p>
@@ -2042,13 +2093,13 @@ function renderReflect(){
         <div class="go-deeper-question">${esc(getEchoResponse(previous).text)}</div>
       </div>
     </article>`:`<div class="reflect-empty">Capture a few Moments first. Reflection becomes more useful once there is something worth returning to.</div>`}`;
-    wireSearch("reflect");
+    wireSearch("reflect");wireAskEchoLaunch();
     return;
   }
 
   if(!reflections.length){
-    main.innerHTML=searchBarHTML("reflect",reflectSearch)+`<div class="search-summary">No Reflections match “${esc(reflectSearch)}”.</div>`;
-    wireSearch("reflect"); return;
+    main.innerHTML=askEchoTopline("Your reflection history")+searchBarHTML("reflect",reflectSearch)+`<div class="search-summary">No Reflections match “${esc(reflectSearch)}”.</div>`;
+    wireSearch("reflect");wireAskEchoLaunch(); return;
   }
 
   // V2.5: organize Reflections by when the Reflection itself happened.
@@ -2065,7 +2116,7 @@ function renderReflect(){
 
   const ordered=[...groups.values()].sort((a,b)=>a.rank-b.rank);
 
-  main.innerHTML=searchBarHTML("reflect",reflectSearch)+(q?`<div class="search-summary">${reflections.length} ${reflections.length===1?"Reflection":"Reflections"} found</div>`:"")+`<div class="reflectHero">
+  main.innerHTML=askEchoTopline("Your reflection history")+searchBarHTML("reflect",reflectSearch)+(q?`<div class="search-summary">${reflections.length} ${reflections.length===1?"Reflection":"Reflections"} found</div>`:"")+`<div class="reflectHero">
     <div class="eyebrow">REFLECT</div>
     <h2>Look back. Think forward.</h2>
     <p>Your reflections are organized by when you had them—not when the original Moment was captured.</p>
@@ -2116,7 +2167,7 @@ function renderReflect(){
       renderReflect();
     };
   });
-  wireSearch("reflect");
+  wireSearch("reflect");wireAskEchoLaunch();
 }
 
 function addReflection(){
