@@ -1,7 +1,8 @@
-<!-- v4.5.3 -->
+<!-- v4.5.4 -->
 <!doctype html>
 <html lang="en">
 <head>
+<meta name="echo-build" content="4.5.4">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
@@ -490,6 +491,16 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 
 
 
+
+
+/* V4.5.4 — timeline actions: exactly two labels, no optional text */
+.timeline-go-deeper{
+  justify-content:flex-start !important;
+}
+.timeline-card-actions .echo-response-trigger span:last-child{
+  color:inherit;
+  font-weight:inherit;
+}
 
 /* V4.5.3 — Photo/Video picker UX fix
    Do not auto-open the native iOS chooser. Keep a persistent in-app button instead. */
@@ -1820,10 +1831,10 @@ function renderMomentCard(m){
 
     <div class="timeline-card-actions">
       ${shouldSurfaceEchoResponse(m)?`
-        <button class="echo-response-trigger" type="button" data-deep="${m.id}">
-          <span>${open?"Close":"Go deeper →"}</span>
+        <button class="echo-response-trigger timeline-go-deeper" type="button" data-deep="${m.id}" aria-label="Go deeper">
+          ${open?"Close":"Go deeper →"}
         </button>
-      `:`<span style="flex:1"></span>`}
+      `:`<span class="timeline-action-spacer"></span>`}
       <button class="timeline-share-btn" type="button" data-share-timeline="${m.id}" aria-label="Share this Moment">
         <span class="share-icon">↗</span><span>Share</span>
       </button>
