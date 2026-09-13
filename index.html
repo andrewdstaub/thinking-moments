@@ -1,4 +1,4 @@
-<!-- v4.4 -->
+<!-- v4.4.2 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -889,67 +889,6 @@ body.keyboard-open .bottom-nav{display:none}
 
 
 
-
-/* V4.4 Three-door capture architecture */
-.capture-choices{
-  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-}
-.media-door{
-  display:none;
-  margin-top:18px;
-}
-.media-door.show{display:block}
-.media-door-title{
-  margin-bottom:12px;
-  font-size:15px;
-  font-weight:900;
-}
-.media-door-grid{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
-}
-.media-door-option{
-  width:100%;
-  min-height:78px;
-  padding:14px;
-  display:grid;
-  grid-template-columns:38px 1fr;
-  grid-template-rows:auto auto;
-  column-gap:10px;
-  text-align:left;
-  border:1px solid var(--line);
-  border-radius:17px;
-  background:rgba(255,255,255,.025);
-  color:var(--ink);
-  font:inherit;
-}
-.media-door-option:active{transform:scale(.992)}
-.media-door-icon{
-  grid-row:1/3;
-  align-self:center;
-  width:34px;height:34px;border-radius:50%;
-  display:grid;place-items:center;
-  color:#8cf0c7;
-  border:1px solid rgba(140,240,199,.22);
-  background:rgba(140,240,199,.05);
-}
-.media-door-option strong{font-size:14px;align-self:end}
-.media-door-option small{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.35}
-.media-door-back{
-  margin-top:12px;border:0;background:transparent;color:var(--muted);
-  font:inherit;font-size:11px;font-weight:850;padding:8px 0;
-}
-.video-preview{
-  display:none;
-  width:100%;
-  max-height:260px;
-  margin-top:10px;
-  border-radius:15px;
-  background:#050913;
-}
-.video-preview.show{display:block}
-
 /* V4.3 Speak capture refinement */
 #voiceInline.show{
   display:block;
@@ -1046,6 +985,56 @@ body.keyboard-open .bottom-nav{display:none}
 }
 .capture-fields textarea{min-height:118px}
 .capture-fields .context-toggle{margin-top:10px}
+
+
+/* V4.4.2 — three-door capture architecture */
+.capture-choice-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+}
+.media-door{
+  display:none;
+  margin-top:4px;
+}
+.media-door.show{display:block}
+.media-door-intro{
+  text-align:center;
+  margin:4px 0 18px;
+}
+.media-door-intro h3{margin:0;font-size:22px}
+.media-door-intro p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.media-door-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:11px;
+}
+.media-door-option{
+  min-height:90px;
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));
+  color:var(--ink);
+  display:grid;
+  grid-template-columns:52px 1fr;
+  grid-template-rows:auto auto;
+  column-gap:12px;
+  align-items:center;
+  text-align:left;
+  padding:14px;
+  font:inherit;
+}
+.media-door-option:active{transform:scale(.992)}
+.media-door-option .capture-choice-icon{grid-row:1/3}
+.media-door-option strong{font-size:14px;align-self:end}
+.media-door-option small{font-size:11px;color:var(--muted);align-self:start;margin-top:3px;line-height:1.35}
+.video-preview{
+  display:none;
+  width:100%;
+  max-height:280px;
+  border-radius:16px;
+  background:#050913;
+}
+.video-preview.show{display:block}
 
 .capture-choice-wrap{padding:6px 0 2px}.capture-choice-intro{text-align:center;margin:4px 0 20px}.capture-choice-intro h3{margin:0;font-size:22px}.capture-choice-intro p{margin:6px 0 0;color:var(--muted);font-size:13px}
 .capture-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.capture-choice{min-height:126px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.025));color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;font:inherit;font-weight:850}.capture-choice-icon{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(140,240,199,.16),rgba(154,167,255,.18));font-size:24px}.capture-choice span:last-child{font-size:14px}
@@ -1159,29 +1148,29 @@ body.keyboard-open .bottom-nav{display:none}
       <div class="capture-choice-grid">
         <button class="capture-choice" type="button" data-capture-mode="type"><span class="capture-choice-icon">✎</span><span>Type</span></button>
         <button class="capture-choice" type="button" data-capture-mode="speak"><span class="capture-choice-icon">◉</span><span>Speak</span></button>
-        <button class="capture-choice" type="button" data-capture-mode="photo"><span class="capture-choice-icon">▣</span><span>Photo</span></button>
-        <button class="capture-choice" type="button" data-capture-mode="listen"><span class="capture-choice-icon">▶</span><span>Listening</span></button>
+        <button class="capture-choice" type="button" data-capture-mode="media"><span class="capture-choice-icon">▣</span><span>Media</span></button>
       </div>
     </div>
-    
-  <div class="media-door" id="mediaDoor">
-    <div class="media-door-title">What made you stop and think?</div>
-    <div class="media-door-grid">
-      <button class="media-door-option" id="mediaVisual" type="button">
-        <span class="media-door-icon">▣</span>
-        <strong>Photo or Video</strong>
-        <small>Photo, screenshot, video, or screen recording</small>
-      </button>
-      <button class="media-door-option" id="mediaListening" type="button">
-        <span class="media-door-icon">▶</span>
-        <strong>Listening</strong>
-        <small>Podcast, audiobook, Spotify, or other audio</small>
-      </button>
-    </div>
-    <button class="media-door-back" id="mediaDoorBack" type="button">← Back to Type, Speak, Media</button>
-  </div>
 
-<div class="capture-fields" id="captureFields">
+    <div class="media-door" id="mediaDoor">
+      <div class="media-door-intro">
+        <h3>What made you stop and think?</h3>
+        <p>Choose what you encountered.</p>
+      </div>
+      <div class="media-door-grid">
+        <button class="media-door-option" id="mediaPhotoVideo" type="button">
+          <span class="capture-choice-icon">▣</span>
+          <strong>Photo or Video</strong>
+          <small>Photo, screenshot, video, or screen recording</small>
+        </button>
+        <button class="media-door-option" id="mediaListening" type="button">
+          <span class="capture-choice-icon">▶</span>
+          <strong>Listening</strong>
+          <small>Podcast, audiobook, Spotify, or other audio</small>
+        </button>
+      </div>
+    </div>
+    <div class="capture-fields" id="captureFields">
       <div class="capture-mode-chip" id="captureModeChip"></div>
       <label class="field-label" id="thoughtLabel" for="thought">What made you stop and think?</label>
       <textarea id="thought" placeholder="Capture the thought"></textarea>
@@ -1191,8 +1180,7 @@ body.keyboard-open .bottom-nav{display:none}
       <div class="voice-live-text muted" id="voiceLiveText">Start speaking and your words will appear here.</div>
       <div class="voice-support-note" id="voiceSupportNote">Your transcript is added to the Moment as you speak.</div>
     </div></div><div><div class="voice-inline-title" id="voiceStatus">Ready to listen</div><div class="voice-inline-time" id="voiceTime">0:00</div></div></div><div class="voice-actions"><button class="voice-action primary" id="voiceBtn" type="button">Start speaking</button><button class="voice-action" id="voiceStop" type="button">Stop</button></div></div>
-      <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview">
-      <video class="video-preview" id="videoPreview" controls playsinline></video><div class="photo-inline-row"><span>Image attached</span><button type="button" id="removePhoto">Remove</button></div></div>
+      <div class="photo-inline" id="photoInline"><img id="photoPreview" class="photo-preview" alt="Selected image preview"><video id="videoPreview" class="video-preview" controls playsinline></video><div class="photo-inline-row"><span id="mediaAttachedLabel">Media attached</span><button type="button" id="removePhoto">Remove</button></div></div>
       <input id="photoInput" type="file" accept="image/*,video/mp4,video/quicktime,video/*" style="display:none">
       <div class="listen-minimal" id="listenMinimal"><div class="audio-inline show" id="audioInline"><div class="audio-head"><div><strong>Where were you listening?</strong><span>Save the source and exact point.</span></div><button class="audio-close" id="audioClose" type="button">×</button></div><div class="audio-kind"><button type="button" id="podcastKind" class="active">Podcast</button><button type="button" id="audiobookKind">Audiobook</button></div><input id="audioTitle" placeholder="Podcast or book title"><div class="audio-grid"><input id="audioPart" placeholder="Episode title / number"><input id="audioTime" inputmode="numeric" placeholder="42:18"></div><input id="audioUrl" inputmode="url" placeholder="Source link (optional)"><p class="audio-help">In the native app, supported listening services can pass this context automatically.</p></div></div>
       <button class="context-toggle" id="contextToggle" type="button">＋ Add context</button>
@@ -1284,6 +1272,11 @@ const source=document.getElementById("source");
 const anchor=document.getElementById("anchor");
 const photoInput=document.getElementById("photoInput");
 const photoPreview=document.getElementById("photoPreview");
+const videoPreview=document.getElementById("videoPreview");
+const mediaAttachedLabel=document.getElementById("mediaAttachedLabel");
+const mediaDoor=document.getElementById("mediaDoor");
+const mediaPhotoVideo=document.getElementById("mediaPhotoVideo");
+const mediaListening=document.getElementById("mediaListening");
 const voiceBtn=document.getElementById("voiceBtn");
 const voiceInline=document.getElementById("voiceInline");
 const photoInline=document.getElementById("photoInline");
@@ -1302,6 +1295,8 @@ const voiceTime=document.getElementById("voiceTime");
 const voiceStop=document.getElementById("voiceStop");
 const toast=document.getElementById("toast");
 let pendingImageData="";
+let pendingVideoFile=null;
+let pendingVideoURL="";
 let pendingAudioKind="podcast";
 let selectedCaptureMode=null;
 let voiceSeconds=0;
@@ -2394,29 +2389,40 @@ audiobookKind.onclick=()=>setAudioKind("audiobook");
 audioTime.addEventListener("blur",()=>{audioTime.value=normalizePlayTime(audioTime.value)});
 
 function resetCaptureArchitecture(){
-  if(pendingVideoURL){URL.revokeObjectURL(pendingVideoURL);pendingVideoURL=null}
-  pendingVideoFile=null;
-  const vp=document.getElementById("videoPreview");if(vp){vp.pause();vp.removeAttribute("src");vp.classList.remove("show")}
-  if(photoPreview)photoPreview.style.display="";
-  document.getElementById("mediaDoor")?.classList.remove("show");
-selectedCaptureMode=null;captureChoices.style.display="block";captureFields.classList.remove("show");captureBack.classList.remove("show");captureModeChip.textContent="";contextFields.classList.remove("show");contextToggle.style.display="block";contextToggle.textContent="＋ Add context";listenMinimal.classList.remove("show");voiceInline.classList.remove("show");}
+  selectedCaptureMode=null;
+  captureChoices.style.display="block";
+  mediaDoor.classList.remove("show");
+  captureFields.classList.remove("show");
+  captureBack.classList.remove("show");
+  captureModeChip.textContent="";
+  contextFields.classList.remove("show");
+  contextToggle.style.display="block";
+  contextToggle.textContent="＋ Add context";
+  listenMinimal.classList.remove("show");
+  voiceInline.classList.remove("show");
+  document.getElementById("voiceLiveWrap")?.classList.remove("show");
+}
 function chooseCaptureMode(mode){
-  captureMode=mode;
-  captureChooser.classList.add("hidden");
-  const mediaDoor=document.getElementById("mediaDoor");
-  if(mediaDoor)mediaDoor.classList.remove("show");
+  selectedCaptureMode=mode;
+  contextFields.classList.remove("show");
+  contextToggle.textContent="＋ Add context";
+  voiceInline.classList.remove("show");
+  document.getElementById("voiceLiveWrap")?.classList.remove("show");
+  listenMinimal.classList.remove("show");
 
   if(mode==="media"){
+    captureChoices.style.display="none";
+    mediaDoor.classList.add("show");
     captureFields.classList.remove("show");
-    if(mediaDoor)mediaDoor.classList.add("show");
+    captureBack.classList.add("show");
+    captureModeChip.textContent="";
     return;
   }
 
+  mediaDoor.classList.remove("show");
+  captureChoices.style.display="none";
   captureFields.classList.add("show");
-  voiceInline.classList.remove("show");
-  document.getElementById("voiceLiveWrap")?.classList.remove("show");
-  photoPreviewWrap.classList.remove("show");
-  listenMinimal.classList.remove("show");
+  captureBack.classList.add("show");
 
   const names={type:"✎  TYPE",speak:"◉  SPEAK",photo:"▣  PHOTO OR VIDEO",listen:"▶  LISTENING"};
   captureModeChip.textContent=names[mode]||"CAPTURE";
@@ -2426,6 +2432,7 @@ function chooseCaptureMode(mode){
     thought.placeholder="Capture the thought";
     setTimeout(()=>thought.focus(),80);
   }
+
   if(mode==="speak"){
     thoughtLabel.textContent="Speak the Moment";
     thought.placeholder="Your spoken thought will appear here";
@@ -2433,11 +2440,13 @@ function chooseCaptureMode(mode){
     document.getElementById("voiceLiveWrap")?.classList.add("show");
     setTimeout(()=>voiceBtn.focus(),80);
   }
+
   if(mode==="photo"){
     thoughtLabel.textContent="Add a thought (optional)";
     thought.placeholder="What about this mattered?";
     setTimeout(()=>photoInput.click(),50);
   }
+
   if(mode==="listen"){
     thoughtLabel.textContent="What made you stop? (optional)";
     thought.placeholder="Capture the thought";
@@ -2445,33 +2454,78 @@ function chooseCaptureMode(mode){
     setTimeout(()=>audioTitle.focus(),80);
   }
 }
-document.querySelectorAll("[data-capture-mode]").forEach(b=>b.onclick=()=>chooseCaptureMode(b.dataset.captureMode));captureBack.onclick=()=>{try{recognition?.stop()}catch(e){}stopVoiceUI();resetCaptureArchitecture()};contextToggle.onclick=()=>{const show=!contextFields.classList.contains("show");contextFields.classList.toggle("show",show);contextToggle.textContent=show?"− Hide context":"＋ Add context"};
 
-const mediaVisual=document.getElementById("mediaVisual");
-const mediaListening=document.getElementById("mediaListening");
-const mediaDoorBack=document.getElementById("mediaDoorBack");
-if(mediaVisual)mediaVisual.onclick=()=>chooseCaptureMode("photo");
-if(mediaListening)mediaListening.onclick=()=>chooseCaptureMode("listen");
-if(mediaDoorBack)mediaDoorBack.onclick=()=>{
-  document.getElementById("mediaDoor")?.classList.remove("show");
-  captureChooser.classList.remove("hidden");
-  captureMode=null;
+document.querySelectorAll("[data-capture-mode]").forEach(b=>b.onclick=()=>chooseCaptureMode(b.dataset.captureMode));
+mediaPhotoVideo.onclick=()=>chooseCaptureMode("photo");
+mediaListening.onclick=()=>chooseCaptureMode("listen");
+captureBack.onclick=()=>{
+  try{recognition?.stop()}catch(e){}
+  stopVoiceUI();
+
+  if(selectedCaptureMode==="photo"||selectedCaptureMode==="listen"){
+    selectedCaptureMode="media";
+    captureFields.classList.remove("show");
+    mediaDoor.classList.add("show");
+    captureChoices.style.display="none";
+    captureBack.classList.add("show");
+    return;
+  }
+
+  resetCaptureArchitecture();
 };
+contextToggle.onclick=()=>{const show=!contextFields.classList.contains("show");contextFields.classList.toggle("show",show);contextToggle.textContent=show?"− Hide context":"＋ Add context"};
 photoInput.addEventListener("change",async()=>{
-  const file=photoInput.files?.[0]; if(!file)return;
+  const file=photoInput.files?.[0];
+  if(!file)return;
+
+  pendingImageData="";
+  pendingVideoFile=null;
+
+  if(pendingVideoURL){
+    try{URL.revokeObjectURL(pendingVideoURL)}catch(e){}
+    pendingVideoURL="";
+  }
+
+  photoPreview.src="";
+  photoPreview.classList.remove("show");
+  videoPreview.pause();
+  videoPreview.removeAttribute("src");
+  videoPreview.classList.remove("show");
+
+  if(file.type.startsWith("video/")){
+    pendingVideoFile=file;
+    pendingVideoURL=URL.createObjectURL(file);
+    videoPreview.src=pendingVideoURL;
+    videoPreview.classList.add("show");
+    mediaAttachedLabel.textContent="Video attached";
+    photoInline.classList.add("show");
+    thought.placeholder="What about this video mattered?";
+    return;
+  }
+
   try{
     pendingImageData=await compressImage(file);
     photoPreview.src=pendingImageData;
     photoPreview.classList.add("show");
+    mediaAttachedLabel.textContent="Image attached";
     photoInline.classList.add("show");
+    thought.placeholder="What about this image mattered?";
   }catch(e){
     showToast("Couldn't load image.");
   }
 });
 removePhoto.addEventListener("click",()=>{
   pendingImageData="";
+  pendingVideoFile=null;
+  if(pendingVideoURL){
+    try{URL.revokeObjectURL(pendingVideoURL)}catch(e){}
+    pendingVideoURL="";
+  }
   photoPreview.src="";
   photoPreview.classList.remove("show");
+  videoPreview.pause();
+  videoPreview.removeAttribute("src");
+  videoPreview.classList.remove("show");
   photoInline.classList.remove("show");
   photoInput.value="";
 });
@@ -2643,7 +2697,9 @@ voiceStop.addEventListener("click",()=>{
 
 
 function openCapture(){
- editingId=null;setCaptureEditMode(null);thought.value="";thought.placeholder="Capture the thought";source.value="";anchor.value="";pendingImageData="";photoInput.value="";photoPreview.src="";photoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
+ editingId=null;setCaptureEditMode(null);thought.value="";thought.placeholder="Capture the thought";source.value="";anchor.value="";pendingImageData="";pendingVideoFile=null;
+ if(pendingVideoURL){try{URL.revokeObjectURL(pendingVideoURL)}catch(e){}pendingVideoURL="";}
+ photoInput.value="";photoPreview.src="";photoPreview.classList.remove("show");videoPreview.pause();videoPreview.removeAttribute("src");videoPreview.classList.remove("show");photoInline.classList.remove("show");clearAudioDraft();resetCaptureArchitecture();
  modal.style.display="block";modal.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";try{recognition?.stop()}catch(e){}stopVoiceUI();voiceSeconds=0;updateVoiceTimer();
 }
 
@@ -2687,7 +2743,7 @@ document.getElementById("save").onclick=()=>{
   const isReflection=existing?.source==="Reflection";
   const audioDraft=isReflection?null:currentAudioDraft();
 
-  if(!isReflection && !pendingImageData && !capturedThought && !source.value.trim() && !anchor.value.trim() && !audioDraft){
+  if(!isReflection && !pendingImageData && !pendingVideoFile && !capturedThought && !source.value.trim() && !anchor.value.trim() && !audioDraft){
     showToast("Add something to capture.");
     return;
   }
@@ -2707,7 +2763,8 @@ document.getElementById("save").onclick=()=>{
       anchor:isReflection?(moments[idx].anchor||""):(anchor.value.trim()||(audioDraft?.time||"")),
       audio:isReflection?(moments[idx].audio||null):audioDraft,
       imageData:isReflection?(moments[idx].imageData||""):pendingImageData,
-      captureType:isReflection?(moments[idx].captureType||"reflection"):(selectedCaptureMode||(audioDraft?"listen":(pendingImageData?"photo":"type"))),
+      videoMeta:isReflection?(moments[idx].videoMeta||null):(pendingVideoFile?{name:pendingVideoFile.name,type:pendingVideoFile.type,size:pendingVideoFile.size}:null),
+      captureType:isReflection?(moments[idx].captureType||"reflection"):(selectedCaptureMode||(audioDraft?"listen":((pendingImageData||pendingVideoFile)?"photo":"type"))),
       updatedAt:new Date().toISOString()
       // Intentionally preserve id, original display date, parentId and creation history.
     };
@@ -2747,8 +2804,9 @@ document.getElementById("save").onclick=()=>{
     source:source.value.trim()||audioSourceLabel(audioDraft),
     anchor:anchor.value.trim()||(audioDraft?.time||""),
     audio:audioDraft,
-    captureType:selectedCaptureMode||(audioDraft?"listen":(pendingImageData?"photo":"type")),
+    captureType:selectedCaptureMode||(audioDraft?"listen":((pendingImageData||pendingVideoFile)?"photo":"type")),
     imageData:pendingImageData,
+    videoMeta:pendingVideoFile?{name:pendingVideoFile.name,type:pendingVideoFile.type,size:pendingVideoFile.size}:null,
   };
 
   try{
@@ -2764,8 +2822,13 @@ document.getElementById("save").onclick=()=>{
   echoResponseId=null;
   thought.value=source.value=anchor.value="";
   pendingImageData="";
+  pendingVideoFile=null;
+  if(pendingVideoURL){try{URL.revokeObjectURL(pendingVideoURL)}catch(e){}pendingVideoURL="";}
   photoPreview.src="";
   photoPreview.classList.remove("show");
+  videoPreview.pause();
+  videoPreview.removeAttribute("src");
+  videoPreview.classList.remove("show");
   photoInline.classList.remove("show");
   photoInput.value="";
   voiceInline.classList.remove("show");
