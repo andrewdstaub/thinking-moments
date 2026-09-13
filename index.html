@@ -1,4 +1,4 @@
-<!-- v3.9.2 -->
+<!-- v4.0 -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -560,6 +560,87 @@ body.keyboard-open .app{padding-bottom:calc(24px + var(--safe-bottom))}
 }
 
 
+
+.timeline-topline{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px;
+}
+.timeline-topline-title{
+  font-size:12px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+}
+.ask-echo-launch{
+  border:1px solid rgba(140,240,199,.20);border-radius:999px;
+  background:linear-gradient(135deg,rgba(140,240,199,.07),rgba(154,167,255,.08));
+  color:var(--ink);display:flex;align-items:center;gap:8px;padding:7px 10px 7px 8px;
+  font:inherit;font-size:11px;font-weight:900;
+}
+.ask-echo-launch:active{transform:scale(.985)}
+.orbit-icon{width:28px;height:28px;position:relative;display:inline-block;flex:0 0 28px}
+.orbit-icon .core{
+  position:absolute;left:10px;top:10px;width:8px;height:8px;border-radius:50%;
+  background:#f5ddbd;box-shadow:0 0 12px rgba(245,221,189,.65)
+}
+.orbit-icon .ring1,.orbit-icon .ring2{
+  position:absolute;border:1px solid rgba(176,202,255,.72);border-radius:50%;inset:5px;
+}
+.orbit-icon .ring2{inset:1px;border-color:rgba(245,221,189,.54);transform:rotate(28deg)}
+.orbit-icon .moon1,.orbit-icon .moon2{
+  position:absolute;width:4px;height:4px;border-radius:50%;background:#f5ddbd;
+  box-shadow:0 0 8px rgba(245,221,189,.55)
+}
+.orbit-icon .moon1{right:2px;top:7px}.orbit-icon .moon2{left:3px;bottom:5px}
+.ask-echo-launch:hover .moon1,.ask-echo-launch:focus .moon1{animation:echoOrbit 3.2s linear infinite;transform-origin:-10px 7px}
+@keyframes echoOrbit{to{transform:rotate(360deg)}}
+
+.ask-echo-backdrop{
+  position:fixed;inset:0;z-index:95;background:rgba(3,7,18,.74);display:none;
+  align-items:flex-end;justify-content:center;padding:14px;
+}
+.ask-echo-backdrop.show{display:flex}
+.ask-echo-sheet{
+  width:min(560px,100%);max-height:88vh;overflow:auto;border:1px solid var(--line);
+  border-radius:26px;background:#10172a;padding:18px;
+  box-shadow:0 24px 70px rgba(0,0,0,.46);
+}
+.ask-echo-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ask-echo-brand{display:flex;align-items:center;gap:10px}
+.ask-echo-brand strong{font-size:18px}.ask-echo-sub{color:var(--muted);font-size:11px;margin-top:2px}
+.ask-echo-close{border:0;background:transparent;color:var(--muted);font-size:22px}
+.ask-echo-prompt{margin-top:15px}
+.ask-echo-input{
+  width:100%;box-sizing:border-box;min-height:48px;padding:13px 48px 13px 14px;
+  border:1px solid rgba(154,167,255,.22);border-radius:15px;background:rgba(255,255,255,.04);
+  color:var(--ink);font:inherit;font-size:14px;outline:none
+}
+.ask-echo-input:focus{border-color:rgba(140,240,199,.38)}
+.ask-echo-go{
+  float:right;margin-top:-42px;margin-right:6px;width:35px;height:35px;border:0;border-radius:50%;
+  background:linear-gradient(135deg,#8cf0c7,#9aa7ff);color:#0b1020;font-size:18px;font-weight:900
+}
+.ask-suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.ask-suggestions button{
+  border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.025);
+  color:var(--muted);padding:8px 10px;font:inherit;font-size:11px;font-weight:800
+}
+.ask-result{display:none;margin-top:16px}
+.ask-result.show{display:block}
+.ask-answer{
+  padding:14px;border:1px solid rgba(140,240,199,.18);border-radius:16px;
+  background:rgba(140,240,199,.045);font-size:14px;line-height:1.52
+}
+.ask-answer-title{font-size:10px;font-weight:900;letter-spacing:.11em;color:var(--accent);margin-bottom:7px}
+.ask-evidence{margin-top:12px}
+.ask-evidence-label{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--muted);margin-bottom:8px}
+.ask-evidence button{
+  width:100%;text-align:left;border:1px solid var(--line);border-radius:14px;
+  background:rgba(255,255,255,.025);color:var(--ink);padding:11px 12px;margin-bottom:8px;font:inherit
+}
+.ask-evidence button small{display:block;color:var(--muted);margin-top:4px;line-height:1.35}
+.ask-empty{
+  padding:14px;border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.025);
+  color:var(--muted);font-size:13px;line-height:1.5
+}
+.ask-foot{margin-top:14px;color:var(--muted);font-size:10px;text-align:center;line-height:1.4}
+
 .echo-search-wrap{position:relative;margin:2px 0 18px}
 .echo-search{width:100%;box-sizing:border-box;min-height:46px;padding:0 42px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.055);color:var(--ink);font:inherit;font-size:15px;outline:none;-webkit-appearance:none;backdrop-filter:blur(14px)}
 .echo-search:focus{border-color:rgba(140,240,199,.42);background:rgba(255,255,255,.075)}
@@ -950,6 +1031,31 @@ body.keyboard-open .bottom-nav{display:none}
       </div>
     </div>
     <button class="share-final" id="shareFinalBtn" type="button">Share →</button>
+  </div>
+</div>
+
+
+<div class="ask-echo-backdrop" id="askEchoBackdrop" aria-hidden="true">
+  <div class="ask-echo-sheet" role="dialog" aria-modal="true" aria-labelledby="askEchoTitle">
+    <div class="ask-echo-head">
+      <div class="ask-echo-brand">
+        <span class="orbit-icon" aria-hidden="true"><span class="ring1"></span><span class="ring2"></span><span class="core"></span><span class="moon1"></span><span class="moon2"></span></span>
+        <div><strong id="askEchoTitle">Ask ECHO</strong><div class="ask-echo-sub">Ask your intellectual history.</div></div>
+      </div>
+      <button class="ask-echo-close" id="askEchoClose" type="button" aria-label="Close Ask ECHO">×</button>
+    </div>
+    <div class="ask-echo-prompt">
+      <input class="ask-echo-input" id="askEchoInput" placeholder="Ask about your thinking..." autocomplete="off">
+      <button class="ask-echo-go" id="askEchoGo" type="button" aria-label="Ask ECHO">→</button>
+    </div>
+    <div class="ask-suggestions" id="askEchoSuggestions">
+      <button type="button">How has my thinking about success changed?</button>
+      <button type="button">What ideas do I keep returning to?</button>
+      <button type="button">Where have I changed my mind?</button>
+      <button type="button">What did I used to believe about discipline?</button>
+    </div>
+    <div class="ask-result" id="askEchoResult"></div>
+    <div class="ask-foot">ECHO only makes claims it can support with your captured Moments.</div>
   </div>
 </div>
 
@@ -1411,15 +1517,104 @@ function wireSearch(kind){
     document.getElementById(kind+"Search")?.focus({preventScroll:true});
   };
 }
+
+function askEchoKeywordTokens(q){
+  const stop=new Set(["how","has","have","my","thinking","about","changed","change","what","did","do","i","used","to","believe","where","ideas","idea","keep","returning","return","the","a","an","of","in","on","and","is","are","was","were"]);
+  return q.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(w=>w.length>2&&!stop.has(w));
+}
+function askEchoRelatedMoments(question){
+  const tokens=askEchoKeywordTokens(question);
+  const all=moments.filter(m=>m.source!=="Reflection").slice().sort((a,b)=>momentDate(a)-momentDate(b));
+  if(!tokens.length) return all.slice(-6);
+  const scored=all.map(m=>{
+    const text=searchableMomentText(m);
+    let score=0;tokens.forEach(t=>{if(text.includes(t))score+=2});
+    const refs=moments.filter(r=>r.source==="Reflection"&&String(r.parentId)===String(m.id));
+    refs.forEach(r=>{const rt=searchableReflectionText(r);tokens.forEach(t=>{if(rt.includes(t))score+=1})});
+    return {m,score};
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||momentDate(a.m)-momentDate(b.m));
+  return scored.map(x=>x.m).slice(0,6);
+}
+function askEchoThemeCounts(){
+  const words={discipline:["discipline","motivation","system","systems","environment"],success:["success","successful","work","career","business"],parenting:["parent","parenting","child","kids","son"],relationships:["relationship","marriage","wife","partner","boundary","boundaries"],confidence:["confidence","competence","capable"],growth:["growth","change","becoming","learn","learning"]};
+  const all=moments.filter(m=>m.source!=="Reflection");
+  return Object.entries(words).map(([name,terms])=>({name,count:all.filter(m=>terms.some(t=>searchableMomentText(m).includes(t))).length})).sort((a,b)=>b.count-a.count);
+}
+function askEchoDateLabel(m){try{return momentDate(m).toLocaleDateString(undefined,{month:"short",year:"numeric"})}catch(e){return ""}}
+function askEchoAnswer(question){
+  const q=question.trim();
+  const all=moments.filter(m=>m.source!=="Reflection");
+  if(!q)return null;
+  if(all.length<3){
+    return {kind:"empty",html:`<div class="ask-empty"><strong>I don't have enough history yet.</strong><br><br>You have ${all.length} captured ${all.length===1?"Moment":"Moments"}. I can show what you've captured, but I don't yet have enough evidence to describe how your thinking has changed.</div>`};
+  }
+
+  const lower=q.toLowerCase();
+  if(/keep returning|return to|recurring|themes|patterns/.test(lower)){
+    const themes=askEchoThemeCounts().filter(x=>x.count>0).slice(0,3);
+    if(!themes.length)return {kind:"empty",html:`<div class="ask-empty">I can see your Moments, but I don't yet have enough repeated language to identify a recurring idea with confidence.</div>`};
+    const top=themes[0];
+    const rel=askEchoRelatedMoments(top.name);
+    return {kind:"answer",title:"ECHO NOTICED",text:`The clearest recurring thread I can support right now is <strong>${esc(top.name)}</strong>, appearing across ${top.count} Moments. Rather than calling that a trait or conclusion, I'd treat it as a theme worth revisiting.`,evidence:rel};
+  }
+
+  const rel=askEchoRelatedMoments(q);
+  if(rel.length<2){
+    return {kind:"empty",html:`<div class="ask-empty"><strong>I don't have enough evidence to describe a change here yet.</strong><br><br>I found ${rel.length} relevant ${rel.length===1?"Moment":"Moments"}. I can show ${rel.length===1?"it":"them"}, but I shouldn't claim an evolution without more history.</div>`};
+  }
+
+  const first=rel.slice().sort((a,b)=>momentDate(a)-momentDate(b))[0];
+  const last=rel.slice().sort((a,b)=>momentDate(a)-momentDate(b)).at(-1);
+  const keyword=askEchoKeywordTokens(q)[0]||"this";
+  const firstText=cleanShareLine(first.thought);
+  const lastText=cleanShareLine(last.thought);
+
+  let title="YOUR HISTORY";
+  let text=`Across ${rel.length} relevant Moments, your language around <strong>${esc(keyword)}</strong> has developed over time. Your earlier capture emphasized “${esc(firstText.slice(0,120))}${firstText.length>120?"…":""},” while your more recent capture emphasized “${esc(lastText.slice(0,120))}${lastText.length>120?"…":""}.”`;
+  if(/changed my mind|where have i changed|used to believe|how has.*changed/.test(lower)){
+    title="A POSSIBLE SHIFT";
+    text+=` <br><br>That is evidence of a shift in emphasis, but not enough for ECHO to claim a complete change of mind.`;
+  }else{
+    text+=` <br><br>I’d read this as a change in emphasis, not a psychological verdict.`;
+  }
+  return {kind:"answer",title,text,evidence:rel};
+}
+function renderAskEchoResult(question){
+  const box=document.getElementById("askEchoResult");
+  const answer=askEchoAnswer(question);
+  if(!answer){box.classList.remove("show");return}
+  if(answer.kind==="empty"){
+    box.innerHTML=answer.html;box.classList.add("show");return;
+  }
+  box.innerHTML=`<div class="ask-answer"><div class="ask-answer-title">${answer.title}</div>${answer.text}</div>
+    <div class="ask-evidence"><div class="ask-evidence-label">MOMENTS BEHIND THIS ANSWER</div>
+      ${answer.evidence.map(m=>`<button type="button" data-ask-moment="${m.id}"><strong>${esc(cleanShareLine(m.thought).slice(0,110)||"Captured Moment")}${cleanShareLine(m.thought).length>110?"…":""}</strong><small>${esc(askEchoDateLabel(m))}${m.source&&m.source!=="Reflection"?" · "+esc(m.source):""}</small></button>`).join("")}
+    </div>`;
+  box.classList.add("show");
+  box.querySelectorAll("[data-ask-moment]").forEach(b=>b.onclick=()=>{closeAskEcho();detail(b.dataset.askMoment)});
+}
+function openAskEcho(){
+  const el=document.getElementById("askEchoBackdrop");if(!el)return;
+  el.classList.add("show");el.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";
+  setTimeout(()=>document.getElementById("askEchoInput")?.focus(),80);
+}
+function closeAskEcho(){
+  const el=document.getElementById("askEchoBackdrop");if(el){el.classList.remove("show");el.setAttribute("aria-hidden","true")}
+  document.body.style.overflow="";
+}
+function wireAskEchoLaunch(){
+  const b=document.getElementById("askEchoLaunch");if(b)b.onclick=openAskEcho;
+}
+
 function renderTimeline(){
   const q=timelineSearch.trim().toLowerCase();
   const allTimelineMoments=moments.filter(m=>m.source!=="Reflection").slice().sort((a,b)=>momentDate(b)-momentDate(a));
   const timelineMoments=q?allTimelineMoments.filter(m=>searchableMomentText(m).includes(q)):allTimelineMoments;
   if(!allTimelineMoments.length){
-    main.innerHTML=searchBarHTML("timeline",timelineSearch)+'<div class="empty">Your timeline is empty.<br><br>Capture the first moment that makes you think.</div>';wireSearch("timeline");return;
+    main.innerHTML=`<div class="timeline-topline"><div class="timeline-topline-title">Your thinking history</div><button class="ask-echo-launch" id="askEchoLaunch" type="button"><span class="orbit-icon"><span class="ring1"></span><span class="ring2"></span><span class="core"></span><span class="moon1"></span><span class="moon2"></span></span><span>Ask ECHO</span></button></div>`+searchBarHTML("timeline",timelineSearch)+'<div class="empty">Your timeline is empty.<br><br>Capture the first moment that makes you think.</div>';wireSearch("timeline");wireAskEchoLaunch();return;
   }
   if(!timelineMoments.length){
-    main.innerHTML=searchBarHTML("timeline",timelineSearch)+`<div class="search-summary">No Moments match “${esc(timelineSearch)}”.</div>`;wireSearch("timeline");return;
+    main.innerHTML=`<div class="timeline-topline"><div class="timeline-topline-title">Your thinking history</div><button class="ask-echo-launch" id="askEchoLaunch" type="button"><span class="orbit-icon"><span class="ring1"></span><span class="ring2"></span><span class="core"></span><span class="moon1"></span><span class="moon2"></span></span><span>Ask ECHO</span></button></div>`+searchBarHTML("timeline",timelineSearch)+`<div class="search-summary">No Moments match “${esc(timelineSearch)}”.</div>`;wireSearch("timeline");wireAskEchoLaunch();return;
   }
 
   const now=new Date();
@@ -1435,7 +1630,7 @@ function renderTimeline(){
 
   const ordered=[...groups.values()].sort((a,b)=>a.rank-b.rank);
 
-  main.innerHTML=searchBarHTML("timeline",timelineSearch)+(q?`<div class="search-summary">${timelineMoments.length} ${timelineMoments.length===1?"Moment":"Moments"} found</div>`:"")+ordered.map(group=>`
+  main.innerHTML=`<div class="timeline-topline"><div class="timeline-topline-title">Your thinking history</div><button class="ask-echo-launch" id="askEchoLaunch" type="button" aria-label="Ask ECHO"><span class="orbit-icon" aria-hidden="true"><span class="ring1"></span><span class="ring2"></span><span class="core"></span><span class="moon1"></span><span class="moon2"></span></span><span>Ask ECHO</span></button></div>`+searchBarHTML("timeline",timelineSearch)+(q?`<div class="search-summary">${timelineMoments.length} ${timelineMoments.length===1?"Moment":"Moments"} found</div>`:"")+ordered.map(group=>`
     <section class="timeline-section ${group.type==="month"?"month-section":""}">
       <div class="timeline-section-head">
         <div class="timeline-section-title">${esc(group.label)}</div>
@@ -1445,6 +1640,8 @@ function renderTimeline(){
       ${group.items.map(renderMomentCard).join("")}
     </section>
   `).join("");
+
+  wireAskEchoLaunch();
 
   document.querySelectorAll(".card[data-id]").forEach(c=>{
     c.onclick=(e)=>{
@@ -2219,6 +2416,17 @@ if(shareFinalBtn)shareFinalBtn.onclick=async()=>{
   closeSharePreview();
   await performShareMoment(m.id,prompt);
 };
+
+const askEchoBackdrop=document.getElementById("askEchoBackdrop");
+const askEchoClose=document.getElementById("askEchoClose");
+const askEchoInput=document.getElementById("askEchoInput");
+const askEchoGo=document.getElementById("askEchoGo");
+if(askEchoClose)askEchoClose.onclick=closeAskEcho;
+if(askEchoBackdrop)askEchoBackdrop.onclick=e=>{if(e.target===askEchoBackdrop)closeAskEcho()};
+if(askEchoGo)askEchoGo.onclick=()=>renderAskEchoResult(askEchoInput.value);
+if(askEchoInput)askEchoInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();renderAskEchoResult(askEchoInput.value)}});
+document.querySelectorAll("#askEchoSuggestions button").forEach(b=>b.onclick=()=>{askEchoInput.value=b.textContent;renderAskEchoResult(b.textContent)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&askEchoBackdrop?.classList.contains("show"))closeAskEcho()});
 render();
 </script>
 
