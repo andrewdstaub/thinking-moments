@@ -1,8 +1,8 @@
-<!-- v4.6.2 -->
+<!-- v4.7.2 -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="echo-build" content="4.6.2">
+<meta name="echo-build" content="4.7.2">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
@@ -1121,7 +1121,38 @@ body.keyboard-open .bottom-nav{display:none}
 .share-preview{width:min(520px,100%);max-height:86vh;overflow:auto;border:1px solid var(--line);border-radius:24px;background:#10172a;padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.45)}
 .share-preview-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
 .share-preview-head strong{font-size:17px}.share-preview-close{border:0;background:transparent;color:var(--muted);font-size:22px}
-.share-preview-moment{padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03);font-size:14px;line-height:1.5}
+.share-visual-card{
+  position:relative;
+  overflow:hidden;
+  min-height:330px;
+  padding:24px 22px 20px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:24px;
+  background:
+    radial-gradient(circle at 8% 0%,rgba(154,167,255,.34),transparent 34%),
+    radial-gradient(circle at 100% 92%,rgba(140,240,199,.22),transparent 34%),
+    radial-gradient(circle at 100% 0%,rgba(255,158,207,.16),transparent 32%),
+    linear-gradient(160deg,#17213c 0%,#0b1020 56%,#10192c 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 18px 44px rgba(0,0,0,.22);
+}
+.share-visual-card::before{
+  content:"";
+  position:absolute;
+  width:190px;height:190px;border:1px solid rgba(255,255,255,.10);border-radius:50%;
+  right:-72px;top:-86px;box-shadow:0 0 0 32px rgba(255,255,255,.025),0 0 0 64px rgba(255,255,255,.018);
+}
+.share-visual-top{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:32px}
+.share-visual-brand{font-size:12px;font-weight:950;letter-spacing:.22em;color:#fff}
+.share-visual-kind{font-size:9px;font-weight:900;letter-spacing:.15em;color:var(--accent);padding:6px 9px;border:1px solid rgba(140,240,199,.22);border-radius:999px;background:rgba(140,240,199,.06)}
+.share-visual-quote{position:relative;z-index:1;font-family:Georgia,"Times New Roman",serif;font-size:29px;line-height:1.24;letter-spacing:-.02em;color:#fff;text-wrap:balance}
+.share-visual-quote::before{content:"“";display:block;font-family:Georgia,serif;font-size:55px;line-height:.55;color:var(--accent2);opacity:.9;margin-bottom:14px}
+.share-visual-source{position:relative;z-index:1;margin-top:22px;color:#b9c3dc;font-size:11px;line-height:1.45}
+.share-visual-rule{position:relative;z-index:1;width:42px;height:2px;margin:24px 0 14px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.share-visual-footer{position:relative;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+.share-visual-prompt{max-width:82%;font-size:16px;line-height:1.42;color:#eef1ff}
+.share-visual-prompt b{display:block;margin-bottom:5px;font-size:11px;letter-spacing:.13em;color:var(--accent);font-weight:950}
+.share-visual-mark{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent3));box-shadow:0 0 22px rgba(154,167,255,.28);flex:0 0 auto}
+.share-visual-note{margin:9px 2px 0;color:var(--muted);font-size:10px;line-height:1.4;text-align:center}
 .share-prompt-card{margin-top:12px;padding:14px;border:1px solid rgba(140,240,199,.18);border-radius:16px;background:rgba(140,240,199,.045)}
 .share-prompt-label{font-size:10px;font-weight:900;letter-spacing:.1em;color:var(--accent);margin-bottom:7px}.share-prompt-text{font-size:14px;line-height:1.48}
 .share-prompt-actions{display:flex;gap:8px;margin-top:11px}.share-prompt-actions button{flex:1;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.035);color:var(--muted);padding:9px;font:inherit;font-size:11px;font-weight:850}
@@ -1614,7 +1645,17 @@ body.keyboard-open .bottom-nav{display:none}
       <button type="button" id="shareReflectionReview">Review Reflection →</button>
     </div>
     <div id="sharePreviewContent">
-      <div class="share-preview-moment" id="sharePreviewMoment"></div>
+      <div class="share-visual-card" id="sharePreviewMoment">
+        <div class="share-visual-top"><span class="share-visual-brand">ECHO</span><span class="share-visual-kind" id="shareVisualKind">MOMENT</span></div>
+        <div class="share-visual-quote" id="shareVisualQuote">Captured Moment</div>
+        <div class="share-visual-source" id="shareVisualSource"></div>
+        <div class="share-visual-rule"></div>
+        <div class="share-visual-footer">
+          <div class="share-visual-prompt" id="shareVisualPrompt"></div>
+          <span class="share-visual-mark" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="share-visual-note">The receiver gets this ECHO card with your message.</div>
       <div class="share-prompt-card" id="sharePromptCard">
         <div class="share-prompt-label" id="sharePromptLabel">TALK ABOUT IT</div>
         <div class="share-prompt-text" id="sharePromptText"></div>
@@ -2427,6 +2468,114 @@ function momentShareText(m,promptOverride=undefined){
   return lines.join("\n");
 }
 
+
+function wrapCanvasText(ctx,text,maxWidth){
+  const words=String(text||"").split(/\s+/).filter(Boolean);
+  const lines=[];let line="";
+  for(const word of words){
+    const test=line?`${line} ${word}`:word;
+    if(ctx.measureText(test).width>maxWidth && line){
+      lines.push(line);line=word;
+    }else line=test;
+  }
+  if(line)lines.push(line);
+  return lines;
+}
+function roundRectPath(ctx,x,y,w,h,r){
+  const rr=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath();
+}
+async function createEchoShareCardFile(m,promptOverride){
+  try{
+    const W=1080,H=1350;
+    const canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;
+    const ctx=canvas.getContext("2d");
+    if(!ctx)return null;
+
+    // Midnight aurora base.
+    const bg=ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,"#192543");bg.addColorStop(.52,"#0b1020");bg.addColorStop(1,"#10192c");
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+    const glow=(x,y,r,color)=>{
+      const g=ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");
+      ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);
+    };
+    glow(80,70,430,"rgba(154,167,255,.34)");
+    glow(1030,1260,460,"rgba(140,240,199,.22)");
+    glow(1030,60,330,"rgba(255,158,207,.16)");
+
+    // Orbit signature.
+    ctx.save();ctx.translate(930,115);ctx.strokeStyle="rgba(255,255,255,.12)";ctx.lineWidth=2;
+    [105,150,195].forEach(r=>{ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke()});
+    ctx.restore();
+
+    ctx.fillStyle="#ffffff";ctx.font="900 34px -apple-system,BlinkMacSystemFont,Arial";ctx.letterSpacing="8px";
+    ctx.fillText("ECHO",82,108);
+
+    const isReflection=m.source==="Reflection";
+    ctx.font="800 22px -apple-system,BlinkMacSystemFont,Arial";
+    const pillText=isReflection?"MY REFLECTION":"A MOMENT";
+    const pillW=ctx.measureText(pillText).width+48;
+    roundRectPath(ctx,W-82-pillW,72,pillW,54,27);
+    ctx.fillStyle="rgba(140,240,199,.08)";ctx.fill();
+    ctx.strokeStyle="rgba(140,240,199,.30)";ctx.stroke();
+    ctx.fillStyle="#8cf0c7";ctx.fillText(pillText,W-58-pillW,108);
+
+    // Quote.
+    ctx.fillStyle="#9aa7ff";ctx.font="700 112px Georgia,serif";ctx.fillText("“",78,275);
+    const thought=cleanShareLine(m.thought)||(isReflection?"Reflection":"Captured Moment");
+    let fontSize=thought.length>300?50:thought.length>210?56:thought.length>130?64:thought.length>75?72:82;
+    ctx.fillStyle="#ffffff";ctx.font=`600 ${fontSize}px Georgia,serif`;
+    let lines=wrapCanvasText(ctx,thought,W-164);
+    while(lines.length>8 && fontSize>46){
+      fontSize-=4;ctx.font=`600 ${fontSize}px Georgia,serif`;lines=wrapCanvasText(ctx,thought,W-164);
+    }
+    const lineH=fontSize*1.24;
+    let y=340;
+    for(const line of lines.slice(0,8)){ctx.fillText(line,82,y);y+=lineH}
+
+    const source=(!isReflection && m.audio)
+      ?[m.audio.title,m.audio.part,m.audio.time?`Play from ${m.audio.time}`:""].filter(Boolean).join(" · ")
+      :(!isReflection?[m.source,m.anchor].filter(Boolean).join(" · "):"");
+    if(source){
+      y+=24;ctx.fillStyle="#b9c3dc";ctx.font="500 27px -apple-system,BlinkMacSystemFont,Arial";
+      for(const line of wrapCanvasText(ctx,source,W-164).slice(0,3)){ctx.fillText(line,82,y);y+=38}
+    }
+
+    // Bottom conversation invitation.
+    const p=(promptOverride===undefined)?sharePromptForMoment(m):promptOverride;
+    const bottomY=H-310;
+    const rule=ctx.createLinearGradient(82,0,240,0);rule.addColorStop(0,"#8cf0c7");rule.addColorStop(1,"#9aa7ff");
+    ctx.fillStyle=rule;roundRectPath(ctx,82,bottomY,158,6,3);ctx.fill();
+
+    ctx.fillStyle="#8cf0c7";ctx.font="900 27px -apple-system,BlinkMacSystemFont,Arial";
+    ctx.fillText(p?.text?(p.label||"TALK ABOUT IT"):"FROM ECHO",82,bottomY+66);
+
+    ctx.fillStyle="#eef1ff";ctx.font="600 43px -apple-system,BlinkMacSystemFont,Arial";
+    const footerText=p?.text?p.text:(isReflection?"A reflection worth sharing.":"Something made me stop and think.");
+    let fy=bottomY+118;
+    for(const line of wrapCanvasText(ctx,footerText,W-245).slice(0,3)){ctx.fillText(line,82,fy);fy+=57}
+
+    const orb=ctx.createLinearGradient(W-190,H-180,W-92,H-82);
+    orb.addColorStop(0,"#8cf0c7");orb.addColorStop(.5,"#9aa7ff");orb.addColorStop(1,"#ff9ecf");
+    ctx.fillStyle=orb;ctx.beginPath();ctx.arc(W-120,H-120,42,0,Math.PI*2);ctx.fill();
+
+    ctx.fillStyle="rgba(255,255,255,.48)";ctx.font="500 20px -apple-system,BlinkMacSystemFont,Arial";
+    ctx.fillText("Captured with ECHO",82,H-70);
+
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png",.96));
+    if(!blob)return null;
+    return new File([blob],isReflection?"echo-reflection.png":"echo-moment.png",{type:"image/png"});
+  }catch(e){
+    console.warn("ECHO share card generation failed",e);
+    return null;
+  }
+}
+
 async function dataUrlToShareFile(dataUrl, name="echo-moment.jpg"){
   try{
     const res=await fetch(dataUrl);
@@ -2470,10 +2619,21 @@ function renderSharePreview(){
     ?[m.audio.title,m.audio.part,m.audio.time?`Play from ${m.audio.time}`:""].filter(Boolean).join(" · ")
     :(!isReflection?[m.source,m.anchor].filter(Boolean).join(" · "):"");
 
-  document.getElementById("sharePreviewMoment").innerHTML=
-    `${isReflection?'<div class="label" style="margin-bottom:8px">MY REFLECTION</div>':""}`+
-    `${cleanShareLine(m.thought)?`<strong>${esc(cleanShareLine(m.thought))}</strong>`:`<strong>${isReflection?"Reflection":"Captured Moment"}</strong>`}`+
-    `${source?`<div class="source" style="margin-top:8px">${esc(source)}</div>`:""}`;
+  const visualKind=document.getElementById("shareVisualKind");
+  const visualQuote=document.getElementById("shareVisualQuote");
+  const visualSource=document.getElementById("shareVisualSource");
+  const visualPrompt=document.getElementById("shareVisualPrompt");
+  if(visualKind) visualKind.textContent=isReflection?"MY REFLECTION":"A MOMENT";
+  if(visualQuote) visualQuote.textContent=cleanShareLine(m.thought)||(isReflection?"Reflection":"Captured Moment");
+  if(visualSource){
+    visualSource.textContent=source||"";
+    visualSource.style.display=source?"block":"none";
+  }
+  if(visualPrompt){
+    visualPrompt.innerHTML=prompt?.text
+      ? `<b>${esc(prompt.label||"TALK ABOUT IT")}</b>${esc(prompt.text)}`
+      : `<b>FROM ECHO</b>${isReflection?"A reflection worth sharing.":"Something made me stop and think."}`;
+  }
 
   const card=document.getElementById("sharePromptCard");
   card.style.display=prompt?"block":"none";
@@ -2519,15 +2679,17 @@ async function performShareMoment(id,promptOverride){
   const isReflection=m.source==="Reflection";
   const shareData={title:isReflection?"An ECHO Reflection":"An ECHO Moment",text};
 
-  // If this Moment contains an image and the browser supports sharing files,
-  // include the image. Otherwise share the complete Moment as text.
-  if(m.imageData && navigator.share && navigator.canShare){
-    const file=await dataUrlToShareFile(m.imageData);
-    if(file){
-      const withFile={...shareData,files:[file]};
+  // V4.7: share a branded, receiver-facing ECHO card whenever the browser allows files.
+  // The user's unique content stays primary; ECHO supplies the visual frame.
+  if(navigator.share && navigator.canShare){
+    const echoCard=await createEchoShareCardFile(m,promptOverride);
+    if(echoCard){
+      // Graphic-only share: the card already contains the Moment/Reflection
+      // and conversation invitation, so do not duplicate them as message text.
+      const graphicOnly={files:[echoCard]};
       try{
-        if(navigator.canShare(withFile)){
-          await navigator.share(withFile);
+        if(navigator.canShare(graphicOnly)){
+          await navigator.share(graphicOnly);
           return;
         }
       }catch(e){
