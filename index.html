@@ -1,8 +1,8 @@
-<!-- v4.7.6 -->
+<!-- v4.7.7 -->
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="echo-build" content="4.7.6">
+<meta name="echo-build" content="4.7.7">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
@@ -1368,16 +1368,15 @@ body.keyboard-open .bottom-nav{display:none}
   box-shadow:0 10px 28px rgba(111,182,207,.18),0 0 0 1px rgba(255,255,255,.04) inset;
 }
 .capture-save-bar .save:active{transform:scale(.992)}
-/* V4.7.6 — don't let the sticky Save bar cover the listening URL field
-   while the iPhone keyboard is open. It returns to sticky as soon as
-   the URL field loses focus. */
-.capture-sheet.url-entry-active .capture-save-bar{
-  position:static;
-  margin-top:24px;
+/* V4.7.7 — while entering a listening URL, remove the sticky Save bar
+   completely so the iPhone keyboard and paste controls have clear space. */
+.sheet.url-entry-active .capture-save-bar{
+  display:none;
 }
-.capture-sheet.url-entry-active .media-url-quick{
-  scroll-margin-top:28px;
-  scroll-margin-bottom:180px;
+.sheet.url-entry-active .media-url-quick,
+.sheet.url-entry-active .listen-minimal{
+  scroll-margin-top:24px;
+  scroll-margin-bottom:260px;
 }
 .capture-save-hint{
   margin-top:7px;
@@ -1750,17 +1749,25 @@ const photoPickerActions=document.getElementById("photoPickerActions");
 const uploadMediaBtn=document.getElementById("uploadMediaBtn");
 const uploadMediaInput=document.getElementById("uploadMediaInput");
 const mediaQuickUrl=document.getElementById("mediaQuickUrl");
-const captureSheet=document.querySelector(".capture-sheet");
-if(mediaQuickUrl && captureSheet){
-  mediaQuickUrl.addEventListener("focus",()=>{
-    captureSheet.classList.add("url-entry-active");
+const captureSheet=document.querySelector("#modal .sheet");
+
+function setUrlEntryMode(active, field){
+  if(!captureSheet)return;
+  captureSheet.classList.toggle("url-entry-active",active);
+  if(active && field){
     requestAnimationFrame(()=>{
-      setTimeout(()=>mediaQuickUrl.scrollIntoView({block:"center",behavior:"smooth"}),120);
+      setTimeout(()=>field.scrollIntoView({block:"center",behavior:"smooth"}),180);
     });
-  });
-  mediaQuickUrl.addEventListener("blur",()=>{
-    setTimeout(()=>captureSheet.classList.remove("url-entry-active"),120);
-  });
+  }
+}
+if(mediaQuickUrl){
+  mediaQuickUrl.addEventListener("focus",()=>setUrlEntryMode(true,mediaQuickUrl));
+  mediaQuickUrl.addEventListener("blur",()=>setTimeout(()=>setUrlEntryMode(false),180));
+}
+const audioUrlField=document.getElementById("audioUrl");
+if(audioUrlField){
+  audioUrlField.addEventListener("focus",()=>setUrlEntryMode(true,audioUrlField));
+  audioUrlField.addEventListener("blur",()=>setTimeout(()=>setUrlEntryMode(false),180));
 }
 const mediaQuickUrlGo=document.getElementById("mediaQuickUrlGo");
 const mediaDoor=document.getElementById("mediaDoor");
